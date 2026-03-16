@@ -95,6 +95,25 @@ const State = (() => {
 
         createSite,
 
+        createSiteFrom(srcSite) {
+            const site = {
+                id: generateId(),
+                name: I18n.t('site.default') + ' ' + (_sites.length + 1),
+                grounds: [],
+                gridSize: srcSite.gridSize || 0.5,
+                snapToGrid: srcSite.snapToGrid !== false,
+                objects: [],
+                templates: JSON.parse(JSON.stringify(srcSite.templates || [])),
+                templateFolders: srcSite.templateFolders ? [...srcSite.templateFolders] : undefined,
+                bgImage: null,
+                view: { panX: 0, panY: 0, zoom: 1 }
+            };
+            _sites.push(site);
+            _activeSiteIndex = _sites.length - 1;
+            notify();
+            return site;
+        },
+
         duplicateSite(index) {
             const src = _sites[index];
             if (!src) return;

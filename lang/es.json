@@ -214,5 +214,6 @@
   "btn.offlineDownload": "Descargar version sin conexion",
   "btn.newFolder": "Nueva carpeta",
   "btn.newFolderPrompt": "Nombre de carpeta:",
-  "modal.print.treasure": "Estilo mapa del tesoro"
+  "modal.print.treasure": "Estilo mapa del tesoro",
+  "msg.copyTemplates": "Copiar plantillas y carpetas del campamento actual?"
 }

@@ -214,5 +214,6 @@
   "btn.offlineDownload": "Scarica versione offline",
   "btn.newFolder": "Nuova cartella",
   "btn.newFolderPrompt": "Nome cartella:",
-  "modal.print.treasure": "Stile mappa del tesoro"
+  "modal.print.treasure": "Stile mappa del tesoro",
+  "msg.copyTemplates": "Copiare modelli e cartelle dal campeggio attuale?"
 }

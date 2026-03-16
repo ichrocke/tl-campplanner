@@ -426,7 +426,14 @@ const UI = (() => {
             Canvas.groundPreview = [];
             Canvas.pathPreview = [];
             hideProperties();
-            State.createSite();
+            const currentSite = State.activeSite;
+            const copyTemplates = currentSite && currentSite.templates && currentSite.templates.length > 0
+                && confirm(I18n.t('msg.copyTemplates'));
+            if (copyTemplates) {
+                State.createSiteFrom(currentSite);
+            } else {
+                State.createSite();
+            }
         });
 
         document.getElementById('btn-custom-object').addEventListener('click', () => {

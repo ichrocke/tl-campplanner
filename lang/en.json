@@ -214,5 +214,6 @@
   "btn.offlineDownload": "Download offline version",
   "btn.newFolder": "New folder",
   "btn.newFolderPrompt": "Folder name:",
-  "modal.print.treasure": "Treasure map style"
+  "modal.print.treasure": "Treasure map style",
+  "msg.copyTemplates": "Copy object templates and folders from current camp site?"
 }
