@@ -371,6 +371,28 @@ body {
     color: var(--text-secondary);
 }
 
+.palette-drag-handle {
+    cursor: grab;
+    color: #ccc;
+    font-size: 12px;
+    line-height: 1;
+    letter-spacing: -2px;
+    padding: 0 2px;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.palette-drag-handle:active { cursor: grabbing; }
+
+.palette-item.dragging {
+    opacity: 0.4;
+}
+
+.palette-item.drag-over {
+    border-color: var(--primary);
+    box-shadow: 0 -2px 0 var(--primary);
+}
+
 .palette-shortcut {
     display: inline-flex;
     align-items: center;

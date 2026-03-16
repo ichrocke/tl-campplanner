@@ -98,7 +98,9 @@ const UI = (() => {
         });
     }
 
-    // --- Object Palette ---
+    // --- Object Palette (with drag-to-reorder) ---
+    let _paletteDragIdx = -1;
+
     function buildPalette() {
         const container = document.getElementById('object-palette');
         container.innerHTML = '';
@@ -108,6 +110,8 @@ const UI = (() => {
         templates.forEach((t, idx) => {
             const el = document.createElement('div');
             el.className = 'palette-item';
+            el.draggable = true;
+            el.dataset.idx = idx;
             const shapeStyle = t.shape === 'circle' ? 'border-radius:50%'
                 : t.shape === 'hexagon' ? 'clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)'
                 : t.shape === 'octagon' ? 'clip-path:polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%)'
@@ -115,6 +119,7 @@ const UI = (() => {
                 : '';
             const shortcutLabel = idx < 10 ? `<span class="palette-shortcut">${(idx + 1) % 10}</span>` : '';
             el.innerHTML = `
+                <div class="palette-drag-handle" title="Drag">&#8942;</div>
                 <div class="palette-swatch" style="background:${t.color};${shapeStyle}"></div>
                 <div class="palette-info">
                     <div class="palette-name">${t.name}</div>
@@ -127,7 +132,42 @@ const UI = (() => {
                 State.removeTemplate(idx);
                 buildPalette();
             });
-            el.addEventListener('click', () => Tools.setPendingTemplate(t));
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('.palette-delete') || e.target.closest('.palette-drag-handle')) return;
+                Tools.setPendingTemplate(t);
+            });
+
+            // Drag-and-drop reorder
+            el.addEventListener('dragstart', (e) => {
+                _paletteDragIdx = idx;
+                el.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+            });
+            el.addEventListener('dragend', () => {
+                el.classList.remove('dragging');
+                _paletteDragIdx = -1;
+                container.querySelectorAll('.palette-item').forEach(item => item.classList.remove('drag-over'));
+            });
+            el.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+                el.classList.add('drag-over');
+            });
+            el.addEventListener('dragleave', () => {
+                el.classList.remove('drag-over');
+            });
+            el.addEventListener('drop', (e) => {
+                e.preventDefault();
+                el.classList.remove('drag-over');
+                const fromIdx = _paletteDragIdx;
+                const toIdx = idx;
+                if (fromIdx < 0 || fromIdx === toIdx) return;
+                const item = templates.splice(fromIdx, 1)[0];
+                templates.splice(toIdx, 0, item);
+                State.notifyChange(true);
+                buildPalette();
+            });
+
             container.appendChild(el);
         });
     }
