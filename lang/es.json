@@ -208,5 +208,6 @@
   "lang.it": "Italiano",
   "props.keepAspectRatio": "Mantener proporción",
   "props.shape.triangle": "Triángulo",
-  "props.opacity": "Opacidad"
+  "props.opacity": "Opacidad",
+  "modal.print.objList": "Imprimir lista de objetos"
 }

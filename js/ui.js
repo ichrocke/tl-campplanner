@@ -390,9 +390,12 @@ const UI = (() => {
 
         // --- Section: General ---
         html += `<div class="prop-section">
-            <div class="prop-section-title">${I18n.t('props.general')}</div>
-            <label>${I18n.t('props.name')} <input type="text" id="prop-name" value="${obj.name}"></label>
-            <label>${I18n.t('props.description')} <input type="text" id="prop-desc" value="${descVal}" placeholder="${I18n.t('props.descPlaceholder')}"></label>`;
+            <div class="prop-section-title">${obj.type === 'guideline' ? I18n.t('tool.measure') : I18n.t('props.general')}</div>
+            ${obj.type === 'guideline'
+                ? `<div style="font-size:14px;font-weight:700;color:var(--primary);text-align:center;padding:4px 0">${obj.name}</div>`
+                : `<label>${I18n.t('props.name')} <input type="text" id="prop-name" value="${obj.name}"></label>
+                   <label>${I18n.t('props.description')} <input type="text" id="prop-desc" value="${descVal}" placeholder="${I18n.t('props.descPlaceholder')}"></label>`
+            }`;
         if (obj.type === 'text') {
             html += `<label>${I18n.t('props.textSection')} <input type="text" id="prop-text" value="${obj.text || ''}"></label>`;
         }
@@ -413,7 +416,7 @@ const UI = (() => {
         html += `</div>`;
 
         // --- Section: Position & Size ---
-        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence') {
+        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'guideline') {
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.posSize')}</div>
                 <div class="prop-grid">
@@ -450,7 +453,7 @@ const UI = (() => {
         }
 
         // --- Section: Rotation ---
-        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence') {
+        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'guideline') {
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.rotation')}</div>
                 <div class="prop-row">
@@ -467,7 +470,7 @@ const UI = (() => {
         }
 
         // --- Section: Guy ropes ---
-        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'bgimage') {
+        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'bgimage' && obj.type !== 'guideline') {
             const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.guyRope')}</div>
@@ -485,7 +488,7 @@ const UI = (() => {
         }
 
         // --- Section: Display ---
-        if (obj.type !== 'bgimage') {
+        if (obj.type !== 'bgimage' && obj.type !== 'guideline') {
             const opVal = obj.objectOpacity !== undefined ? obj.objectOpacity : 1;
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.display')}</div>

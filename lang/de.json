@@ -208,5 +208,6 @@
   "lang.it": "Italiano",
   "props.keepAspectRatio": "Seitenverhältnis beibehalten",
   "props.shape.triangle": "Dreieck",
-  "props.opacity": "Deckkraft"
+  "props.opacity": "Deckkraft",
+  "modal.print.objList": "Objektliste drucken"
 }

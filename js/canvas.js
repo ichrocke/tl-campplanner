@@ -492,6 +492,12 @@ const Canvas = (() => {
             ctx.globalAlpha = 1;
             return;
         }
+        // --- Guideline ---
+        if (obj.type === 'guideline' && obj.points && obj.points.length === 2) {
+            drawGuideline(obj, z, isSel, isHov);
+            ctx.globalAlpha = 1;
+            return;
+        }
         // --- Fence ---
         if (obj.type === 'fence' && obj.points && obj.points.length >= 2) {
             drawFence(obj, z, isSel, isHov);
@@ -839,6 +845,69 @@ const Canvas = (() => {
         ctx.restore();
     }
 
+    function drawGuideline(obj, z, isSel, isHov) {
+        const a = obj.points[0], b = obj.points[1];
+        const p1 = w2s(a.x, a.y), p2 = w2s(b.x, b.y);
+        const color = obj.color || '#6366f1';
+        const dx = b.x - a.x, dy = b.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        // Line
+        ctx.strokeStyle = color;
+        ctx.lineWidth = isSel ? 2 : 1.5;
+        ctx.setLineDash(isSel ? [6, 3] : [8, 4]);
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Arrow ends (perpendicular ticks)
+        const len = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
+        if (len > 0) {
+            const nx = -(p2.y - p1.y) / len * 6;
+            const ny = (p2.x - p1.x) / len * 6;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(p1.x + nx, p1.y + ny);
+            ctx.lineTo(p1.x - nx, p1.y - ny);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(p2.x + nx, p2.y + ny);
+            ctx.lineTo(p2.x - nx, p2.y - ny);
+            ctx.stroke();
+        }
+
+        // Distance label
+        const mx = (p1.x + p2.x) / 2;
+        const my = (p1.y + p2.y) / 2;
+        const text = dist.toFixed(2) + ' m';
+        ctx.font = 'bold 11px sans-serif';
+        const tw = ctx.measureText(text).width;
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        ctx.fillRect(mx - tw / 2 - 4, my - 8, tw + 8, 16);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 0.5;
+        ctx.strokeRect(mx - tw / 2 - 4, my - 8, tw + 8, 16);
+        ctx.fillStyle = color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(text, mx, my);
+
+        // Endpoint handles when selected
+        if (isSel) {
+            [p1, p2].forEach(p => {
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#6366f1';
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            });
+        }
+    }
+
     function drawFence(obj, z, isSel, isHov) {
         if (!obj.points || obj.points.length < 2) return;
         const color = obj.color || '#8B4513';
@@ -1146,6 +1215,11 @@ const Canvas = (() => {
         // Area: point in polygon
         if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
             return pointInPolygon(px, py, obj.points);
+        }
+        // Guideline: proximity to line segment
+        if (obj.type === 'guideline' && obj.points && obj.points.length === 2) {
+            const d = pointToSegDist(px, py, obj.points[0], obj.points[1]);
+            return d < 0.5;
         }
         // Fence: proximity to any segment
         if (obj.type === 'fence' && obj.points && obj.points.length >= 2) {

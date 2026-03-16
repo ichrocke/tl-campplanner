@@ -136,6 +136,9 @@ const State = (() => {
                 obj.text = template.text || 'Text';
                 obj.fontSize = template.fontSize || 1;
             }
+            if (template.type === 'guideline') {
+                obj.points = template.points ? template.points.map(p => ({...p})) : [];
+            }
             if (template.type === 'fence') {
                 obj.points = template.points ? [...template.points] : [];
                 obj.fenceHeight = template.fenceHeight || 1.5;

@@ -101,7 +101,8 @@ const Tools = (() => {
 
     // Find area vertex near world point (for selected area objects)
     function findAreaVertex(world, obj) {
-        if (!obj || obj.type !== 'area' || !obj.points) return -1;
+        if (!obj || !obj.points) return -1;
+        if (obj.type !== 'area' && obj.type !== 'guideline') return -1;
         const threshold = 8 / Canvas.zoom();
         for (let i = 0; i < obj.points.length; i++) {
             const pt = obj.points[i];
@@ -200,9 +201,9 @@ const Tools = (() => {
                 }
             }
 
-            // 1b. Check area/fence vertex drag
-            if (sel && (sel.type === 'area' || sel.type === 'fence') && sel.points) {
-                const vi = sel.type === 'area' ? findAreaVertex(world, sel) : findFenceVertex(world, sel);
+            // 1b. Check area/fence/guideline vertex drag
+            if (sel && (sel.type === 'area' || sel.type === 'fence' || sel.type === 'guideline') && sel.points) {
+                const vi = findAreaVertex(world, sel);
                 if (vi >= 0) {
                     drag = { type: 'areaVertex', objId: sel.id, vertexIndex: vi };
                     return;
@@ -493,6 +494,12 @@ const Tools = (() => {
                         obj.points.forEach(p => { cx += p.x; cy += p.y; });
                         obj.x = cx / obj.points.length;
                         obj.y = cy / obj.points.length;
+                        // Update guideline distance label
+                        if (obj.type === 'guideline' && obj.points.length === 2) {
+                            const dx = obj.points[1].x - obj.points[0].x;
+                            const dy = obj.points[1].y - obj.points[0].y;
+                            obj.name = Math.sqrt(dx * dx + dy * dy).toFixed(2) + ' m';
+                        }
                         Canvas.render();
                     }
                     break;
@@ -533,8 +540,8 @@ const Tools = (() => {
                 // Check area/fence vertex hover
                 if (Canvas.selectionCount === 1) {
                     const sel = site.objects.find(o => o.id === Canvas.selectedId);
-                    if (sel && (sel.type === 'area' || sel.type === 'fence') && sel.points) {
-                        const avi = sel.type === 'area' ? findAreaVertex(world, sel) : findFenceVertex(world, sel);
+                    if (sel && (sel.type === 'area' || sel.type === 'fence' || sel.type === 'guideline') && sel.points) {
+                        const avi = (sel.type === 'area' || sel.type === 'guideline') ? findAreaVertex(world, sel) : findFenceVertex(world, sel);
                         if (avi >= 0) {
                             Canvas.canvas.style.cursor = 'grab';
                             Canvas.hoveredId = sel.id;
@@ -617,6 +624,28 @@ const Tools = (() => {
                 State.notifyChange();
                 const obj = State.activeSite?.objects.find(o => o.id === drag.objId);
                 if (obj) UI.showProperties(obj);
+            }
+            if (drag.type === 'measure') {
+                const dx = drag.x2 - drag.x1, dy = drag.y2 - drag.y1;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist > 0.1) {
+                    const site = State.activeSite;
+                    if (site) {
+                        const cx = (drag.x1 + drag.x2) / 2;
+                        const cy = (drag.y1 + drag.y2) / 2;
+                        const obj = State.addObject({
+                            type: 'guideline', name: dist.toFixed(2) + ' m',
+                            width: 0, height: 0, guyRopeDistance: 0,
+                            color: '#6366f1', shape: 'rect',
+                            points: [{ x: drag.x1, y: drag.y1 }, { x: drag.x2, y: drag.y2 }],
+                        }, cx, cy);
+                        if (obj) {
+                            Canvas.selectedId = obj.id;
+                            UI.showProperties(obj);
+                        }
+                    }
+                }
+                Canvas.measureLine = null;
             }
             if (drag.type === 'rectSelect') {
                 const site = State.activeSite;

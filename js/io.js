@@ -49,6 +49,7 @@ const IO = (() => {
         const scaleOption = document.getElementById('print-scale').value;
         const showGrid = document.getElementById('print-grid').checked;
         const showDistances = document.getElementById('print-distances').checked;
+        const showObjList = document.getElementById('print-objlist').checked;
         const title = document.getElementById('print-title').value;
         const format = document.getElementById('print-format').value;
 
@@ -162,6 +163,34 @@ const IO = (() => {
 
         // Objects
         site.objects.forEach(obj => {
+            if (obj.type === 'bgimage') return;
+            if (obj.type === 'guideline' && obj.points && obj.points.length === 2) {
+                const p1 = wp(obj.points[0].x, obj.points[0].y);
+                const p2 = wp(obj.points[1].x, obj.points[1].y);
+                const color = obj.color || '#6366f1';
+                const dx = obj.points[1].x - obj.points[0].x;
+                const dy = obj.points[1].y - obj.points[0].y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                pctx.strokeStyle = color;
+                pctx.lineWidth = 1;
+                pctx.setLineDash([6, 3]);
+                pctx.beginPath(); pctx.moveTo(p1.x, p1.y); pctx.lineTo(p2.x, p2.y); pctx.stroke();
+                pctx.setLineDash([]);
+                // Ticks
+                const len = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
+                if (len > 0) {
+                    const nx = -(p2.y - p1.y) / len * 4, ny = (p2.x - p1.x) / len * 4;
+                    pctx.beginPath(); pctx.moveTo(p1.x + nx, p1.y + ny); pctx.lineTo(p1.x - nx, p1.y - ny); pctx.stroke();
+                    pctx.beginPath(); pctx.moveTo(p2.x + nx, p2.y + ny); pctx.lineTo(p2.x - nx, p2.y - ny); pctx.stroke();
+                }
+                // Label
+                const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
+                pctx.font = `${8 * ds.fontScale}px sans-serif`;
+                pctx.fillStyle = color;
+                pctx.textAlign = 'center';
+                pctx.fillText(dist.toFixed(2) + ' m', mx, my - 4);
+                return;
+            }
             if (obj.type === 'text') {
                 const pos = wp(obj.x, obj.y);
                 pctx.save();
@@ -295,7 +324,7 @@ const IO = (() => {
 
         // --- Page 2: Object list table ---
         let page2 = null;
-        if (site.objects.length > 0) {
+        if (showObjList && site.objects.length > 0) {
             page2 = document.createElement('canvas');
             page2.width = canvasW; page2.height = canvasH;
             const p2 = page2.getContext('2d');
