@@ -166,6 +166,20 @@ const IO = (() => {
                 pctx.strokeStyle = treasureMap ? '#5a7a3a' : '#22c55e';
                 pctx.lineWidth = (treasureMap ? 2.5 : 1.5) * ds.lineScale;
                 pctx.stroke();
+
+                // Edge lengths (not in treasure map mode)
+                if (!treasureMap) {
+                    pctx.font = `${8 * ds.fontScale}px sans-serif`;
+                    pctx.fillStyle = '#16a34a';
+                    pctx.textAlign = 'center';
+                    pctx.textBaseline = 'bottom';
+                    for (let i = 0; i < ground.length; i++) {
+                        const a = ground[i], b = ground[(i + 1) % ground.length];
+                        const dist = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
+                        const pa = wp(a.x, a.y), pb = wp(b.x, b.y);
+                        pctx.fillText(dist.toFixed(1) + ' m', (pa.x + pb.x) / 2, (pa.y + pb.y) / 2 - 3);
+                    }
+                }
             }
         });
 
@@ -373,18 +387,44 @@ const IO = (() => {
         const sbPx = scaleBarMeters * ppm;
         const sbx = canvasW - margin * pxPerMm - sbPx;
         const sby = canvasH - margin * pxPerMm;
-        pctx.strokeStyle = '#333'; pctx.lineWidth = 1.5;
-        pctx.beginPath();
-        pctx.moveTo(sbx, sby - 4); pctx.lineTo(sbx, sby);
-        pctx.lineTo(sbx + sbPx, sby); pctx.lineTo(sbx + sbPx, sby - 4);
-        pctx.stroke();
-        pctx.font = `${9 * ds.fontScale}px sans-serif`;
-        pctx.fillStyle = '#333';
-        pctx.textAlign = 'center';
-        pctx.fillText(scaleBarMeters + ' m', sbx + sbPx / 2, sby - 6);
+        if (treasureMap) {
+            // Treasure map scale bar
+            pctx.strokeStyle = '#3d2b1f';
+            pctx.lineWidth = 2;
+            pctx.beginPath();
+            wobblyLine(pctx, sbx, sby, sbx + sbPx, sby, 1);
+            pctx.stroke();
+            pctx.beginPath();
+            wobblyLine(pctx, sbx, sby - 5, sbx, sby + 1, 0.5);
+            pctx.stroke();
+            pctx.beginPath();
+            wobblyLine(pctx, sbx + sbPx, sby - 5, sbx + sbPx, sby + 1, 0.5);
+            pctx.stroke();
+            pctx.font = `italic ${10 * ds.fontScale}px 'Georgia','Times New Roman',serif`;
+            pctx.fillStyle = '#3d2b1f';
+            pctx.textAlign = 'center';
+            pctx.textBaseline = 'bottom';
+            pctx.fillText(scaleBarMeters + ' m', sbx + sbPx / 2, sby - 8);
+        } else {
+            pctx.strokeStyle = '#333'; pctx.lineWidth = 1.5;
+            pctx.beginPath();
+            pctx.moveTo(sbx, sby - 4); pctx.lineTo(sbx, sby);
+            pctx.lineTo(sbx + sbPx, sby); pctx.lineTo(sbx + sbPx, sby - 4);
+            pctx.stroke();
+            pctx.font = `${9 * ds.fontScale}px sans-serif`;
+            pctx.fillStyle = '#333';
+            pctx.textAlign = 'center';
+            pctx.textBaseline = 'bottom';
+            pctx.fillText(scaleBarMeters + ' m', sbx + sbPx / 2, sby - 6);
+        }
         if (scaleOption !== 'auto') {
+            pctx.font = treasureMap
+                ? `italic ${9 * ds.fontScale}px 'Georgia','Times New Roman',serif`
+                : `${9 * ds.fontScale}px sans-serif`;
+            pctx.fillStyle = treasureMap ? '#3d2b1f' : '#333';
             pctx.textAlign = 'right';
-            pctx.fillText('Ma\u00dfstab 1:' + scaleOption, canvasW - margin * pxPerMm, margin * pxPerMm + 14);
+            pctx.textBaseline = 'top';
+            pctx.fillText(I18n.t('print.scale') + ' 1:' + scaleOption, canvasW - margin * pxPerMm, margin * pxPerMm + 14);
         }
 
         // Compass image
