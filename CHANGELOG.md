@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.2] - 2026-03-16
+
+### Geändert
+- **Mehrere Grundflächen**: Beliebig viele Grundflächen pro Zeltplatz möglich (keine Ersetzungs-Abfrage mehr)
+- **Toolbar-Icons**: Import, Export, Drucken, Rückgängig und Einstellungen als kompakte Icons in der Toolbar
+- Alte Exporte mit einzelner Grundfläche werden automatisch migriert
+
 ## [2.0.1] - 2026-03-16
 
 ### Geändert

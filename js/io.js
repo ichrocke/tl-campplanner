@@ -144,19 +144,21 @@ const IO = (() => {
             pctx.fillText(I18n.t('canvas.grid') + ': ' + gridStep + ' m', ox, oy + bounds.height * ppm + 4);
         }
 
-        // Ground
-        if (site.ground.length >= 3) {
-            pctx.beginPath();
-            const g0 = wp(site.ground[0].x, site.ground[0].y);
-            pctx.moveTo(g0.x, g0.y);
-            site.ground.forEach((pt, i) => { if (i > 0) { const p = wp(pt.x, pt.y); pctx.lineTo(p.x, p.y); } });
-            pctx.closePath();
-            pctx.fillStyle = 'rgba(34,197,94,0.06)';
-            pctx.fill();
-            pctx.strokeStyle = '#22c55e';
-            pctx.lineWidth = 1.5 * ds.lineScale;
-            pctx.stroke();
-        }
+        // Grounds (multiple)
+        (site.grounds || []).forEach(ground => {
+            if (ground.length >= 3) {
+                pctx.beginPath();
+                const g0 = wp(ground[0].x, ground[0].y);
+                pctx.moveTo(g0.x, g0.y);
+                ground.forEach((pt, i) => { if (i > 0) { const p = wp(pt.x, pt.y); pctx.lineTo(p.x, p.y); } });
+                pctx.closePath();
+                pctx.fillStyle = 'rgba(34,197,94,0.06)';
+                pctx.fill();
+                pctx.strokeStyle = '#22c55e';
+                pctx.lineWidth = 1.5 * ds.lineScale;
+                pctx.stroke();
+            }
+        });
 
         // Objects
         site.objects.forEach(obj => {
@@ -402,7 +404,7 @@ const IO = (() => {
             if (x < minX) minX = x; if (x > maxX) maxX = x;
             if (y < minY) minY = y; if (y > maxY) maxY = y;
         };
-        site.ground.forEach(p => expand(p.x, p.y));
+        (site.grounds || []).forEach(g => g.forEach(p => expand(p.x, p.y)));
         site.objects.forEach(obj => {
             const pad = Math.max(obj.width || 0, obj.height || 0) / 2 + (obj.guyRopeDistance || 0) + 0.5;
             expand(obj.x - pad, obj.y - pad);

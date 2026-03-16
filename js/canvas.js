@@ -12,7 +12,7 @@ const Canvas = (() => {
     let dragDistances = [];
     let measureLine = null;
     let groundPreview = [];
-    let highlightGroundVertex = -1;
+    let highlightGroundVertex = null; // {gi, vi} or null
     let placementPreview = null;
     let pathPreview = []; // for path/area drawing
 
@@ -265,62 +265,64 @@ const Canvas = (() => {
     }
 
     function drawGround(site) {
-        const pts = site.ground;
-        if (pts.length < 2) return;
-        ctx.beginPath();
-        const p0 = w2s(pts[0].x, pts[0].y);
-        ctx.moveTo(p0.x, p0.y);
-        for (let i = 1; i < pts.length; i++) {
-            const p = w2s(pts[i].x, pts[i].y);
-            ctx.lineTo(p.x, p.y);
-        }
-        if (pts.length >= 3) {
-            ctx.closePath();
-            ctx.fillStyle = 'rgba(34, 197, 94, 0.08)';
-            ctx.fill();
-        }
-        ctx.strokeStyle = '#22c55e';
-        ctx.lineWidth = 2;
-        ctx.stroke();
-
-        // Vertices
-        pts.forEach((pt, i) => {
-            const p = w2s(pt.x, pt.y);
-            const isHighlighted = (i === highlightGroundVertex);
+        const grounds = site.grounds || [];
+        grounds.forEach((pts, gi) => {
+            if (pts.length < 2) return;
             ctx.beginPath();
-            ctx.arc(p.x, p.y, isHighlighted ? 7 : 5, 0, Math.PI * 2);
-            ctx.fillStyle = isHighlighted ? '#16a34a' : '#22c55e';
-            ctx.fill();
-            ctx.strokeStyle = '#fff';
-            ctx.lineWidth = isHighlighted ? 2.5 : 1.5;
+            const p0 = w2s(pts[0].x, pts[0].y);
+            ctx.moveTo(p0.x, p0.y);
+            for (let i = 1; i < pts.length; i++) {
+                const p = w2s(pts[i].x, pts[i].y);
+                ctx.lineTo(p.x, p.y);
+            }
+            if (pts.length >= 3) {
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(34, 197, 94, 0.08)';
+                ctx.fill();
+            }
+            ctx.strokeStyle = '#22c55e';
+            ctx.lineWidth = 2;
             ctx.stroke();
-        });
 
-        // Edge lengths
-        ctx.font = '10px sans-serif';
-        ctx.fillStyle = '#16a34a';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        for (let i = 0; i < pts.length; i++) {
-            const a = pts[i];
-            const b = pts[(i + 1) % pts.length];
-            if (i === pts.length - 1 && pts.length < 3) break;
-            const dist = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
-            const mp = w2s((a.x + b.x) / 2, (a.y + b.y) / 2);
-            ctx.fillText(dist.toFixed(1) + ' m', mp.x, mp.y - 4);
-        }
+            // Vertices
+            pts.forEach((pt, i) => {
+                const p = w2s(pt.x, pt.y);
+                const isHighlighted = (highlightGroundVertex && highlightGroundVertex.gi === gi && highlightGroundVertex.vi === i);
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, isHighlighted ? 7 : 5, 0, Math.PI * 2);
+                ctx.fillStyle = isHighlighted ? '#16a34a' : '#22c55e';
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = isHighlighted ? 2.5 : 1.5;
+                ctx.stroke();
+            });
 
-        // Area display
-        if (pts.length >= 3) {
-            const area = polygonArea(pts);
-            const center = polygonCentroid(pts);
-            const cp = w2s(center.x, center.y);
-            ctx.font = 'bold 12px sans-serif';
+            // Edge lengths
+            ctx.font = '10px sans-serif';
             ctx.fillStyle = '#16a34a';
             ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText(area.toFixed(1) + ' m\u00b2', cp.x, cp.y);
-        }
+            ctx.textBaseline = 'bottom';
+            for (let i = 0; i < pts.length; i++) {
+                const a = pts[i];
+                const b = pts[(i + 1) % pts.length];
+                if (i === pts.length - 1 && pts.length < 3) break;
+                const dist = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
+                const mp = w2s((a.x + b.x) / 2, (a.y + b.y) / 2);
+                ctx.fillText(dist.toFixed(1) + ' m', mp.x, mp.y - 4);
+            }
+
+            // Area display
+            if (pts.length >= 3) {
+                const area = polygonArea(pts);
+                const center = polygonCentroid(pts);
+                const cp = w2s(center.x, center.y);
+                ctx.font = 'bold 12px sans-serif';
+                ctx.fillStyle = '#16a34a';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(area.toFixed(1) + ' m\u00b2', cp.x, cp.y);
+            }
+        });
     }
 
     function drawGroundPreview() {

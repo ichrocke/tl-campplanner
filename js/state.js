@@ -49,7 +49,7 @@ const State = (() => {
             if (x < minX) minX = x; if (x > maxX) maxX = x;
             if (y < minY) minY = y; if (y > maxY) maxY = y;
         };
-        site.ground.forEach(p => expand(p.x, p.y));
+        (site.grounds || []).forEach(g => g.forEach(p => expand(p.x, p.y)));
         site.objects.forEach(o => {
             const pad = Math.max(o.width || 0, o.height || 0) / 2 + (o.guyRopeDistance || 0) + 1;
             expand(o.x - pad, o.y - pad);
@@ -64,7 +64,7 @@ const State = (() => {
         const site = {
             id: generateId(),
             name: name || I18n.t('site.default') + ' ' + (_sites.length + 1),
-            ground: [],
+            grounds: [],
             gridSize: 0.5,
             snapToGrid: true,
             objects: [],
@@ -225,6 +225,12 @@ const State = (() => {
                     const b = getSiteContentBounds(s);
                     autoOff = b ? b.maxX + 10 : autoOff + 30;
                 }
+                // Migrate: ground → grounds (array of polygons)
+                if (s.ground && !s.grounds) {
+                    s.grounds = s.ground.length >= 3 ? [s.ground] : [];
+                    delete s.ground;
+                }
+                if (!s.grounds) s.grounds = [];
                 // Migrate: ensure guyRopeSides exists on all objects
                 s.objects.forEach(o => {
                     if (!o.guyRopeSides) o.guyRopeSides = { top: true, right: true, bottom: true, left: true };

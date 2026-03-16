@@ -47,7 +47,7 @@
 
     // Warn before leaving page
     window.addEventListener('beforeunload', (e) => {
-        const hasContent = State.sites.some(s => s.objects.length > 0 || s.ground.length > 0);
+        const hasContent = State.sites.some(s => s.objects.length > 0 || (s.grounds && s.grounds.length > 0));
         if (hasContent) {
             e.preventDefault();
             e.returnValue = '';

@@ -749,37 +749,38 @@ const UI = (() => {
         if (rect.bottom > window.innerHeight) menu.style.top = (y - rect.height) + 'px';
     }
 
-    function showGroundVertexMenu(x, y, vertexIndex) {
+    function showGroundVertexMenu(x, y, gi, vertexIndex) {
         const site = State.activeSite;
-        if (!site) return;
+        if (!site || !site.grounds || !site.grounds[gi]) return;
+        const ground = site.grounds[gi];
         createContextMenuAt(x, y, [
-            { label: I18n.t('ctx.deleteVertex'), className: site.ground.length <= 3 ? '' : 'danger', action: () => {
-                if (site.ground.length <= 3) return;
-                site.ground.splice(vertexIndex, 1);
+            { label: I18n.t('ctx.deleteVertex'), className: ground.length <= 3 ? '' : 'danger', action: () => {
+                if (ground.length <= 3) return;
+                ground.splice(vertexIndex, 1);
                 State.notifyChange();
                 Canvas.render();
             }},
             { sep: true },
             { label: I18n.t('ctx.deleteGround'), className: 'danger', action: () => {
-                site.ground = [];
+                site.grounds.splice(gi, 1);
                 State.notifyChange();
                 Canvas.render();
             }},
         ]);
     }
 
-    function showGroundEdgeMenu(x, y, edgeIndex, worldPos) {
+    function showGroundEdgeMenu(x, y, gi, edgeIndex, worldPos) {
         const site = State.activeSite;
-        if (!site) return;
+        if (!site || !site.grounds || !site.grounds[gi]) return;
         createContextMenuAt(x, y, [
             { label: I18n.t('ctx.addVertex'), action: () => {
-                site.ground.splice(edgeIndex + 1, 0, { x: worldPos.x, y: worldPos.y });
+                site.grounds[gi].splice(edgeIndex + 1, 0, { x: worldPos.x, y: worldPos.y });
                 State.notifyChange();
                 Canvas.render();
             }},
             { sep: true },
             { label: I18n.t('ctx.deleteGround'), className: 'danger', action: () => {
-                site.ground = [];
+                site.grounds.splice(gi, 1);
                 State.notifyChange();
                 Canvas.render();
             }},

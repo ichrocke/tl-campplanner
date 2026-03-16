@@ -162,6 +162,29 @@ body {
     color: #fff !important;
 }
 
+.icon-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    border: 1px solid #444;
+    border-radius: var(--radius);
+    background: #2a2a30;
+    color: #ccc;
+    cursor: pointer;
+    transition: all 0.15s;
+    padding: 0;
+}
+
+.icon-btn:hover {
+    border-color: var(--primary);
+    color: #fff;
+    background: #3a3a42;
+}
+
+.icon-btn svg { flex-shrink: 0; }
+
 .toolbar-sep {
     width: 1px;
     height: 24px;
