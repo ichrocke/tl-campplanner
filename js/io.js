@@ -152,14 +152,18 @@ const IO = (() => {
         // Grounds (multiple)
         (site.grounds || []).forEach(ground => {
             if (ground.length >= 3) {
-                pctx.beginPath();
-                const g0 = wp(ground[0].x, ground[0].y);
-                pctx.moveTo(g0.x, g0.y);
-                ground.forEach((pt, i) => { if (i > 0) { const p = wp(pt.x, pt.y); pctx.lineTo(p.x, p.y); } });
-                pctx.closePath();
-                pctx.fillStyle = 'rgba(34,197,94,0.06)';
+                const gPts = ground.map(pt => wp(pt.x, pt.y));
+                if (treasureMap) {
+                    wobblyPolygon(pctx, gPts, 2);
+                } else {
+                    pctx.beginPath();
+                    pctx.moveTo(gPts[0].x, gPts[0].y);
+                    gPts.forEach((p, i) => { if (i > 0) pctx.lineTo(p.x, p.y); });
+                    pctx.closePath();
+                }
+                pctx.fillStyle = treasureMap ? 'rgba(34,197,94,0.04)' : 'rgba(34,197,94,0.06)';
                 pctx.fill();
-                pctx.strokeStyle = '#22c55e';
+                pctx.strokeStyle = treasureMap ? '#5a7a3a' : '#22c55e';
                 pctx.lineWidth = 1.5 * ds.lineScale;
                 pctx.stroke();
             }
@@ -210,11 +214,15 @@ const IO = (() => {
                 return;
             }
             if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
-                pctx.beginPath();
-                const ap0 = wp(obj.points[0].x, obj.points[0].y);
-                pctx.moveTo(ap0.x, ap0.y);
-                obj.points.forEach((pt, i) => { if (i > 0) { const p = wp(pt.x, pt.y); pctx.lineTo(p.x, p.y); } });
-                pctx.closePath();
+                const aPts = obj.points.map(pt => wp(pt.x, pt.y));
+                if (treasureMap) {
+                    wobblyPolygon(pctx, aPts, 1.5);
+                } else {
+                    pctx.beginPath();
+                    pctx.moveTo(aPts[0].x, aPts[0].y);
+                    aPts.forEach((p, i) => { if (i > 0) pctx.lineTo(p.x, p.y); });
+                    pctx.closePath();
+                }
                 pctx.fillStyle = (obj.color || '#d4a574') + '25';
                 pctx.fill();
                 pctx.setLineDash([4, 3]);
@@ -257,7 +265,27 @@ const IO = (() => {
             }
 
             // Body
-            if (obj.shape === 'circle') {
+            if (treasureMap) {
+                const amp = Math.max(1, Math.min(w, h) * 0.02);
+                if (obj.shape === 'circle') {
+                    // Wobbly circle
+                    pctx.beginPath();
+                    const segs = 24;
+                    for (let i = 0; i <= segs; i++) {
+                        const a = (i / segs) * Math.PI * 2;
+                        const r = w / 2 + Math.sin(a * 5 + obj.x) * amp;
+                        const px = Math.cos(a) * r, py = Math.sin(a) * r;
+                        if (i === 0) pctx.moveTo(px, py); else pctx.lineTo(px, py);
+                    }
+                    pctx.closePath();
+                    pctx.fillStyle = obj.color + '66'; pctx.fill();
+                    pctx.strokeStyle = obj.color; pctx.lineWidth = 1 * ds.lineScale; pctx.stroke();
+                } else {
+                    wobblyRect(pctx, -w / 2, -h / 2, w, h, amp);
+                    pctx.fillStyle = obj.color + '66'; pctx.fill();
+                    pctx.strokeStyle = obj.color; pctx.lineWidth = 1 * ds.lineScale; pctx.stroke();
+                }
+            } else if (obj.shape === 'circle') {
                 pctx.beginPath(); pctx.arc(0, 0, w / 2, 0, Math.PI * 2);
                 pctx.fillStyle = obj.color + '66'; pctx.fill();
                 pctx.strokeStyle = obj.color; pctx.lineWidth = 1 * ds.lineScale; pctx.stroke();
@@ -270,12 +298,13 @@ const IO = (() => {
 
             // Name
             const fs = Math.max(7, Math.min(11, ppm * 0.4)) * ds.fontScale;
-            pctx.font = `600 ${fs}px sans-serif`;
+            const fontFamily = treasureMap ? "'Georgia','Times New Roman',serif" : "sans-serif";
+            pctx.font = treasureMap ? `italic ${fs}px ${fontFamily}` : `600 ${fs}px ${fontFamily}`;
             pctx.textAlign = 'center'; pctx.textBaseline = 'middle';
-            pctx.fillStyle = '#333';
+            pctx.fillStyle = treasureMap ? '#3d2b1f' : '#333';
             pctx.fillText(obj.name, 0, -fs * 0.3);
-            pctx.font = `${fs - 1}px sans-serif`;
-            pctx.fillStyle = '#666';
+            pctx.font = `${fs - 1}px ${fontFamily}`;
+            pctx.fillStyle = treasureMap ? '#5a4a3a' : '#666';
             pctx.fillText(`${obj.width}\u00d7${obj.height}m`, 0, fs * 0.6);
 
             pctx.restore();
@@ -453,6 +482,43 @@ const IO = (() => {
         const pad = 1;
         return { minX: minX - pad, minY: minY - pad, maxX: maxX + pad, maxY: maxY + pad,
             width: maxX - minX + 2 * pad, height: maxY - minY + 2 * pad };
+    }
+
+    // Draw a wobbly line between two points (hand-drawn effect)
+    function wobblyLine(ctx, x1, y1, x2, y2, amplitude) {
+        const dx = x2 - x1, dy = y2 - y1;
+        const len = Math.sqrt(dx * dx + dy * dy);
+        const steps = Math.max(4, Math.floor(len / 6));
+        const nx = -dy / len, ny = dx / len; // perpendicular
+        ctx.moveTo(x1, y1);
+        for (let i = 1; i <= steps; i++) {
+            const t = i / steps;
+            const px = x1 + dx * t;
+            const py = y1 + dy * t;
+            const wobble = (Math.sin(i * 2.7 + x1 * 0.1) + Math.cos(i * 1.3 + y1 * 0.1)) * amplitude;
+            ctx.lineTo(px + nx * wobble, py + ny * wobble);
+        }
+    }
+
+    // Draw a wobbly rectangle path
+    function wobblyRect(ctx, x, y, w, h, amp) {
+        ctx.beginPath();
+        wobblyLine(ctx, x, y, x + w, y, amp);
+        wobblyLine(ctx, x + w, y, x + w, y + h, amp);
+        wobblyLine(ctx, x + w, y + h, x, y + h, amp);
+        wobblyLine(ctx, x, y + h, x, y, amp);
+        ctx.closePath();
+    }
+
+    // Draw a wobbly polygon path from points array
+    function wobblyPolygon(ctx, points, amp) {
+        ctx.beginPath();
+        for (let i = 0; i < points.length; i++) {
+            const a = points[i], b = points[(i + 1) % points.length];
+            if (i === 0) ctx.moveTo(a.x, a.y);
+            wobblyLine(ctx, a.x, a.y, b.x, b.y, amp);
+        }
+        ctx.closePath();
     }
 
     function applyTreasureMapEffect(ctx, w, h) {
