@@ -374,6 +374,111 @@ body {
     color: var(--text-secondary);
 }
 
+/* ---- Palette Folders ---- */
+.palette-folder { margin-bottom: 2px; }
+
+.palette-folder-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text);
+    transition: all 0.15s;
+}
+
+.palette-folder-header:hover { border-color: var(--primary); }
+.palette-folder-header.drag-over { border-color: var(--primary); background: var(--primary-light); }
+
+.palette-folder-arrow {
+    font-size: 8px;
+    color: var(--text-secondary);
+    transition: transform 0.2s;
+}
+
+.palette-folder-arrow.collapsed { transform: rotate(-90deg); }
+
+.palette-folder-name { flex: 1; }
+
+.palette-folder-count {
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-weight: 400;
+}
+
+.palette-folder-del {
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    text-align: center;
+}
+
+.palette-folder-header:hover .palette-folder-del { display: block; }
+.palette-folder-del:hover { background: var(--danger); color: white; }
+
+.palette-folder-items {
+    padding-left: 12px;
+    border-left: 2px solid var(--border);
+    margin-left: 8px;
+    margin-bottom: 4px;
+}
+
+.palette-root-drop {
+    height: 6px;
+    border-radius: 3px;
+    transition: all 0.15s;
+}
+
+.palette-root-drop.drag-over {
+    height: 20px;
+    background: var(--primary-light);
+    border: 1px dashed var(--primary);
+}
+
+.sidebar-btn-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+}
+
+.sidebar-btn-row .sidebar-btn-full {
+    margin-bottom: 0;
+    flex: 1;
+}
+
+.sidebar-btn-icon {
+    width: 34px;
+    height: auto;
+    border: 1px solid var(--primary);
+    border-radius: var(--radius);
+    background: var(--primary-light);
+    color: var(--primary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.15s;
+}
+
+.sidebar-btn-icon:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
 .palette-drag-handle {
     cursor: grab;
     color: #ccc;

@@ -211,5 +211,7 @@
   "props.opacity": "Opacidad",
   "modal.print.objList": "Imprimir lista de objetos",
   "btn.offline": "Version sin conexion",
-  "btn.offlineDownload": "Descargar version sin conexion"
+  "btn.offlineDownload": "Descargar version sin conexion",
+  "btn.newFolder": "Nueva carpeta",
+  "btn.newFolderPrompt": "Nombre de carpeta:"
 }

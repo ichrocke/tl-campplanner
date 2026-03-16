@@ -211,5 +211,7 @@
   "props.opacity": "Opacity",
   "modal.print.objList": "Print object list",
   "btn.offline": "Offline Version",
-  "btn.offlineDownload": "Download offline version"
+  "btn.offlineDownload": "Download offline version",
+  "btn.newFolder": "New folder",
+  "btn.newFolderPrompt": "Folder name:"
 }

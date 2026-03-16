@@ -98,8 +98,9 @@ const UI = (() => {
         });
     }
 
-    // --- Object Palette (with drag-to-reorder) ---
+    // --- Object Palette (with folders and drag-to-reorder) ---
     let _paletteDragIdx = -1;
+    let _collapsedFolders = {};
 
     function buildPalette() {
         const container = document.getElementById('object-palette');
@@ -107,69 +108,164 @@ const UI = (() => {
         const site = State.activeSite;
         if (!site) return;
         const templates = site.templates || [];
+
+        // Group templates by folder
+        const folders = {};
+        const rootItems = [];
         templates.forEach((t, idx) => {
-            const el = document.createElement('div');
-            el.className = 'palette-item';
-            el.draggable = true;
-            el.dataset.idx = idx;
-            const shapeStyle = t.shape === 'circle' ? 'border-radius:50%'
-                : t.shape === 'hexagon' ? 'clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)'
-                : t.shape === 'octagon' ? 'clip-path:polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%)'
-                : t.shape === 'triangle' ? 'clip-path:polygon(50% 0%,100% 100%,0% 100%)'
-                : '';
-            const shortcutLabel = idx < 10 ? `<span class="palette-shortcut">${(idx + 1) % 10}</span>` : '';
-            el.innerHTML = `
-                <div class="palette-drag-handle" title="Drag">&#8942;</div>
-                <div class="palette-swatch" style="background:${t.color};${shapeStyle}"></div>
-                <div class="palette-info">
-                    <div class="palette-name">${t.name}</div>
-                    <div class="palette-dims">${t.width} \u00d7 ${t.height} m</div>
-                </div>
-                ${shortcutLabel}
-                <button class="palette-delete" title="${I18n.t('palette.removeTemplate')}">&times;</button>`;
-            el.querySelector('.palette-delete').addEventListener('click', (e) => {
-                e.stopPropagation();
-                State.removeTemplate(idx);
+            const f = t.folder || '';
+            if (f) {
+                if (!folders[f]) folders[f] = [];
+                folders[f].push({ t, idx });
+            } else {
+                rootItems.push({ t, idx });
+            }
+        });
+
+        // Get ordered folder names (from templateFolders + first-seen in templates)
+        const folderOrder = [...(site.templateFolders || [])];
+        templates.forEach(t => {
+            if (t.folder && !folderOrder.includes(t.folder)) folderOrder.push(t.folder);
+        });
+
+        // Render folders
+        folderOrder.forEach(fname => {
+            const folderEl = document.createElement('div');
+            folderEl.className = 'palette-folder';
+            const collapsed = _collapsedFolders[fname];
+            folderEl.innerHTML = `
+                <div class="palette-folder-header">
+                    <span class="palette-folder-arrow ${collapsed ? 'collapsed' : ''}">&#9660;</span>
+                    <span class="palette-folder-name">${fname}</span>
+                    <span class="palette-folder-count">${(folders[fname] || []).length}</span>
+                    <button class="palette-folder-del" title="${I18n.t('props.delete')}">&times;</button>
+                </div>`;
+            const header = folderEl.querySelector('.palette-folder-header');
+            header.addEventListener('click', (e) => {
+                if (e.target.closest('.palette-folder-del')) {
+                    // Remove folder: move items to root
+                    templates.forEach(t => { if (t.folder === fname) delete t.folder; });
+                    if (site.templateFolders) {
+                        site.templateFolders = site.templateFolders.filter(f => f !== fname);
+                    }
+                    State.notifyChange(true);
+                    buildPalette();
+                    return;
+                }
+                _collapsedFolders[fname] = !_collapsedFolders[fname];
                 buildPalette();
             });
-            el.addEventListener('click', (e) => {
-                if (e.target.closest('.palette-delete') || e.target.closest('.palette-drag-handle')) return;
-                Tools.setPendingTemplate(t);
+
+            // Drop zone on folder header (to move items into folder)
+            header.addEventListener('dragover', (e) => { e.preventDefault(); header.classList.add('drag-over'); });
+            header.addEventListener('dragleave', () => { header.classList.remove('drag-over'); });
+            header.addEventListener('drop', (e) => {
+                e.preventDefault();
+                header.classList.remove('drag-over');
+                if (_paletteDragIdx >= 0 && templates[_paletteDragIdx]) {
+                    templates[_paletteDragIdx].folder = fname;
+                    State.notifyChange(true);
+                    buildPalette();
+                }
             });
 
-            // Drag-and-drop reorder
-            el.addEventListener('dragstart', (e) => {
-                _paletteDragIdx = idx;
-                el.classList.add('dragging');
-                e.dataTransfer.effectAllowed = 'move';
-            });
-            el.addEventListener('dragend', () => {
-                el.classList.remove('dragging');
-                _paletteDragIdx = -1;
-                container.querySelectorAll('.palette-item').forEach(item => item.classList.remove('drag-over'));
-            });
-            el.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                e.dataTransfer.dropEffect = 'move';
-                el.classList.add('drag-over');
-            });
-            el.addEventListener('dragleave', () => {
-                el.classList.remove('drag-over');
-            });
-            el.addEventListener('drop', (e) => {
-                e.preventDefault();
-                el.classList.remove('drag-over');
-                const fromIdx = _paletteDragIdx;
-                const toIdx = idx;
-                if (fromIdx < 0 || fromIdx === toIdx) return;
-                const item = templates.splice(fromIdx, 1)[0];
-                templates.splice(toIdx, 0, item);
+            container.appendChild(folderEl);
+
+            if (!collapsed && folders[fname] && folders[fname].length > 0) {
+                const itemsContainer = document.createElement('div');
+                itemsContainer.className = 'palette-folder-items';
+                folders[fname].forEach(({ t, idx }) => {
+                    itemsContainer.appendChild(buildPaletteItem(t, idx, templates));
+                });
+                container.appendChild(itemsContainer);
+            }
+        });
+
+        // Render root items
+        rootItems.forEach(({ t, idx }) => {
+            container.appendChild(buildPaletteItem(t, idx, templates));
+        });
+
+        // Drop zone at bottom to move items out of folders (to root)
+        const rootDrop = document.createElement('div');
+        rootDrop.className = 'palette-root-drop';
+        rootDrop.addEventListener('dragover', (e) => { e.preventDefault(); rootDrop.classList.add('drag-over'); });
+        rootDrop.addEventListener('dragleave', () => { rootDrop.classList.remove('drag-over'); });
+        rootDrop.addEventListener('drop', (e) => {
+            e.preventDefault();
+            rootDrop.classList.remove('drag-over');
+            if (_paletteDragIdx >= 0 && templates[_paletteDragIdx]) {
+                delete templates[_paletteDragIdx].folder;
                 State.notifyChange(true);
                 buildPalette();
-            });
-
-            container.appendChild(el);
+            }
         });
+        container.appendChild(rootDrop);
+    }
+
+    function buildPaletteItem(t, idx, templates) {
+        const el = document.createElement('div');
+        el.className = 'palette-item';
+        el.draggable = true;
+        el.dataset.idx = idx;
+        const shapeStyle = t.shape === 'circle' ? 'border-radius:50%'
+            : t.shape === 'hexagon' ? 'clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)'
+            : t.shape === 'octagon' ? 'clip-path:polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%)'
+            : t.shape === 'triangle' ? 'clip-path:polygon(50% 0%,100% 100%,0% 100%)'
+            : '';
+        const shortcutLabel = idx < 10 ? `<span class="palette-shortcut">${(idx + 1) % 10}</span>` : '';
+        el.innerHTML = `
+            <div class="palette-drag-handle" title="Drag">&#8942;</div>
+            <div class="palette-swatch" style="background:${t.color};${shapeStyle}"></div>
+            <div class="palette-info">
+                <div class="palette-name">${t.name}</div>
+                <div class="palette-dims">${t.width} \u00d7 ${t.height} m</div>
+            </div>
+            ${shortcutLabel}
+            <button class="palette-delete" title="${I18n.t('palette.removeTemplate')}">&times;</button>`;
+        el.querySelector('.palette-delete').addEventListener('click', (e) => {
+            e.stopPropagation();
+            State.removeTemplate(idx);
+            buildPalette();
+        });
+        el.addEventListener('click', (e) => {
+            if (e.target.closest('.palette-delete') || e.target.closest('.palette-drag-handle')) return;
+            Tools.setPendingTemplate(t);
+        });
+
+        // Drag-and-drop reorder
+        el.addEventListener('dragstart', (e) => {
+            _paletteDragIdx = idx;
+            el.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+        el.addEventListener('dragend', () => {
+            el.classList.remove('dragging');
+            _paletteDragIdx = -1;
+            document.querySelectorAll('.palette-item,.palette-folder-header,.palette-root-drop').forEach(item => item.classList.remove('drag-over'));
+        });
+        el.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            el.classList.add('drag-over');
+        });
+        el.addEventListener('dragleave', () => { el.classList.remove('drag-over'); });
+        el.addEventListener('drop', (e) => {
+            e.preventDefault();
+            el.classList.remove('drag-over');
+            const fromIdx = _paletteDragIdx;
+            const toIdx = idx;
+            if (fromIdx < 0 || fromIdx === toIdx) return;
+            // Move item to same folder as target
+            templates[fromIdx].folder = t.folder;
+            const item = templates.splice(fromIdx, 1)[0];
+            const newToIdx = toIdx > fromIdx ? toIdx - 1 : toIdx;
+            templates.splice(newToIdx, 0, item);
+            State.notifyChange(true);
+            buildPalette();
+        });
+
+        return el;
     }
 
     // --- Placed Objects List ---
@@ -319,6 +415,25 @@ const UI = (() => {
 
         document.getElementById('btn-custom-object').addEventListener('click', () => {
             openModal('modal-custom-object');
+        });
+
+        document.getElementById('btn-new-folder').addEventListener('click', () => {
+            const name = prompt(I18n.t('btn.newFolderPrompt'), I18n.t('btn.newFolder'));
+            if (!name || !name.trim()) return;
+            // Create a dummy template in the folder to establish it, then remove it
+            // Actually, just set the folder on the first root-level template, or create a marker
+            // Simplest: folders exist implicitly via templates. Create an empty placeholder approach:
+            // We just need at least one template with this folder. Let user drag items in.
+            // For now, prompt and if there are root items, move the last one into the folder.
+            const site = State.activeSite;
+            if (!site || !site.templates) return;
+            // Add folder by tagging a placeholder - or just store folder names
+            if (!site.templateFolders) site.templateFolders = [];
+            if (!site.templateFolders.includes(name.trim())) {
+                site.templateFolders.push(name.trim());
+            }
+            State.notifyChange(true);
+            buildPalette();
         });
 
         document.getElementById('btn-clear-all').addEventListener('click', () => {

@@ -211,5 +211,7 @@
   "props.opacity": "Deckkraft",
   "modal.print.objList": "Objektliste drucken",
   "btn.offline": "Offline-Version",
-  "btn.offlineDownload": "Offline-Version herunterladen"
+  "btn.offlineDownload": "Offline-Version herunterladen",
+  "btn.newFolder": "Neuer Ordner",
+  "btn.newFolderPrompt": "Ordnername:"
 }
