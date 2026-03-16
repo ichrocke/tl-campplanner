@@ -213,5 +213,6 @@
   "btn.offline": "Offline-Version",
   "btn.offlineDownload": "Offline-Version herunterladen",
   "btn.newFolder": "Neuer Ordner",
-  "btn.newFolderPrompt": "Ordnername:"
+  "btn.newFolderPrompt": "Ordnername:",
+  "modal.print.treasure": "Schatzkarten-Stil"
 }

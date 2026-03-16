@@ -213,5 +213,6 @@
   "btn.offline": "Offline Version",
   "btn.offlineDownload": "Download offline version",
   "btn.newFolder": "New folder",
-  "btn.newFolderPrompt": "Folder name:"
+  "btn.newFolderPrompt": "Folder name:",
+  "modal.print.treasure": "Treasure map style"
 }

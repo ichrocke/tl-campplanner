@@ -213,5 +213,6 @@
   "btn.offline": "Versione offline",
   "btn.offlineDownload": "Scarica versione offline",
   "btn.newFolder": "Nuova cartella",
-  "btn.newFolderPrompt": "Nome cartella:"
+  "btn.newFolderPrompt": "Nome cartella:",
+  "modal.print.treasure": "Stile mappa del tesoro"
 }

@@ -50,6 +50,7 @@ const IO = (() => {
         const showGrid = document.getElementById('print-grid').checked;
         const showDistances = document.getElementById('print-distances').checked;
         const showObjList = document.getElementById('print-objlist').checked;
+        const treasureMap = document.getElementById('print-treasure').checked;
         const title = document.getElementById('print-title').value;
         const format = document.getElementById('print-format').value;
 
@@ -87,7 +88,7 @@ const IO = (() => {
         const pctx = pc.getContext('2d');
         const ds = State.displaySettings;
 
-        // White background
+        // Background
         pctx.fillStyle = '#fff';
         pctx.fillRect(0, 0, canvasW, canvasH);
 
@@ -95,8 +96,11 @@ const IO = (() => {
         const oy = margin * pxPerMm + (title ? 20 : 0);
 
         if (title) {
-            pctx.font = `bold ${16 * ds.fontScale}px sans-serif`;
-            pctx.fillStyle = '#1a1a2e';
+            const titleFont = treasureMap
+                ? `italic bold ${20 * ds.fontScale}px 'Georgia', 'Times New Roman', serif`
+                : `bold ${16 * ds.fontScale}px sans-serif`;
+            pctx.font = titleFont;
+            pctx.fillStyle = treasureMap ? '#3d2b1f' : '#1a1a2e';
             pctx.textAlign = 'left';
             pctx.fillText(title, ox, margin * pxPerMm + 14);
         }
@@ -322,6 +326,11 @@ const IO = (() => {
             pctx.globalAlpha = 1;
         }
 
+        // --- Treasure map effect ---
+        if (treasureMap) {
+            applyTreasureMapEffect(pctx, canvasW, canvasH);
+        }
+
         // --- Page 2: Object list table ---
         let page2 = null;
         if (showObjList && site.objects.length > 0) {
@@ -444,6 +453,114 @@ const IO = (() => {
         const pad = 1;
         return { minX: minX - pad, minY: minY - pad, maxX: maxX + pad, maxY: maxY + pad,
             width: maxX - minX + 2 * pad, height: maxY - minY + 2 * pad };
+    }
+
+    function applyTreasureMapEffect(ctx, w, h) {
+        // 1. Get current image data and convert to sepia
+        const imageData = ctx.getImageData(0, 0, w, h);
+        const d = imageData.data;
+        for (let i = 0; i < d.length; i += 4) {
+            const r = d[i], g = d[i + 1], b = d[i + 2];
+            // Sepia tone
+            d[i]     = Math.min(255, r * 0.393 + g * 0.769 + b * 0.189);
+            d[i + 1] = Math.min(255, r * 0.349 + g * 0.686 + b * 0.168);
+            d[i + 2] = Math.min(255, r * 0.272 + g * 0.534 + b * 0.131);
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        // 2. Parchment background overlay
+        ctx.globalCompositeOperation = 'multiply';
+        const grad = ctx.createRadialGradient(w / 2, h / 2, w * 0.1, w / 2, h / 2, w * 0.7);
+        grad.addColorStop(0, '#f5e6c8');
+        grad.addColorStop(0.6, '#e8d5a3');
+        grad.addColorStop(1, '#c4a265');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, h);
+        ctx.globalCompositeOperation = 'source-over';
+
+        // 3. Noise/grain texture
+        ctx.globalAlpha = 0.06;
+        for (let i = 0; i < 8000; i++) {
+            const x = Math.random() * w;
+            const y = Math.random() * h;
+            const s = Math.random() * 2 + 0.5;
+            ctx.fillStyle = Math.random() > 0.5 ? '#3d2b1f' : '#8b7355';
+            ctx.fillRect(x, y, s, s);
+        }
+        ctx.globalAlpha = 1;
+
+        // 4. Stain spots
+        for (let i = 0; i < 5; i++) {
+            const sx = Math.random() * w;
+            const sy = Math.random() * h;
+            const sr = 30 + Math.random() * 80;
+            const sg = ctx.createRadialGradient(sx, sy, 0, sx, sy, sr);
+            sg.addColorStop(0, 'rgba(101, 67, 33, 0.08)');
+            sg.addColorStop(1, 'rgba(101, 67, 33, 0)');
+            ctx.fillStyle = sg;
+            ctx.fillRect(sx - sr, sy - sr, sr * 2, sr * 2);
+        }
+
+        // 5. Burned/darkened edges (vignette)
+        ctx.globalCompositeOperation = 'multiply';
+        const vignette = ctx.createRadialGradient(w / 2, h / 2, w * 0.25, w / 2, h / 2, w * 0.75);
+        vignette.addColorStop(0, 'rgba(255,255,255,1)');
+        vignette.addColorStop(0.7, 'rgba(210,180,140,1)');
+        vignette.addColorStop(1, 'rgba(139,90,43,1)');
+        ctx.fillStyle = vignette;
+        ctx.fillRect(0, 0, w, h);
+        ctx.globalCompositeOperation = 'source-over';
+
+        // 6. Torn/rough edge effect
+        ctx.strokeStyle = '#8b6914';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.3;
+        // Top edge
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        for (let x = 0; x < w; x += 8) {
+            ctx.lineTo(x, Math.random() * 4);
+        }
+        ctx.stroke();
+        // Bottom edge
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        for (let x = 0; x < w; x += 8) {
+            ctx.lineTo(x, h - Math.random() * 4);
+        }
+        ctx.stroke();
+        // Left edge
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        for (let y = 0; y < h; y += 8) {
+            ctx.lineTo(Math.random() * 4, y);
+        }
+        ctx.stroke();
+        // Right edge
+        ctx.beginPath();
+        ctx.moveTo(w, 0);
+        for (let y = 0; y < h; y += 8) {
+            ctx.lineTo(w - Math.random() * 4, y);
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // 7. Decorative corner flourishes
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.25;
+        const cs = 40; // corner size
+        [[0, 0, 1, 1], [w, 0, -1, 1], [0, h, 1, -1], [w, h, -1, -1]].forEach(([cx, cy, dx, dy]) => {
+            ctx.beginPath();
+            ctx.moveTo(cx + dx * 5, cy + dy * cs);
+            ctx.quadraticCurveTo(cx + dx * 5, cy + dy * 5, cx + dx * cs, cy + dy * 5);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(cx + dx * 10, cy + dy * (cs - 5));
+            ctx.quadraticCurveTo(cx + dx * 10, cy + dy * 10, cx + dx * (cs - 5), cy + dy * 10);
+            ctx.stroke();
+        });
+        ctx.globalAlpha = 1;
     }
 
     async function downloadOffline() {

@@ -213,5 +213,6 @@
   "btn.offline": "Version sin conexion",
   "btn.offlineDownload": "Descargar version sin conexion",
   "btn.newFolder": "Nueva carpeta",
-  "btn.newFolderPrompt": "Nombre de carpeta:"
+  "btn.newFolderPrompt": "Nombre de carpeta:",
+  "modal.print.treasure": "Estilo mapa del tesoro"
 }

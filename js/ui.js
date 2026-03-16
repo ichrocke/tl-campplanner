@@ -51,6 +51,22 @@ const UI = (() => {
             btn.addEventListener('click', () => Tools.setTool(btn.dataset.tool));
         });
 
+        // Zoom buttons
+        document.getElementById('btn-zoom-in').addEventListener('click', () => {
+            const site = State.activeSite;
+            if (!site) return;
+            site.view.zoom = Math.min(20, site.view.zoom * 1.25);
+            updateZoom(site.view.zoom);
+            Canvas.render();
+        });
+        document.getElementById('btn-zoom-out').addEventListener('click', () => {
+            const site = State.activeSite;
+            if (!site) return;
+            site.view.zoom = Math.max(0.05, site.view.zoom / 1.25);
+            updateZoom(site.view.zoom);
+            Canvas.render();
+        });
+
         // Background image button
         document.getElementById('btn-add-bgimage').addEventListener('click', () => {
             document.getElementById('bg-file-input').click();

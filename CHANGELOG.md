@@ -1,5 +1,11 @@
 # Changelog
 
+## [2.1.1] - 2026-03-16
+
+### Hinzugefügt
+- **Schatzkarten-Stil** (experimentell): Checkbox im Druckdialog verwandelt die Karte in eine alte Schatzkarte mit Pergament-Textur, Sepia-Tönung, Vignette, Flecken, fransigen Rändern und Eckverzierungen
+- **Zoom +/- Buttons**: Plus- und Minus-Lupe in der schwebenden Werkzeugleiste
+
 ## [2.1.0] - 2026-03-16
 
 ### Hinzugefügt
