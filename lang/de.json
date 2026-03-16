@@ -206,5 +206,7 @@
   "lang.en": "English",
   "lang.es": "Español",
   "lang.it": "Italiano",
-  "props.keepAspectRatio": "Seitenverhältnis beibehalten"
+  "props.keepAspectRatio": "Seitenverhältnis beibehalten",
+  "props.shape.triangle": "Dreieck",
+  "props.opacity": "Deckkraft"
 }

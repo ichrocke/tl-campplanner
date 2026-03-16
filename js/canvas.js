@@ -482,19 +482,26 @@ const Canvas = (() => {
         // --- Background image (rendered separately in drawBgImages) ---
         if (obj.type === 'bgimage') return;
 
+        // Apply object opacity
+        const objOp = obj.objectOpacity !== undefined ? obj.objectOpacity : 1;
+        if (objOp < 1) ctx.globalAlpha = objOp;
+
         // --- Area annotation ---
         if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
             drawArea(obj, z, isSel, isHov);
+            ctx.globalAlpha = 1;
             return;
         }
         // --- Fence ---
         if (obj.type === 'fence' && obj.points && obj.points.length >= 2) {
             drawFence(obj, z, isSel, isHov);
+            ctx.globalAlpha = 1;
             return;
         }
         // --- Text ---
         if (obj.type === 'text') {
             drawTextField(obj, z, isSel, isHov);
+            ctx.globalAlpha = 1;
             return;
         }
 
@@ -651,6 +658,7 @@ const Canvas = (() => {
         }
 
         ctx.restore();
+        ctx.globalAlpha = 1;
     }
 
     // --- Area texture patterns ---

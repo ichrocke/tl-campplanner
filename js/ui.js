@@ -425,6 +425,7 @@ const UI = (() => {
                 ${obj.type === 'bgimage' ? '' : `<label>${I18n.t('props.shape')}
                     <select id="prop-shape">
                         <option value="rect" ${obj.shape === 'rect' ? 'selected' : ''}>${I18n.t('props.shape.rect')}</option>
+                        <option value="triangle" ${obj.shape === 'triangle' ? 'selected' : ''}>${I18n.t('props.shape.triangle')}</option>
                         <option value="hexagon" ${obj.shape === 'hexagon' ? 'selected' : ''}>${I18n.t('props.shape.hexagon')}</option>
                         <option value="octagon" ${obj.shape === 'octagon' ? 'selected' : ''}>${I18n.t('props.shape.octagon')}</option>
                         <option value="circle" ${obj.shape === 'circle' ? 'selected' : ''}>${I18n.t('props.shape.circle')}</option>
@@ -484,13 +485,15 @@ const UI = (() => {
         }
 
         // --- Section: Display ---
-        if (obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'bgimage') {
+        if (obj.type !== 'bgimage') {
+            const opVal = obj.objectOpacity !== undefined ? obj.objectOpacity : 1;
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.display')}</div>
-                <div class="prop-grid">
+                ${obj.type !== 'text' && obj.type !== 'fence' ? `<div class="prop-grid">
                     <label>${I18n.t('props.labelSize')} <input type="number" id="prop-labelsize" value="${obj.labelSize || 0}" min="0" max="3" step="0.1" placeholder="auto"></label>
                     <label>${I18n.t('props.lineWidth')} <input type="number" id="prop-linewidth" value="${obj.lineWidth || 0}" min="0" max="3" step="0.1" placeholder="auto"></label>
-                </div>
+                </div>` : ''}
+                <label>${I18n.t('props.opacity')} <input type="range" id="prop-obj-opacity" min="0.05" max="1" step="0.05" value="${opVal}" style="width:100%"></label>
             </div>`;
         }
 
@@ -520,7 +523,16 @@ const UI = (() => {
         bind('prop-fontsize', 'fontSize', parseFloat);
         bind('prop-fenceheight', 'fenceHeight', parseFloat);
         bind('prop-texture', 'texture');
-        // Opacity slider for bgimage
+        // Object opacity slider
+        const objOpSlider = document.getElementById('prop-obj-opacity');
+        if (objOpSlider) {
+            objOpSlider.addEventListener('input', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                State.updateObject(obj.id, { objectOpacity: parseFloat(objOpSlider.value) });
+                Canvas.render();
+            });
+        }
+        // Bgimage opacity slider
         const opSlider = document.getElementById('prop-opacity');
         if (opSlider) {
             opSlider.addEventListener('input', () => {

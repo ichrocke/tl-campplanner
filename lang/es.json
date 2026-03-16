@@ -206,5 +206,7 @@
   "lang.en": "English",
   "lang.es": "Español",
   "lang.it": "Italiano",
-  "props.keepAspectRatio": "Mantener proporción"
+  "props.keepAspectRatio": "Mantener proporción",
+  "props.shape.triangle": "Triángulo",
+  "props.opacity": "Opacidad"
 }
