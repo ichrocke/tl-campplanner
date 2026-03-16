@@ -51,7 +51,7 @@ const I18n = (() => {
     }
 
     // Load default language
-    load('de');
+    load('en');
 
     return { t, setLang, updateDOM, onChange, get lang() { return _lang; } };
 })();
