@@ -264,11 +264,11 @@ const IO = (() => {
                 }
             }
 
-            // Body
+            // Body - use Canvas shape helpers for all shapes
+            const sides = Canvas.getShapeSides(obj.shape);
             if (treasureMap) {
                 const amp = Math.max(1, Math.min(w, h) * 0.02);
                 if (obj.shape === 'circle') {
-                    // Wobbly circle
                     pctx.beginPath();
                     const segs = 24;
                     for (let i = 0; i <= segs; i++) {
@@ -278,15 +278,30 @@ const IO = (() => {
                         if (i === 0) pctx.moveTo(px, py); else pctx.lineTo(px, py);
                     }
                     pctx.closePath();
-                    pctx.fillStyle = obj.color + '66'; pctx.fill();
-                    pctx.strokeStyle = obj.color; pctx.lineWidth = 1 * ds.lineScale; pctx.stroke();
+                } else if (sides >= 3) {
+                    const pts = [];
+                    for (let i = 0; i < sides; i++) {
+                        const a = (i / sides) * Math.PI * 2 - Math.PI / 2;
+                        pts.push({ x: Math.cos(a) * w / 2, y: Math.sin(a) * h / 2 });
+                    }
+                    wobblyPolygon(pctx, pts, amp);
                 } else {
                     wobblyRect(pctx, -w / 2, -h / 2, w, h, amp);
-                    pctx.fillStyle = obj.color + '66'; pctx.fill();
-                    pctx.strokeStyle = obj.color; pctx.lineWidth = 1 * ds.lineScale; pctx.stroke();
                 }
+                pctx.fillStyle = obj.color + '66'; pctx.fill();
+                pctx.strokeStyle = obj.color; pctx.lineWidth = 1 * ds.lineScale; pctx.stroke();
             } else if (obj.shape === 'circle') {
                 pctx.beginPath(); pctx.arc(0, 0, w / 2, 0, Math.PI * 2);
+                pctx.fillStyle = obj.color + '66'; pctx.fill();
+                pctx.strokeStyle = obj.color; pctx.lineWidth = 1 * ds.lineScale; pctx.stroke();
+            } else if (sides >= 3) {
+                pctx.beginPath();
+                for (let i = 0; i < sides; i++) {
+                    const a = (i / sides) * Math.PI * 2 - Math.PI / 2;
+                    const px = Math.cos(a) * w / 2, py = Math.sin(a) * h / 2;
+                    if (i === 0) pctx.moveTo(px, py); else pctx.lineTo(px, py);
+                }
+                pctx.closePath();
                 pctx.fillStyle = obj.color + '66'; pctx.fill();
                 pctx.strokeStyle = obj.color; pctx.lineWidth = 1 * ds.lineScale; pctx.stroke();
             } else {
