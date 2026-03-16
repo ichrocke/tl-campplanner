@@ -1,5 +1,25 @@
 # Changelog
 
+## [2.1.0] - 2026-03-16
+
+### Hinzugefügt
+- **Persistente Maßlinien**: Mess-Werkzeug (M) erzeugt jetzt bleibende Hilfslinien mit Distanzangabe in Metern
+- Maßlinien-Endpunkte per Drag verschiebbar, Distanz aktualisiert sich automatisch
+- Maßlinien werden im Ausdruck mit angezeigt
+- **Dreieck**: Neue Objektform "Dreieck" in der Shape-Auswahl
+- **Objekt-Transparenz**: Deckkraft-Slider (5%-100%) für alle Objekte in der Darstellungs-Sektion
+- **Objektliste optional**: Checkbox im Druckdialog zum Ein-/Ausschalten der Objektliste (Seite 2)
+
+### Geändert
+- **Palette sortierbar**: Objekte in der Palette per Drag-and-Drop umsortierbar, Tastenkürzel 1-0 passen sich an
+- **Browser-Caching**: Zustand wird automatisch in localStorage gespeichert und beim Laden wiederhergestellt
+- Sprachpräferenz wird im Browser gespeichert
+- English als Standardsprache
+- Gebiets-Label immer innerhalb des Polygons (gewichteter Flächen-Centroid mit Fallback)
+
+### Behoben
+- "Noch keine Objekte platziert" wird jetzt beim Sprachwechsel korrekt übersetzt
+
 ## [2.0.5] - 2026-03-16
 
 ### Hinzugefügt
