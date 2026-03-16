@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.3] - 2026-03-16
+
+### Hinzugefügt
+- **Grundflächen auswählbar**: Klick auf eine Grundfläche selektiert sie (blau hervorgehoben, gestrichelt)
+- **Grundflächen löschbar**: Ausgewählte Grundfläche per Entf/X oder Löschen-Button im Eigenschaftspanel entfernen
+- Eigenschaftspanel zeigt bei ausgewählter Grundfläche Anzahl Eckpunkte und Fläche
+
 ## [2.0.2] - 2026-03-16
 
 ### Geändert

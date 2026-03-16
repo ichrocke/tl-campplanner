@@ -13,6 +13,7 @@ const Canvas = (() => {
     let measureLine = null;
     let groundPreview = [];
     let highlightGroundVertex = null; // {gi, vi} or null
+    let selectedGroundIndex = -1;
     let placementPreview = null;
     let pathPreview = []; // for path/area drawing
 
@@ -268,6 +269,7 @@ const Canvas = (() => {
         const grounds = site.grounds || [];
         grounds.forEach((pts, gi) => {
             if (pts.length < 2) return;
+            const isSel = (gi === selectedGroundIndex);
             ctx.beginPath();
             const p0 = w2s(pts[0].x, pts[0].y);
             ctx.moveTo(p0.x, p0.y);
@@ -277,12 +279,14 @@ const Canvas = (() => {
             }
             if (pts.length >= 3) {
                 ctx.closePath();
-                ctx.fillStyle = 'rgba(34, 197, 94, 0.08)';
+                ctx.fillStyle = isSel ? 'rgba(37, 99, 235, 0.10)' : 'rgba(34, 197, 94, 0.08)';
                 ctx.fill();
             }
-            ctx.strokeStyle = '#22c55e';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = isSel ? '#2563eb' : '#22c55e';
+            ctx.lineWidth = isSel ? 3 : 2;
+            if (isSel) { ctx.setLineDash([6, 3]); }
             ctx.stroke();
+            if (isSel) { ctx.setLineDash([]); }
 
             // Vertices
             pts.forEach((pt, i) => {
@@ -1230,11 +1234,14 @@ const Canvas = (() => {
         set groundPreview(p) { groundPreview = p; },
         get highlightGroundVertex() { return highlightGroundVertex; },
         set highlightGroundVertex(v) { highlightGroundVertex = v; },
+        get selectedGroundIndex() { return selectedGroundIndex; },
+        set selectedGroundIndex(v) { selectedGroundIndex = v; },
         get placementPreview() { return placementPreview; },
         set placementPreview(p) { placementPreview = p; },
         get pathPreview() { return pathPreview; },
         set pathPreview(p) { pathPreview = p; },
         polygonArea,
+        pointInPolygonCheck: pointInPolygon,
         AREA_TEXTURES,
     };
 })();

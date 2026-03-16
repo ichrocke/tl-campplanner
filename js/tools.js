@@ -206,9 +206,20 @@ const Tools = (() => {
             return;
         }
 
-        // 3. Check object hit
+        // 3. Check ground polygon hit
+        const grounds = site.grounds || [];
+        let groundHit = -1;
+        for (let gi = grounds.length - 1; gi >= 0; gi--) {
+            if (grounds[gi].length >= 3 && Canvas.pointInPolygonCheck(world.x, world.y, grounds[gi])) {
+                groundHit = gi;
+                break;
+            }
+        }
+
+        // 4. Check object hit
         const hit = [...site.objects].reverse().find(o => Canvas.pointInObj(world.x, world.y, o));
         if (hit) {
+            Canvas.selectedGroundIndex = -1;
             if (ctrlKey) {
                 Canvas.toggleSelection(hit.id);
                 if (Canvas.selectionCount === 1) {
@@ -228,7 +239,13 @@ const Tools = (() => {
                 origPositions: getSelectedPositions(site),
                 moved: false,
             };
+        } else if (groundHit >= 0) {
+            // Click on ground polygon: select it
+            Canvas.clearSelection();
+            Canvas.selectedGroundIndex = groundHit;
+            UI.showGroundProperties(groundHit);
         } else {
+            Canvas.selectedGroundIndex = -1;
             if (ctrlKey) {
                 drag = { type: 'rectSelect', x1: world.x, y1: world.y, additive: true };
             } else {
@@ -643,6 +660,10 @@ const Tools = (() => {
                     setTool('select');
                 } else if (activeTool === 'place' || activeTool === 'text') {
                     setTool('select');
+                } else if (Canvas.selectedGroundIndex >= 0) {
+                    Canvas.selectedGroundIndex = -1;
+                    UI.hideProperties();
+                    Canvas.render();
                 } else if (Canvas.selectionCount > 0) {
                     Canvas.clearSelection();
                     UI.hideProperties();
@@ -657,8 +678,17 @@ const Tools = (() => {
             case 'Delete':
             case 'Backspace':
             case 'x': case 'X':
-                if ((e.key === 'x' || e.key === 'X') && (e.ctrlKey || e.metaKey)) break; // don't intercept Ctrl+X
-                if (Canvas.selectionCount > 0) {
+                if ((e.key === 'x' || e.key === 'X') && (e.ctrlKey || e.metaKey)) break;
+                if (Canvas.selectedGroundIndex >= 0) {
+                    const site = State.activeSite;
+                    if (site && site.grounds && site.grounds[Canvas.selectedGroundIndex]) {
+                        site.grounds.splice(Canvas.selectedGroundIndex, 1);
+                        Canvas.selectedGroundIndex = -1;
+                        UI.hideProperties();
+                        State.notifyChange();
+                        Canvas.render();
+                    }
+                } else if (Canvas.selectionCount > 0) {
                     [...Canvas.selectedIds].forEach(id => State.removeObject(id));
                     Canvas.clearSelection();
                     UI.hideProperties();

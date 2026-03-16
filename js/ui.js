@@ -548,6 +548,40 @@ const UI = (() => {
         document.getElementById('btn-close-props').addEventListener('click', hideProperties);
     }
 
+    function showGroundProperties(gi) {
+        const panel = document.getElementById('properties');
+        const content = document.getElementById('prop-content');
+        panel.classList.remove('hidden');
+        const site = State.activeSite;
+        const ground = site && site.grounds ? site.grounds[gi] : null;
+        if (!ground) return;
+        const area = Canvas.polygonArea(ground);
+        content.innerHTML = `
+            <div class="prop-section">
+                <div class="prop-section-title">${I18n.t('tool.ground')} ${gi + 1}</div>
+                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">
+                    ${ground.length} ${I18n.t('ctx.deleteVertex').split(' ')[0]}e &middot; ${area.toFixed(1)} m&sup2;
+                </div>
+            </div>
+            <div class="prop-actions">
+                <button class="btn-danger" id="prop-del-ground">${I18n.t('props.delete')}</button>
+            </div>`;
+        document.getElementById('prop-del-ground').addEventListener('click', () => {
+            if (site.grounds) {
+                site.grounds.splice(gi, 1);
+                Canvas.selectedGroundIndex = -1;
+                hideProperties();
+                State.notifyChange();
+                Canvas.render();
+            }
+        });
+        document.getElementById('btn-close-props').addEventListener('click', () => {
+            Canvas.selectedGroundIndex = -1;
+            hideProperties();
+            Canvas.render();
+        });
+    }
+
     function showMultiProperties() {
         const panel = document.getElementById('properties');
         const content = document.getElementById('prop-content');
@@ -867,7 +901,7 @@ const UI = (() => {
 
     return {
         init, buildTabs, buildPalette, buildPlacedList, syncSettings, translateUI,
-        showProperties, hideProperties,
+        showProperties, showGroundProperties, hideProperties,
         updateToolButtons, updateCoords, updateZoom, showHint,
         showContextMenu, showGroundVertexMenu, showGroundEdgeMenu,
         showAreaVertexMenu, showAreaEdgeMenu, showFenceVertexMenu,
