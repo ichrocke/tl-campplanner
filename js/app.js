@@ -3,8 +3,29 @@
    ======================================== */
 
 (function () {
-    // Initialize state
-    State.clear(); // creates first site
+    const STORAGE_KEY = 'zeltplaner_autosave';
+    const STORAGE_LANG_KEY = 'zeltplaner_lang';
+
+    // Restore language preference
+    const savedLang = localStorage.getItem(STORAGE_LANG_KEY);
+    if (savedLang) {
+        I18n.setLang(savedLang);
+    }
+
+    // Try to restore from localStorage
+    let restored = false;
+    try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            State.importJSON(saved);
+            restored = true;
+        }
+    } catch (e) {
+        console.warn('Could not restore autosave:', e);
+    }
+    if (!restored) {
+        State.clear(); // creates first site
+    }
 
     // Initialize canvas
     Canvas.init(document.getElementById('canvas'));
@@ -14,8 +35,27 @@
     UI.syncSettings();
     I18n.updateDOM();
 
+    // Update language flag highlight
+    if (savedLang) {
+        document.querySelectorAll('.lang-flag').forEach(b => b.classList.toggle('active', b.dataset.lang === savedLang));
+    }
+
+    // Auto-save to localStorage on state change (debounced)
+    let _saveTimer = null;
+    function autoSave() {
+        clearTimeout(_saveTimer);
+        _saveTimer = setTimeout(() => {
+            try {
+                localStorage.setItem(STORAGE_KEY, State.exportJSON());
+            } catch (e) {
+                // localStorage full (e.g. too many large images) – silently ignore
+            }
+        }, 500);
+    }
+
     // Language change handler
-    I18n.onChange(() => {
+    I18n.onChange((lang) => {
+        localStorage.setItem(STORAGE_LANG_KEY, lang);
         UI.translateUI();
         UI.syncSettings();
         Canvas.render();
@@ -28,6 +68,7 @@
         UI.buildPlacedList();
         UI.syncSettings();
         Canvas.render();
+        autoSave();
     });
 
     // Canvas events
@@ -45,13 +86,12 @@
     // Prevent browser context menu on canvas
     c.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    // Warn before leaving page
+    // Warn before leaving page only if no autosave
     window.addEventListener('beforeunload', (e) => {
-        const hasContent = State.sites.some(s => s.objects.length > 0 || (s.grounds && s.grounds.length > 0));
-        if (hasContent) {
-            e.preventDefault();
-            e.returnValue = '';
-        }
+        // Save immediately before unload
+        try {
+            localStorage.setItem(STORAGE_KEY, State.exportJSON());
+        } catch (ex) { /* ignore */ }
     });
 
     // Initial render

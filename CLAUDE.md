@@ -19,7 +19,7 @@ All JS files use the IIFE/revealing module pattern exposing global singletons. L
 
 ## Key Design Decisions
 
-- **No browser storage**: No localStorage/sessionStorage. All persistence via JSON export/import.
+- **Auto-save**: State is auto-saved to localStorage on every change and restored on page load. JSON export/import still available for manual backup.
 - **Cache busting**: `index.html` uses `document.write` with `Date.now()` query params to force-reload all JS/CSS.
 - **Coordinate system**: World coordinates in meters. `Canvas.w2s()` / `Canvas.s2w()` convert between world and screen pixels. Base scale: 30px per meter × zoom factor.
 - **Distance calculation**: Edge-to-edge distance between rotated rectangles using segment-to-segment distance algorithm. Guy rope distances included in boundary. Color coding: red (< min), yellow (< 1.5× min), green (>= 1.5× min).

@@ -265,6 +265,7 @@ const State = (() => {
             _activeSiteIndex = 0;
             _undoStack = [];
             _undoPointer = -1;
+            try { localStorage.removeItem('zeltplaner_autosave'); } catch (e) {}
             createSite();
         },
 
