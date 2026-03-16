@@ -418,7 +418,7 @@ body {
 }
 
 #placed-objects-list:empty::after {
-    content: 'Noch keine Objekte platziert';
+    content: attr(data-empty);
     color: var(--text-secondary);
     font-size: 11px;
     font-style: italic;

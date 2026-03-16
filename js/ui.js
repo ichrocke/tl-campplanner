@@ -136,6 +136,7 @@ const UI = (() => {
     function buildPlacedList() {
         const container = document.getElementById('placed-objects-list');
         container.innerHTML = '';
+        container.dataset.empty = I18n.t('sidebar.noObjects');
         const site = State.activeSite;
         if (!site) return;
         site.objects.forEach(obj => {
