@@ -240,25 +240,47 @@ const IO = (() => {
             const w = obj.width * ppm;
             const h = obj.height * ppm;
 
-            // Guy ropes
-            if (obj.guyRopeDistance > 0) {
+            // Guy ropes (skip in treasure map mode)
+            if (obj.guyRopeDistance > 0 && !treasureMap) {
                 const gd = obj.guyRopeDistance * ppm;
+                const hw = w / 2, hh = h / 2;
+                const pSides = Canvas.getShapeSides(obj.shape);
                 pctx.setLineDash([3, 3]);
-                pctx.strokeStyle = treasureMap ? '#8b7355' : '#aaa';
-                pctx.lineWidth = (treasureMap ? 0.8 : 0.5) * ds.ropeScale;
+                pctx.strokeStyle = '#aaa';
+                pctx.lineWidth = 0.5 * ds.ropeScale;
                 if (obj.shape === 'circle') {
-                    pctx.beginPath(); pctx.arc(0, 0, w / 2 + gd, 0, Math.PI * 2); pctx.stroke();
+                    pctx.beginPath(); pctx.arc(0, 0, hw + gd, 0, Math.PI * 2); pctx.stroke();
+                } else if (pSides >= 3) {
+                    // Polygon outline for guy ropes
+                    pctx.beginPath();
+                    for (let i = 0; i < pSides; i++) {
+                        const a = (i / pSides) * Math.PI * 2 - Math.PI / 2;
+                        const px = Math.cos(a) * (hw + gd), py = Math.sin(a) * (hh + gd);
+                        if (i === 0) pctx.moveTo(px, py); else pctx.lineTo(px, py);
+                    }
+                    pctx.closePath(); pctx.stroke();
                 } else {
-                    pctx.strokeRect(-w / 2 - gd, -h / 2 - gd, w + 2 * gd, h + 2 * gd);
+                    pctx.strokeRect(-hw - gd, -hh - gd, w + 2 * gd, h + 2 * gd);
                 }
                 pctx.setLineDash([]);
+                // Rope lines from body to outer
                 pctx.strokeStyle = '#ccc';
                 pctx.lineWidth = 0.3 * ds.ropeScale;
-                if (obj.shape !== 'circle') {
+                if (obj.shape === 'circle') {
+                    // Skip rope lines for circle
+                } else if (pSides >= 3) {
+                    for (let i = 0; i < pSides; i++) {
+                        const a = (i / pSides) * Math.PI * 2 - Math.PI / 2;
+                        pctx.beginPath();
+                        pctx.moveTo(Math.cos(a) * hw, Math.sin(a) * hh);
+                        pctx.lineTo(Math.cos(a) * (hw + gd), Math.sin(a) * (hh + gd));
+                        pctx.stroke();
+                    }
+                } else {
                     [[-1,-1],[1,-1],[1,1],[-1,1],[0,-1],[1,0],[0,1],[-1,0]].forEach(([cx, cy]) => {
                         pctx.beginPath();
-                        pctx.moveTo(cx * w / 2, cy * h / 2);
-                        pctx.lineTo(cx * (w / 2 + gd * (Math.abs(cx) || 0.001)), cy * (h / 2 + gd * (Math.abs(cy) || 0.001)));
+                        pctx.moveTo(cx * hw, cy * hh);
+                        pctx.lineTo(cx * (hw + gd * (Math.abs(cx) || 0.001)), cy * (hh + gd * (Math.abs(cy) || 0.001)));
                         pctx.stroke();
                     });
                 }
