@@ -205,5 +205,6 @@
   "lang.de": "Deutsch",
   "lang.en": "English",
   "lang.es": "Español",
-  "lang.it": "Italiano"
+  "lang.it": "Italiano",
+  "props.keepAspectRatio": "Keep aspect ratio"
 }

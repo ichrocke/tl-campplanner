@@ -185,6 +185,21 @@ const Tools = (() => {
                 return;
             }
 
+            // 1a. Check resize handle (bgimage)
+            if (sel && sel.type === 'bgimage') {
+                const corner = Canvas.pointOnResizeHandle(world.x, world.y, sel);
+                if (corner >= 0) {
+                    drag = {
+                        type: 'resize', objId: sel.id, corner,
+                        origWidth: sel.width, origHeight: sel.height,
+                        origX: sel.x, origY: sel.y,
+                        startDist: Math.sqrt((world.x - sel.x) ** 2 + (world.y - sel.y) ** 2),
+                        aspect: sel.width / sel.height,
+                    };
+                    return;
+                }
+            }
+
             // 1b. Check area/fence vertex drag
             if (sel && (sel.type === 'area' || sel.type === 'fence') && sel.points) {
                 const vi = sel.type === 'area' ? findAreaVertex(world, sel) : findFenceVertex(world, sel);
@@ -420,6 +435,29 @@ const Tools = (() => {
                     Canvas.render();
                     break;
                 }
+                case 'resize': {
+                    const obj = site.objects.find(o => o.id === drag.objId);
+                    if (obj) {
+                        const dist = Math.sqrt((world.x - obj.x) ** 2 + (world.y - obj.y) ** 2);
+                        const scale = dist / drag.startDist;
+                        if (obj.keepAspectRatio !== false) {
+                            // Proportional resize
+                            obj.width = Math.max(0.5, drag.origWidth * scale);
+                            obj.height = Math.max(0.5, drag.origHeight * scale);
+                        } else {
+                            // Free resize: project onto local axes
+                            const rad = -(obj.rotation || 0) * Math.PI / 180;
+                            const dx = world.x - obj.x, dy = world.y - obj.y;
+                            const lx = Math.abs(dx * Math.cos(rad) - dy * Math.sin(rad));
+                            const ly = Math.abs(dx * Math.sin(rad) + dy * Math.cos(rad));
+                            obj.width = Math.max(0.5, lx * 2);
+                            obj.height = Math.max(0.5, ly * 2);
+                        }
+                        Canvas.render();
+                        UI.showProperties(obj);
+                    }
+                    break;
+                }
                 case 'rotate': {
                     const obj = site.objects.find(o => o.id === drag.objId);
                     if (obj) {
@@ -478,6 +516,19 @@ const Tools = (() => {
                     return;
                 }
                 Canvas.highlightGroundVertex = null;
+
+                // Check resize handle hover (bgimage)
+                if (Canvas.selectionCount === 1) {
+                    const sel = site.objects.find(o => o.id === Canvas.selectedId);
+                    if (sel && sel.type === 'bgimage') {
+                        const corner = Canvas.pointOnResizeHandle(world.x, world.y, sel);
+                        if (corner >= 0) {
+                            Canvas.canvas.style.cursor = 'nwse-resize';
+                            Canvas.render();
+                            return;
+                        }
+                    }
+                }
 
                 // Check area/fence vertex hover
                 if (Canvas.selectionCount === 1) {
@@ -554,7 +605,7 @@ const Tools = (() => {
                     if (sel) UI.showProperties(sel);
                 }
             }
-            if (drag.type === 'rotate') {
+            if (drag.type === 'rotate' || drag.type === 'resize') {
                 State.notifyChange();
                 const obj = State.activeSite?.objects.find(o => o.id === drag.objId);
                 if (obj) UI.showProperties(obj);

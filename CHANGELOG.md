@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.5] - 2026-03-16
+
+### Hinzugefügt
+- **Bild-Resize per Maus**: Hintergrundbilder an den Ecken per Drag skalierbar (weisse Anfasser)
+- **Seitenverhältnis-Sperre**: Standardmäßig bleibt das Seitenverhältnis beim Skalieren erhalten. Per Checkbox "Seitenverhältnis beibehalten" im Eigenschaftspanel abschaltbar
+- Cursor ändert sich beim Hover über Resize-Handles
+
 ## [2.0.4] - 2026-03-16
 
 ### Geändert

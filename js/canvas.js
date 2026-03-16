@@ -229,6 +229,17 @@ const Canvas = (() => {
             ctx.strokeRect(-w / 2 - 2, -h / 2 - 2, w + 4, h + 4);
             ctx.setLineDash([]);
 
+            // Resize handles at corners
+            const hs = 5;
+            [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([cx, cy]) => {
+                const hx = cx * w / 2, hy = cy * h / 2;
+                ctx.fillStyle = '#fff';
+                ctx.fillRect(hx - hs, hy - hs, hs * 2, hs * 2);
+                ctx.strokeStyle = '#2563eb';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(hx - hs, hy - hs, hs * 2, hs * 2);
+            });
+
             // Rotation handle
             const handleY = -h / 2 - 28;
             ctx.strokeStyle = '#2563eb';
@@ -1160,6 +1171,26 @@ const Canvas = (() => {
         return d < 10 / z;
     }
 
+    // Check if point is on a resize handle corner of a bgimage object
+    // Returns corner index 0-3 (TL, TR, BR, BL) or -1
+    function pointOnResizeHandle(px, py, obj) {
+        if (obj.type !== 'bgimage') return -1;
+        const z = zoom();
+        const threshold = 10 / z;
+        const hw = obj.width / 2, hh = obj.height / 2;
+        const rad = (obj.rotation || 0) * Math.PI / 180;
+        const cos = Math.cos(rad), sin = Math.sin(rad);
+        const corners = [[-hw, -hh], [hw, -hh], [hw, hh], [-hw, hh]];
+        for (let i = 0; i < 4; i++) {
+            const [lx, ly] = corners[i];
+            const wx = obj.x + lx * cos - ly * sin;
+            const wy = obj.y + lx * sin + ly * cos;
+            const d = Math.sqrt((px - wx) ** 2 + (py - wy) ** 2);
+            if (d < threshold) return i;
+        }
+        return -1;
+    }
+
     // Segment-to-segment distance
     function segDist(a, b, c, d) {
         function dot(u, v) { return u.x * v.x + u.y * v.y; }
@@ -1259,7 +1290,7 @@ const Canvas = (() => {
 
     return {
         init, render, resize, w2s, s2w, zoom, snapToGrid, snapObjToGrid,
-        pointInObj, pointOnRotHandle, computeDistancesForObj,
+        pointInObj, pointOnRotHandle, pointOnResizeHandle, computeDistancesForObj,
         getLocalShapePath, getShapeSides,
         get canvas() { return canvas; },
         get selectedIds() { return selectedIds; },

@@ -360,6 +360,7 @@ const UI = (() => {
         }
         if (obj.type === 'bgimage') {
             html += `<label>${I18n.t('modal.settings.bgOpacity')} <input type="range" id="prop-opacity" min="0.05" max="1" step="0.05" value="${obj.opacity || 0.3}" style="width:100%"></label>`;
+            html += `<label style="flex-direction:row !important;align-items:center !important;gap:6px !important"><input type="checkbox" id="prop-keepaspect" ${obj.keepAspectRatio !== false ? 'checked' : ''} style="width:auto"> ${I18n.t('props.keepAspectRatio')}</label>`;
         }
         if (obj.type === 'area') {
             let texOpts = '';
@@ -485,6 +486,14 @@ const UI = (() => {
                 if (!Canvas.isSelected(obj.id)) return;
                 State.updateObject(obj.id, { opacity: parseFloat(opSlider.value) });
                 Canvas.render();
+            });
+        }
+        // Keep aspect ratio checkbox
+        const keepAspect = document.getElementById('prop-keepaspect');
+        if (keepAspect) {
+            keepAspect.addEventListener('change', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                State.updateObject(obj.id, { keepAspectRatio: keepAspect.checked });
             });
         }
         bind('prop-labelsize', 'labelSize', parseFloat);

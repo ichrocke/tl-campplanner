@@ -143,6 +143,7 @@ const State = (() => {
             if (template.type === 'bgimage') {
                 obj.dataUrl = template.dataUrl || '';
                 obj.opacity = template.opacity || 0.3;
+                obj.keepAspectRatio = template.keepAspectRatio !== false;
             }
             site.objects.push(obj);
             notify();
