@@ -154,7 +154,7 @@ const IO = (() => {
             if (ground.length >= 3) {
                 const gPts = ground.map(pt => wp(pt.x, pt.y));
                 if (treasureMap) {
-                    wobblyPolygon(pctx, gPts, 2);
+                    wobblyPolygon(pctx, gPts, 1.2);
                 } else {
                     pctx.beginPath();
                     pctx.moveTo(gPts[0].x, gPts[0].y);
@@ -164,7 +164,7 @@ const IO = (() => {
                 pctx.fillStyle = treasureMap ? 'rgba(34,197,94,0.04)' : 'rgba(34,197,94,0.06)';
                 pctx.fill();
                 pctx.strokeStyle = treasureMap ? '#5a7a3a' : '#22c55e';
-                pctx.lineWidth = 1.5 * ds.lineScale;
+                pctx.lineWidth = (treasureMap ? 2.5 : 1.5) * ds.lineScale;
                 pctx.stroke();
             }
         });
@@ -216,7 +216,7 @@ const IO = (() => {
             if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
                 const aPts = obj.points.map(pt => wp(pt.x, pt.y));
                 if (treasureMap) {
-                    wobblyPolygon(pctx, aPts, 1.5);
+                    wobblyPolygon(pctx, aPts, 1);
                 } else {
                     pctx.beginPath();
                     pctx.moveTo(aPts[0].x, aPts[0].y);
@@ -227,7 +227,7 @@ const IO = (() => {
                 pctx.fill();
                 pctx.setLineDash([4, 3]);
                 pctx.strokeStyle = obj.color || '#d4a574';
-                pctx.lineWidth = 1 * ds.lineScale;
+                pctx.lineWidth = (treasureMap ? 1.8 : 1) * ds.lineScale;
                 pctx.stroke();
                 pctx.setLineDash([]);
                 return;
@@ -244,8 +244,8 @@ const IO = (() => {
             if (obj.guyRopeDistance > 0) {
                 const gd = obj.guyRopeDistance * ppm;
                 pctx.setLineDash([3, 3]);
-                pctx.strokeStyle = '#aaa';
-                pctx.lineWidth = 0.5 * ds.ropeScale;
+                pctx.strokeStyle = treasureMap ? '#8b7355' : '#aaa';
+                pctx.lineWidth = (treasureMap ? 0.8 : 0.5) * ds.ropeScale;
                 if (obj.shape === 'circle') {
                     pctx.beginPath(); pctx.arc(0, 0, w / 2 + gd, 0, Math.PI * 2); pctx.stroke();
                 } else {
@@ -266,8 +266,11 @@ const IO = (() => {
 
             // Body - use Canvas shape helpers for all shapes
             const sides = Canvas.getShapeSides(obj.shape);
+            const tmLine = treasureMap ? 2 : 1; // thicker lines in treasure map mode
             if (treasureMap) {
-                const amp = Math.max(1, Math.min(w, h) * 0.02);
+                const baseAmp = Math.max(0.5, Math.min(w, h) * 0.012);
+                // Less wobble for special polygon shapes, more for rects
+                const amp = sides >= 3 ? baseAmp * 0.5 : baseAmp;
                 if (obj.shape === 'circle') {
                     pctx.beginPath();
                     const segs = 24;
@@ -289,7 +292,7 @@ const IO = (() => {
                     wobblyRect(pctx, -w / 2, -h / 2, w, h, amp);
                 }
                 pctx.fillStyle = obj.color + '66'; pctx.fill();
-                pctx.strokeStyle = obj.color; pctx.lineWidth = 1 * ds.lineScale; pctx.stroke();
+                pctx.strokeStyle = obj.color; pctx.lineWidth = tmLine * ds.lineScale; pctx.stroke();
             } else if (obj.shape === 'circle') {
                 pctx.beginPath(); pctx.arc(0, 0, w / 2, 0, Math.PI * 2);
                 pctx.fillStyle = obj.color + '66'; pctx.fill();
