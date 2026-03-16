@@ -446,5 +446,112 @@ const IO = (() => {
             width: maxX - minX + 2 * pad, height: maxY - minY + 2 * pad };
     }
 
-    return { exportFile, importFile, print };
+    async function downloadOffline() {
+        const files = {
+            css: ['css/style.css'],
+            js: ['js/i18n.js', 'js/state.js', 'js/canvas.js', 'js/tools.js', 'js/ui.js', 'js/io.js', 'js/app.js'],
+            lang: ['lang/de.json', 'lang/en.json', 'lang/es.json', 'lang/it.json'],
+            img: ['img/logo.png', 'img/compass.png'],
+        };
+
+        // Fetch all text files
+        const fetchText = async (url) => {
+            const r = await fetch(url + '?v=' + Date.now());
+            return r.text();
+        };
+        const fetchDataUrl = async (url) => {
+            const r = await fetch(url);
+            const blob = await r.blob();
+            return new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+        };
+
+        const css = await fetchText(files.css[0]);
+        const jsContents = [];
+        for (const f of files.js) jsContents.push(await fetchText(f));
+        const langData = {};
+        for (const f of files.lang) {
+            const key = f.replace('lang/', '').replace('.json', '');
+            langData[key] = await fetchText(f);
+        }
+        const logoDataUrl = await fetchDataUrl(files.img[0]);
+        const compassDataUrl = await fetchDataUrl(files.img[1]);
+
+        // Get current index.html and extract the body
+        const indexHtml = await fetchText('index.html');
+
+        // Build self-contained HTML
+        let html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n';
+        html += '<meta charset="UTF-8">\n';
+        html += '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n';
+        html += '<title>Tyra Lorena Camp Planner (Offline)</title>\n';
+        html += '<style>\n' + css + '\n</style>\n';
+        html += '</head>\n';
+
+        // Extract body content from index.html (between <body> and </body>)
+        const bodyMatch = indexHtml.match(/<body>([\s\S]*?)<\/body>/i);
+        let body = bodyMatch ? bodyMatch[1] : '';
+
+        // Replace image src with data URLs
+        body = body.replace(/src="img\/logo\.png"/g, 'src="' + logoDataUrl + '"');
+        body = body.replace(/src="img\/compass\.png"/g, 'src="' + compassDataUrl + '"');
+
+        // Remove the script loader at the bottom
+        body = body.replace(/<script>[\s\S]*?\.forEach[\s\S]*?<\/script>/g, '');
+
+        html += '<body>\n' + body + '\n';
+
+        // Embed translations as global variable
+        html += '<script>\nwindow._offlineLangs = ' + JSON.stringify(langData) + ';\n</script>\n';
+
+        // Patch i18n.js to use embedded translations instead of fetch
+        let i18nJs = jsContents[0];
+        i18nJs = i18nJs.replace(
+            /function load\(lang\) \{[\s\S]*?if \(xhr\.status === 200\) \{[\s\S]*?\}\s*\}/,
+            `function load(lang) {
+        if (window._offlineLangs && window._offlineLangs[lang]) {
+            _translations = JSON.parse(window._offlineLangs[lang]);
+            _lang = lang;
+        } else {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', 'lang/' + lang + '.json?v=' + Date.now(), false);
+            xhr.send();
+            if (xhr.status === 200) {
+                _translations = JSON.parse(xhr.responseText);
+                _lang = lang;
+            }
+        }
+    }`
+        );
+
+        // Patch canvas.js compass image src
+        let canvasJs = jsContents[2];
+        canvasJs = canvasJs.replace(
+            "_compassImg.src = 'img/compass.png';",
+            "_compassImg.src = '" + compassDataUrl + "';"
+        );
+
+        // Embed all JS
+        html += '<script>\n' + i18nJs + '\n</script>\n';
+        for (let i = 1; i < jsContents.length; i++) {
+            const js = (i === 2) ? canvasJs : jsContents[i];
+            html += '<script>\n' + js + '\n</script>\n';
+        }
+
+        html += '</body>\n</html>';
+
+        // Download
+        const blob = new Blob([html], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'campplanner-offline.html';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    return { exportFile, importFile, print, downloadOffline };
 })();

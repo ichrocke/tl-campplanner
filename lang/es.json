@@ -209,5 +209,7 @@
   "props.keepAspectRatio": "Mantener proporción",
   "props.shape.triangle": "Triángulo",
   "props.opacity": "Opacidad",
-  "modal.print.objList": "Imprimir lista de objetos"
+  "modal.print.objList": "Imprimir lista de objetos",
+  "btn.offline": "Version sin conexion",
+  "btn.offlineDownload": "Descargar version sin conexion"
 }

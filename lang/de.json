@@ -209,5 +209,7 @@
   "props.keepAspectRatio": "Seitenverhältnis beibehalten",
   "props.shape.triangle": "Dreieck",
   "props.opacity": "Deckkraft",
-  "modal.print.objList": "Objektliste drucken"
+  "modal.print.objList": "Objektliste drucken",
+  "btn.offline": "Offline-Version",
+  "btn.offlineDownload": "Offline-Version herunterladen"
 }

@@ -209,5 +209,7 @@
   "props.keepAspectRatio": "Keep aspect ratio",
   "props.shape.triangle": "Triangle",
   "props.opacity": "Opacity",
-  "modal.print.objList": "Print object list"
+  "modal.print.objList": "Print object list",
+  "btn.offline": "Offline Version",
+  "btn.offlineDownload": "Download offline version"
 }

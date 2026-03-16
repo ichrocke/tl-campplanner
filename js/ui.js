@@ -328,6 +328,10 @@ const UI = (() => {
                 State.clear();
             }
         });
+
+        document.getElementById('btn-offline').addEventListener('click', () => {
+            IO.downloadOffline();
+        });
     }
 
     function updateToolButtons(activeName) {
