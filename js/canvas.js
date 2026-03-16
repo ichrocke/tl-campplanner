@@ -127,6 +127,7 @@ const Canvas = (() => {
         drawMeasureLine();
         drawSelectionRect();
         drawScaleBar(activeSite);
+        drawCompass();
     }
 
     function drawSiteLabel(site, isActive) {
@@ -835,6 +836,70 @@ const Canvas = (() => {
         }
         const hw = (obj.width || 0) / 2, hh = (obj.height || 0) / 2;
         return (obj.x + hw >= minX && obj.x - hw <= maxX && obj.y + hh >= minY && obj.y - hh <= maxY);
+    }
+
+    function drawCompass() {
+        const cx = 40;
+        const cy = canvas.height - 50;
+        const r = 22;
+
+        // Outer circle
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.fill();
+        ctx.strokeStyle = '#64748b';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // North arrow (pointing up)
+        ctx.save();
+        ctx.translate(cx, cy);
+
+        // North half (filled)
+        ctx.beginPath();
+        ctx.moveTo(0, -r + 4);
+        ctx.lineTo(-6, 6);
+        ctx.lineTo(0, 2);
+        ctx.closePath();
+        ctx.fillStyle = '#dc2626';
+        ctx.fill();
+
+        // North half (right)
+        ctx.beginPath();
+        ctx.moveTo(0, -r + 4);
+        ctx.lineTo(6, 6);
+        ctx.lineTo(0, 2);
+        ctx.closePath();
+        ctx.fillStyle = '#ef4444';
+        ctx.fill();
+
+        // South half (left)
+        ctx.beginPath();
+        ctx.moveTo(0, r - 4);
+        ctx.lineTo(-6, -6);
+        ctx.lineTo(0, -2);
+        ctx.closePath();
+        ctx.fillStyle = '#94a3b8';
+        ctx.fill();
+
+        // South half (right)
+        ctx.beginPath();
+        ctx.moveTo(0, r - 4);
+        ctx.lineTo(6, -6);
+        ctx.lineTo(0, -2);
+        ctx.closePath();
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fill();
+
+        // N label
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillStyle = '#dc2626';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('N', 0, -r + 3);
+
+        ctx.restore();
     }
 
     function drawScaleBar(site) {

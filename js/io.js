@@ -279,6 +279,57 @@ const IO = (() => {
             pctx.fillText('Ma\u00dfstab 1:' + scaleOption, canvasW - margin * pxPerMm, margin * pxPerMm + 14);
         }
 
+        // Compass
+        const compX = ox + 25;
+        const compY = canvasH - margin * pxPerMm - 25;
+        const compR = 18;
+        pctx.beginPath();
+        pctx.arc(compX, compY, compR, 0, Math.PI * 2);
+        pctx.fillStyle = 'rgba(255,255,255,0.9)';
+        pctx.fill();
+        pctx.strokeStyle = '#333';
+        pctx.lineWidth = 1;
+        pctx.stroke();
+        pctx.save();
+        pctx.translate(compX, compY);
+        // North (red)
+        pctx.beginPath();
+        pctx.moveTo(0, -compR + 3);
+        pctx.lineTo(-5, 5);
+        pctx.lineTo(0, 2);
+        pctx.closePath();
+        pctx.fillStyle = '#dc2626';
+        pctx.fill();
+        pctx.beginPath();
+        pctx.moveTo(0, -compR + 3);
+        pctx.lineTo(5, 5);
+        pctx.lineTo(0, 2);
+        pctx.closePath();
+        pctx.fillStyle = '#ef4444';
+        pctx.fill();
+        // South (gray)
+        pctx.beginPath();
+        pctx.moveTo(0, compR - 3);
+        pctx.lineTo(-5, -5);
+        pctx.lineTo(0, -2);
+        pctx.closePath();
+        pctx.fillStyle = '#94a3b8';
+        pctx.fill();
+        pctx.beginPath();
+        pctx.moveTo(0, compR - 3);
+        pctx.lineTo(5, -5);
+        pctx.lineTo(0, -2);
+        pctx.closePath();
+        pctx.fillStyle = '#cbd5e1';
+        pctx.fill();
+        // N label
+        pctx.font = 'bold 9px sans-serif';
+        pctx.fillStyle = '#dc2626';
+        pctx.textAlign = 'center';
+        pctx.textBaseline = 'bottom';
+        pctx.fillText('N', 0, -compR + 2);
+        pctx.restore();
+
         // --- Page 2: Object list table ---
         let page2 = null;
         if (site.objects.length > 0) {
