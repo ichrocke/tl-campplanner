@@ -536,6 +536,128 @@ body {
 .input-with-unit input { width: 60px; }
 .unit { color: var(--text-secondary); font-size: 11px; }
 
+/* ---- Language Flags ---- */
+.lang-flags {
+    display: flex;
+    gap: 2px;
+}
+
+.lang-flag {
+    width: 28px;
+    height: 24px;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    background: transparent;
+    font-size: 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+    opacity: 0.5;
+    padding: 0;
+}
+
+.lang-flag:hover {
+    opacity: 0.8;
+    background: #3a3a42;
+}
+
+.lang-flag.active {
+    opacity: 1;
+    border-color: var(--primary);
+    background: #2a2a30;
+}
+
+/* ---- Floating Tool Palette ---- */
+#floating-tools {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background: rgba(26, 26, 30, 0.92);
+    border-radius: 10px;
+    padding: 4px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    z-index: 8;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+#floating-tools-handle {
+    text-align: center;
+    color: #666;
+    font-size: 10px;
+    letter-spacing: -2px;
+    cursor: grab;
+    padding: 2px 0;
+    line-height: 1;
+    user-select: none;
+}
+
+#floating-tools-handle:active {
+    cursor: grabbing;
+}
+
+#floating-tools .tool-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 32px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: all 0.15s;
+}
+
+#floating-tools .tool-btn span {
+    display: none;
+}
+
+#floating-tools .tool-btn:hover {
+    background: #3a3a42;
+    color: #e5e7eb;
+}
+
+#floating-tools .tool-btn.active {
+    background: var(--primary);
+    color: #fff;
+    box-shadow: var(--shadow);
+}
+
+.float-sep {
+    height: 1px;
+    background: #444;
+    margin: 2px 4px;
+}
+
+/* ---- Settings IO Buttons ---- */
+.settings-io-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.settings-io-buttons button {
+    flex: 1;
+}
+
+.settings-danger-btn {
+    width: 100%;
+    color: var(--danger) !important;
+    border-color: var(--danger) !important;
+}
+
+.settings-danger-btn:hover {
+    background: var(--danger) !important;
+    color: white !important;
+}
+
 /* ---- Canvas ---- */
 #canvas-container {
     flex: 1;
@@ -1053,7 +1175,7 @@ kbd {
 /* ---- Print ---- */
 @media print {
     #toolbar, #tabs-bar, #sidebar, #properties, #statusbar,
-    .modal-overlay, .canvas-hint { display: none !important; }
+    .modal-overlay, .canvas-hint, #floating-tools { display: none !important; }
     #main { display: block !important; }
     #canvas-container { width: 100vw; height: 100vh; }
 }

@@ -1,6 +1,5 @@
 {
   "app.title": "Tyra Lorena Zeltplaner",
-
   "tool.select": "Auswählen",
   "tool.select.title": "Auswählen (V)",
   "tool.pan": "Verschieben",
@@ -16,7 +15,6 @@
   "tool.fence": "Zaun",
   "tool.fence.title": "Zaun zeichnen (F)",
   "tool.place": "Platzieren",
-
   "hint.select": "Objekte anklicken zum Auswählen. Grundflächen-Eckpunkte ziehbar.",
   "hint.pan": "Klicken und ziehen zum Verschieben der Ansicht",
   "hint.ground": "Klicken um Eckpunkte zu setzen. Doppelklick oder Enter zum Abschließen. Esc zum Abbrechen.",
@@ -24,8 +22,7 @@
   "hint.text": "Klicken um ein Textfeld zu platzieren.",
   "hint.measure": "Klicken und ziehen um Abstände zu messen",
   "hint.fence": "Klicken um Zaunpunkte zu setzen. Doppelklick oder Enter zum Abschließen. Esc zum Abbrechen.",
-  "hint.place": "\"{name}\" platzieren \u2013 Klick auf die Fläche. Esc zum Abbrechen.",
-
+  "hint.place": "\"{name}\" platzieren – Klick auf die Fläche. Esc zum Abbrechen.",
   "btn.settings": "Einstellungen",
   "btn.undo": "Rückgängig",
   "btn.undo.title": "Rückgängig (Strg+Z)",
@@ -37,13 +34,10 @@
   "btn.print": "Drucken",
   "btn.newSite": "Neuer Zeltplatz",
   "btn.newObject": "+ Neues Objekt...",
-
   "sidebar.objects": "Objekte",
   "sidebar.placedObjects": "Platzierte Objekte",
   "sidebar.noObjects": "Noch keine Objekte platziert",
-
   "palette.removeTemplate": "Vorlage entfernen",
-
   "props.title": "Eigenschaften",
   "props.general": "Allgemein",
   "props.name": "Name",
@@ -79,7 +73,6 @@
   "props.duplicateAll": "Alle duplizieren",
   "props.deleteAll": "Alle löschen",
   "props.fenceHeight": "Zaunhöhe (m)",
-
   "texture.solid": "Einfarbig",
   "texture.hatch": "Schraffur",
   "texture.crosshatch": "Kreuzschraffur",
@@ -87,11 +80,9 @@
   "texture.grass": "Gras",
   "texture.trees": "Wald",
   "texture.water": "Wasser",
-
   "tab.rename": "Umbenennen",
   "tab.close": "Schließen",
   "tab.confirmDelete": "\"{name}\" wirklich löschen?",
-
   "modal.customObject.title": "Eigenes Objekt erstellen",
   "modal.customObject.name": "Name",
   "modal.customObject.type": "Typ",
@@ -107,7 +98,6 @@
   "modal.customObject.color": "Farbe",
   "modal.customObject.cancel": "Abbrechen",
   "modal.customObject.create": "Erstellen & Platzieren",
-
   "modal.settings.title": "Einstellungen",
   "modal.settings.grid": "Raster & Abstände",
   "modal.settings.gridSize": "Rastergröße",
@@ -127,7 +117,6 @@
   "modal.settings.donate": "Dir gefällt der Zeltplaner? Dann würde ich mich riesig über eine kleine Unterstützung freuen!",
   "modal.settings.shortcuts": "Tastenkürzel",
   "modal.settings.ok": "OK",
-
   "modal.print.title": "Druckeinstellungen",
   "modal.print.paper": "Papierformat",
   "modal.print.orientation": "Ausrichtung",
@@ -144,19 +133,16 @@
   "modal.print.formatJpeg": "Als JPEG speichern",
   "modal.print.cancel": "Abbrechen",
   "modal.print.export": "Exportieren",
-
   "modal.rename.title": "Zeltplatz umbenennen",
   "modal.rename.name": "Name",
   "modal.rename.cancel": "Abbrechen",
   "modal.rename.ok": "OK",
-
   "modal.text.title": "Textfeld",
   "modal.text.text": "Text",
   "modal.text.fontSize": "Schriftgröße (m)",
   "modal.text.color": "Farbe",
   "modal.text.cancel": "Abbrechen",
   "modal.text.place": "Platzieren",
-
   "msg.confirmClearAll": "Wirklich ALLES löschen? Alle Zeltplätze und Objekte werden unwiderruflich entfernt.\n\nTipp: Vorher exportieren, um nichts zu verlieren!",
   "msg.replaceGround": "Es gibt bereits eine Grundfläche. Soll diese ersetzt werden?",
   "msg.nameArea": "Gebiet benennen:",
@@ -166,10 +152,8 @@
   "msg.importError": "Fehler beim Importieren: ",
   "msg.popupBlocked": "Popup-Blocker verhindert das Druckfenster.",
   "msg.noPrintContent": "Keine Inhalte zum Drucken.",
-
   "canvas.drawGround": "Grundfläche hier zeichnen",
   "canvas.grid": "Raster",
-
   "ctx.properties": "Eigenschaften...",
   "ctx.duplicate": "Duplizieren",
   "ctx.toFront": "Nach vorne",
@@ -180,7 +164,6 @@
   "ctx.deleteGround": "Grundfläche löschen",
   "ctx.deleteAreaVertex": "Punkt löschen",
   "ctx.addAreaVertex": "Punkt hier einfügen",
-
   "print.objectList": "Objektliste",
   "print.nr": "Nr.",
   "print.name": "Name",
@@ -190,7 +173,6 @@
   "print.rotation": "Drehung",
   "print.type": "Typ",
   "print.scale": "Maßstab",
-
   "shortcut.select": "Auswählen",
   "shortcut.pan": "Ansicht verschieben",
   "shortcut.ground": "Grundfläche zeichnen",
@@ -207,8 +189,7 @@
   "shortcut.rotSnap": "15°-Raster",
   "shortcut.zoom": "Zoom",
   "shortcut.rename": "Umbenennen",
-  "shortcut.quickPlace": "Objekte 1\u201310 schnell platzieren",
-
+  "shortcut.quickPlace": "Objekte 1–10 schnell platzieren",
   "template.tent2p": "Zelt 2P",
   "template.tent4p": "Zelt 4P",
   "template.familyTent": "Familienzelt",
@@ -219,12 +200,10 @@
   "template.firepit": "Feuerstelle",
   "template.bar": "Theke",
   "template.entrance": "Eingang",
-
   "site.default": "Zeltplatz",
-
-  "donate.toolbar": "Einen Kaffee spendieren \u2615",
-
+  "donate.toolbar": "Einen Kaffee spendieren ☕",
   "lang.de": "Deutsch",
   "lang.en": "English",
-  "lang.es": "Español"
+  "lang.es": "Español",
+  "lang.it": "Italiano"
 }

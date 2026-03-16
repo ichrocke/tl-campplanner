@@ -1,6 +1,5 @@
 {
   "app.title": "Tyra Lorena Planificador de Campamento",
-
   "tool.select": "Seleccionar",
   "tool.select.title": "Seleccionar (V)",
   "tool.pan": "Mover",
@@ -16,7 +15,6 @@
   "tool.fence": "Valla",
   "tool.fence.title": "Dibujar valla (F)",
   "tool.place": "Colocar",
-
   "hint.select": "Haz clic en objetos para seleccionar. Los vértices del terreno se pueden arrastrar.",
   "hint.pan": "Haz clic y arrastra para mover la vista",
   "hint.ground": "Haz clic para establecer vértices. Doble clic o Enter para terminar. Esc para cancelar.",
@@ -24,8 +22,7 @@
   "hint.text": "Haz clic para colocar un campo de texto.",
   "hint.measure": "Haz clic y arrastra para medir distancias",
   "hint.fence": "Haz clic para establecer puntos de valla. Doble clic o Enter para terminar. Esc para cancelar.",
-  "hint.place": "Colocar \"{name}\" \u2013 clic en el lienzo. Esc para cancelar.",
-
+  "hint.place": "Colocar \"{name}\" – clic en el lienzo. Esc para cancelar.",
   "btn.settings": "Configuración",
   "btn.undo": "Deshacer",
   "btn.undo.title": "Deshacer (Ctrl+Z)",
@@ -37,13 +34,10 @@
   "btn.print": "Imprimir",
   "btn.newSite": "Nuevo campamento",
   "btn.newObject": "+ Nuevo objeto...",
-
   "sidebar.objects": "Objetos",
   "sidebar.placedObjects": "Objetos colocados",
   "sidebar.noObjects": "Aún no hay objetos colocados",
-
   "palette.removeTemplate": "Eliminar plantilla",
-
   "props.title": "Propiedades",
   "props.general": "General",
   "props.name": "Nombre",
@@ -79,7 +73,6 @@
   "props.duplicateAll": "Duplicar todos",
   "props.deleteAll": "Eliminar todos",
   "props.fenceHeight": "Altura de valla (m)",
-
   "texture.solid": "Sólido",
   "texture.hatch": "Rayado",
   "texture.crosshatch": "Rayado cruzado",
@@ -87,11 +80,9 @@
   "texture.grass": "Hierba",
   "texture.trees": "Bosque",
   "texture.water": "Agua",
-
   "tab.rename": "Renombrar",
   "tab.close": "Cerrar",
   "tab.confirmDelete": "¿Realmente eliminar \"{name}\"?",
-
   "modal.customObject.title": "Crear objeto personalizado",
   "modal.customObject.name": "Nombre",
   "modal.customObject.type": "Tipo",
@@ -107,7 +98,6 @@
   "modal.customObject.color": "Color",
   "modal.customObject.cancel": "Cancelar",
   "modal.customObject.create": "Crear y colocar",
-
   "modal.settings.title": "Configuración",
   "modal.settings.grid": "Cuadrícula y distancias",
   "modal.settings.gridSize": "Tamaño de cuadrícula",
@@ -127,7 +117,6 @@
   "modal.settings.donate": "¿Te gusta el planificador? ¡Me encantaría recibir un pequeño apoyo!",
   "modal.settings.shortcuts": "Atajos de teclado",
   "modal.settings.ok": "OK",
-
   "modal.print.title": "Configuración de impresión",
   "modal.print.paper": "Tamaño de papel",
   "modal.print.orientation": "Orientación",
@@ -144,19 +133,16 @@
   "modal.print.formatJpeg": "Guardar como JPEG",
   "modal.print.cancel": "Cancelar",
   "modal.print.export": "Exportar",
-
   "modal.rename.title": "Renombrar campamento",
   "modal.rename.name": "Nombre",
   "modal.rename.cancel": "Cancelar",
   "modal.rename.ok": "OK",
-
   "modal.text.title": "Campo de texto",
   "modal.text.text": "Texto",
   "modal.text.fontSize": "Tamaño de fuente (m)",
   "modal.text.color": "Color",
   "modal.text.cancel": "Cancelar",
   "modal.text.place": "Colocar",
-
   "msg.confirmClearAll": "¿Realmente borrar TODO? Todos los campamentos y objetos serán eliminados irreversiblemente.\n\n¡Consejo: exporta primero para no perder nada!",
   "msg.replaceGround": "Ya existe un terreno. ¿Reemplazarlo?",
   "msg.nameArea": "Nombrar zona:",
@@ -166,10 +152,8 @@
   "msg.importError": "Error al importar: ",
   "msg.popupBlocked": "El bloqueador de ventanas emergentes impide la ventana de impresión.",
   "msg.noPrintContent": "No hay contenido para imprimir.",
-
   "canvas.drawGround": "Dibujar terreno aquí",
   "canvas.grid": "Cuadrícula",
-
   "ctx.properties": "Propiedades...",
   "ctx.duplicate": "Duplicar",
   "ctx.toFront": "Traer al frente",
@@ -180,7 +164,6 @@
   "ctx.deleteGround": "Eliminar terreno",
   "ctx.deleteAreaVertex": "Eliminar punto",
   "ctx.addAreaVertex": "Insertar punto aquí",
-
   "print.objectList": "Lista de objetos",
   "print.nr": "Nº",
   "print.name": "Nombre",
@@ -190,7 +173,6 @@
   "print.rotation": "Rotación",
   "print.type": "Tipo",
   "print.scale": "Escala",
-
   "shortcut.select": "Seleccionar",
   "shortcut.pan": "Mover vista",
   "shortcut.ground": "Dibujar terreno",
@@ -207,8 +189,7 @@
   "shortcut.rotSnap": "Ajuste 15°",
   "shortcut.zoom": "Zoom",
   "shortcut.rename": "Renombrar",
-  "shortcut.quickPlace": "Colocar objetos 1\u201310 rápido",
-
+  "shortcut.quickPlace": "Colocar objetos 1–10 rápido",
   "template.tent2p": "Tienda 2P",
   "template.tent4p": "Tienda 4P",
   "template.familyTent": "Tienda familiar",
@@ -219,12 +200,10 @@
   "template.firepit": "Fogata",
   "template.bar": "Barra",
   "template.entrance": "Entrada",
-
   "site.default": "Campamento",
-
-  "donate.toolbar": "Invítame un café \u2615",
-
+  "donate.toolbar": "Invítame un café ☕",
   "lang.de": "Deutsch",
   "lang.en": "English",
-  "lang.es": "Español"
+  "lang.es": "Español",
+  "lang.it": "Italiano"
 }

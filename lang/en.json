@@ -1,6 +1,5 @@
 {
   "app.title": "Tyra Lorena Camp Planner",
-
   "tool.select": "Select",
   "tool.select.title": "Select (V)",
   "tool.pan": "Pan",
@@ -16,7 +15,6 @@
   "tool.fence": "Fence",
   "tool.fence.title": "Draw fence (F)",
   "tool.place": "Place",
-
   "hint.select": "Click objects to select. Ground vertices are draggable.",
   "hint.pan": "Click and drag to pan the view",
   "hint.ground": "Click to set vertices. Double-click or Enter to finish. Esc to cancel.",
@@ -24,8 +22,7 @@
   "hint.text": "Click to place a text field.",
   "hint.measure": "Click and drag to measure distances",
   "hint.fence": "Click to set fence points. Double-click or Enter to finish. Esc to cancel.",
-  "hint.place": "Place \"{name}\" \u2013 click on the canvas. Esc to cancel.",
-
+  "hint.place": "Place \"{name}\" – click on the canvas. Esc to cancel.",
   "btn.settings": "Settings",
   "btn.undo": "Undo",
   "btn.undo.title": "Undo (Ctrl+Z)",
@@ -37,13 +34,10 @@
   "btn.print": "Print",
   "btn.newSite": "New camp site",
   "btn.newObject": "+ New object...",
-
   "sidebar.objects": "Objects",
   "sidebar.placedObjects": "Placed Objects",
   "sidebar.noObjects": "No objects placed yet",
-
   "palette.removeTemplate": "Remove template",
-
   "props.title": "Properties",
   "props.general": "General",
   "props.name": "Name",
@@ -79,7 +73,6 @@
   "props.duplicateAll": "Duplicate all",
   "props.deleteAll": "Delete all",
   "props.fenceHeight": "Fence height (m)",
-
   "texture.solid": "Solid",
   "texture.hatch": "Hatching",
   "texture.crosshatch": "Cross-hatching",
@@ -87,11 +80,9 @@
   "texture.grass": "Grass",
   "texture.trees": "Forest",
   "texture.water": "Water",
-
   "tab.rename": "Rename",
   "tab.close": "Close",
   "tab.confirmDelete": "Really delete \"{name}\"?",
-
   "modal.customObject.title": "Create custom object",
   "modal.customObject.name": "Name",
   "modal.customObject.type": "Type",
@@ -107,7 +98,6 @@
   "modal.customObject.color": "Color",
   "modal.customObject.cancel": "Cancel",
   "modal.customObject.create": "Create & Place",
-
   "modal.settings.title": "Settings",
   "modal.settings.grid": "Grid & Distances",
   "modal.settings.gridSize": "Grid size",
@@ -127,7 +117,6 @@
   "modal.settings.donate": "Do you like the camp planner? I would be happy about a small support!",
   "modal.settings.shortcuts": "Keyboard shortcuts",
   "modal.settings.ok": "OK",
-
   "modal.print.title": "Print settings",
   "modal.print.paper": "Paper size",
   "modal.print.orientation": "Orientation",
@@ -144,19 +133,16 @@
   "modal.print.formatJpeg": "Save as JPEG",
   "modal.print.cancel": "Cancel",
   "modal.print.export": "Export",
-
   "modal.rename.title": "Rename camp site",
   "modal.rename.name": "Name",
   "modal.rename.cancel": "Cancel",
   "modal.rename.ok": "OK",
-
   "modal.text.title": "Text field",
   "modal.text.text": "Text",
   "modal.text.fontSize": "Font size (m)",
   "modal.text.color": "Color",
   "modal.text.cancel": "Cancel",
   "modal.text.place": "Place",
-
   "msg.confirmClearAll": "Really delete EVERYTHING? All camp sites and objects will be irreversibly removed.\n\nTip: Export first to not lose anything!",
   "msg.replaceGround": "A ground area already exists. Replace it?",
   "msg.nameArea": "Name area:",
@@ -166,10 +152,8 @@
   "msg.importError": "Import error: ",
   "msg.popupBlocked": "Popup blocker prevents the print window.",
   "msg.noPrintContent": "No content to print.",
-
   "canvas.drawGround": "Draw ground area here",
   "canvas.grid": "Grid",
-
   "ctx.properties": "Properties...",
   "ctx.duplicate": "Duplicate",
   "ctx.toFront": "Bring to front",
@@ -180,7 +164,6 @@
   "ctx.deleteGround": "Delete ground area",
   "ctx.deleteAreaVertex": "Delete point",
   "ctx.addAreaVertex": "Insert point here",
-
   "print.objectList": "Object list",
   "print.nr": "No.",
   "print.name": "Name",
@@ -190,7 +173,6 @@
   "print.rotation": "Rotation",
   "print.type": "Type",
   "print.scale": "Scale",
-
   "shortcut.select": "Select",
   "shortcut.pan": "Pan view",
   "shortcut.ground": "Draw ground area",
@@ -207,8 +189,7 @@
   "shortcut.rotSnap": "15° snap",
   "shortcut.zoom": "Zoom",
   "shortcut.rename": "Rename",
-  "shortcut.quickPlace": "Quick place objects 1\u201310",
-
+  "shortcut.quickPlace": "Quick place objects 1–10",
   "template.tent2p": "Tent 2P",
   "template.tent4p": "Tent 4P",
   "template.familyTent": "Family tent",
@@ -219,12 +200,10 @@
   "template.firepit": "Fire pit",
   "template.bar": "Bar",
   "template.entrance": "Entrance",
-
   "site.default": "Camp site",
-
-  "donate.toolbar": "Buy me a coffee \u2615",
-
+  "donate.toolbar": "Buy me a coffee ☕",
   "lang.de": "Deutsch",
   "lang.en": "English",
-  "lang.es": "Español"
+  "lang.es": "Español",
+  "lang.it": "Italiano"
 }

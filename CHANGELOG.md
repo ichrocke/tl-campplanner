@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.0.1] - 2026-03-16
+
+### Geändert
+- **Werkzeugleiste**: Werkzeuge als schwebende, frei verschiebbare Leiste auf dem Zeichenfeld (nur Icons, kompakt, Drag-Handle)
+- **Toolbar vereinfacht**: Nur noch Logo, Sprachflaggen, Rückgängig, Drucken, Einstellungen in der oberen Leiste
+- **Import/Export/Alles löschen**: In den Einstellungen-Dialog verschoben
+- **Sprachauswahl mit Flaggen**: DE/EN/ES/IT Flaggen direkt in der oberen Leiste sichtbar
+
+### Hinzugefügt
+- **Italienisch**: Neue Sprache (Italiano) hinzugefügt
+
 ## [2.0.0] - 2026-03-16
 
 ### Hinzugefügt

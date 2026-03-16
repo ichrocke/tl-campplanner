@@ -17,49 +17,21 @@
                     <img src="img/logo.png" alt="Logo" class="app-logo">
                     <span class="app-title" data-i18n="app.title">Tyra Lorena Zeltplaner</span>
                 </div>
-                <div class="toolbar-group">
-                    <button data-tool="select" class="tool-btn active" data-i18n-title="tool.select.title">
-                        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 1l10 6-4 1 3 5-2 1-3-5-2 4z" fill="currentColor"/></svg>
-                        <span data-i18n="tool.select">Auswählen</span>
-                    </button>
-                    <button data-tool="pan" class="tool-btn" data-i18n-title="tool.pan.title">
-                        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 1l3 3H9v3h3V5l3 3-3 3v-2H9v3h2l-3 3-3-3h2V9H4v2L1 8l3-3v2h3V4H5z" fill="currentColor"/></svg>
-                        <span data-i18n="tool.pan">Verschieben</span>
-                    </button>
-                    <button data-tool="ground" class="tool-btn" data-i18n-title="tool.ground.title">
-                        <svg width="16" height="16" viewBox="0 0 16 16"><polygon points="8,1 14,5 14,11 8,15 2,11 2,5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
-                        <span data-i18n="tool.ground">Grundfläche</span>
-                    </button>
-                    <button data-tool="area" class="tool-btn" data-i18n-title="tool.area.title">
-                        <svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3,2"/></svg>
-                        <span data-i18n="tool.area">Gebiet</span>
-                    </button>
-                    <button data-tool="fence" class="tool-btn" data-i18n-title="tool.fence.title">
-                        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M1 12V5h2v7M5 12V4h2v8M9 12V5h2v7M13 12V4h2v8M2 7h12M2 10h12" stroke="currentColor" stroke-width="1" fill="none"/></svg>
-                        <span data-i18n="tool.fence">Zaun</span>
-                    </button>
-                    <button data-tool="text" class="tool-btn" data-i18n-title="tool.text.title">
-                        <svg width="16" height="16" viewBox="0 0 16 16"><text x="3" y="13" font-size="13" font-weight="bold" fill="currentColor">T</text></svg>
-                        <span data-i18n="tool.text">Text</span>
-                    </button>
-                    <button data-tool="measure" class="tool-btn" data-i18n-title="tool.measure.title">
-                        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 14L14 2M2 14l2-1M2 14l1-2M14 2l-2 1M14 2l-1 2" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
-                        <span data-i18n="tool.measure">Messen</span>
-                    </button>
-                </div>
             </div>
             <div class="toolbar-center">
                 <a href="https://paypal.me/marc85444" target="_blank" rel="noopener" class="donate-link" data-i18n-title="donate.toolbar" data-i18n="donate.toolbar">Einen Kaffee spendieren &#9749;</a>
             </div>
             <div class="toolbar-right">
-                <button id="btn-settings" class="action-btn" data-i18n="btn.settings">Einstellungen</button>
+                <div id="lang-flags" class="lang-flags">
+                    <button class="lang-flag active" data-lang="de" title="Deutsch">&#127465;&#127466;</button>
+                    <button class="lang-flag" data-lang="en" title="English">&#127468;&#127463;</button>
+                    <button class="lang-flag" data-lang="es" title="Español">&#127466;&#127480;</button>
+                    <button class="lang-flag" data-lang="it" title="Italiano">&#127470;&#127481;</button>
+                </div>
+                <div class="toolbar-sep"></div>
                 <button id="btn-undo" class="action-btn" data-i18n-title="btn.undo.title" data-i18n="btn.undo">Rückgängig</button>
-                <div class="toolbar-sep"></div>
-                <button id="btn-clear-all" class="action-btn danger-btn" data-i18n="btn.clearAll">Alles l&ouml;schen</button>
-                <div class="toolbar-sep"></div>
-                <button id="btn-import" class="action-btn" data-i18n-title="btn.import.title" data-i18n="btn.import">Import</button>
-                <button id="btn-export" class="action-btn" data-i18n-title="btn.export.title" data-i18n="btn.export">Export</button>
                 <button id="btn-print" class="action-btn primary" data-i18n="btn.print">Drucken</button>
+                <button id="btn-settings" class="action-btn" data-i18n="btn.settings">Einstellungen</button>
             </div>
         </header>
 
@@ -86,6 +58,34 @@
 
             <div id="canvas-container">
                 <canvas id="canvas"></canvas>
+
+                <!-- Floating tool palette -->
+                <div id="floating-tools">
+                    <div id="floating-tools-handle" title="Drag to move">&#8942;&#8942;</div>
+                    <button data-tool="select" class="tool-btn active" data-i18n-title="tool.select.title">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 1l10 6-4 1 3 5-2 1-3-5-2 4z" fill="currentColor"/></svg>
+                    </button>
+                    <button data-tool="pan" class="tool-btn" data-i18n-title="tool.pan.title">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 1l3 3H9v3h3V5l3 3-3 3v-2H9v3h2l-3 3-3-3h2V9H4v2L1 8l3-3v2h3V4H5z" fill="currentColor"/></svg>
+                    </button>
+                    <div class="float-sep"></div>
+                    <button data-tool="ground" class="tool-btn" data-i18n-title="tool.ground.title">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><polygon points="8,1 14,5 14,11 8,15 2,11 2,5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                    </button>
+                    <button data-tool="area" class="tool-btn" data-i18n-title="tool.area.title">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3,2"/></svg>
+                    </button>
+                    <button data-tool="fence" class="tool-btn" data-i18n-title="tool.fence.title">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M1 12V5h2v7M5 12V4h2v8M9 12V5h2v7M13 12V4h2v8M2 7h12M2 10h12" stroke="currentColor" stroke-width="1" fill="none"/></svg>
+                    </button>
+                    <button data-tool="text" class="tool-btn" data-i18n-title="tool.text.title">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><text x="3" y="13" font-size="13" font-weight="bold" fill="currentColor">T</text></svg>
+                    </button>
+                    <button data-tool="measure" class="tool-btn" data-i18n-title="tool.measure.title">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 14L14 2M2 14l2-1M2 14l1-2M14 2l-2 1M14 2l-1 2" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+                    </button>
+                </div>
+
                 <div id="canvas-hint" class="canvas-hint"></div>
             </div>
 
@@ -180,6 +180,7 @@
                                 <option value="de">Deutsch</option>
                                 <option value="en">English</option>
                                 <option value="es">Español</option>
+                                <option value="it">Italiano</option>
                             </select>
                         </label>
                         <div class="settings-divider"></div>
@@ -192,6 +193,14 @@
                         </div>
                         <input type="file" id="bg-file-input" accept="image/*" style="display:none">
                     </div>
+                    <div class="settings-divider"></div>
+                    <h4 class="settings-subtitle">Import / Export</h4>
+                    <div class="settings-io-buttons">
+                        <button id="btn-import" class="btn-secondary" data-i18n="btn.import">Import</button>
+                        <button id="btn-export" class="btn-secondary" data-i18n="btn.export">Export</button>
+                    </div>
+                    <div class="settings-divider"></div>
+                    <button id="btn-clear-all" class="btn-secondary settings-danger-btn" data-i18n="btn.clearAll">Alles l&ouml;schen</button>
                     <div class="settings-donate">
                         <div class="settings-divider"></div>
                         <p class="donate-text" data-i18n="modal.settings.donate">Dir gef&auml;llt der Zeltplaner? Dann w&uuml;rde ich mich riesig &uuml;ber eine kleine Unterst&uuml;tzung freuen!</p>

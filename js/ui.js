@@ -14,6 +14,54 @@ const UI = (() => {
         bindModals();
         bindContextMenuClose();
         bindPaletteToggle();
+        bindFloatingTools();
+        bindLangFlags();
+    }
+
+    // --- Floating tool palette drag ---
+    function bindFloatingTools() {
+        const panel = document.getElementById('floating-tools');
+        const handle = document.getElementById('floating-tools-handle');
+        let dragging = false, offX = 0, offY = 0;
+
+        handle.addEventListener('mousedown', (e) => {
+            dragging = true;
+            offX = e.clientX - panel.offsetLeft;
+            offY = e.clientY - panel.offsetTop;
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!dragging) return;
+            const container = document.getElementById('canvas-container');
+            const rect = container.getBoundingClientRect();
+            let nx = e.clientX - offX;
+            let ny = e.clientY - offY;
+            // Clamp to container
+            nx = Math.max(0, Math.min(rect.width - panel.offsetWidth, nx));
+            ny = Math.max(0, Math.min(rect.height - panel.offsetHeight, ny));
+            panel.style.left = nx + 'px';
+            panel.style.top = ny + 'px';
+        });
+
+        document.addEventListener('mouseup', () => { dragging = false; });
+
+        // Bind tool buttons inside floating panel
+        panel.querySelectorAll('.tool-btn').forEach(btn => {
+            btn.addEventListener('click', () => Tools.setTool(btn.dataset.tool));
+        });
+    }
+
+    // --- Language flags ---
+    function bindLangFlags() {
+        document.querySelectorAll('.lang-flag').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const lang = btn.dataset.lang;
+                I18n.setLang(lang);
+                document.querySelectorAll('.lang-flag').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+                document.getElementById('lang-select').value = lang;
+            });
+        });
     }
 
     // --- Object Palette ---
@@ -165,10 +213,6 @@ const UI = (() => {
 
     // --- Toolbar ---
     function bindToolbar() {
-        document.querySelectorAll('.tool-btn').forEach(btn => {
-            btn.addEventListener('click', () => Tools.setTool(btn.dataset.tool));
-        });
-
         document.getElementById('btn-undo').addEventListener('click', () => {
             State.undo();
             Canvas.render();
@@ -202,7 +246,7 @@ const UI = (() => {
     }
 
     function updateToolButtons(activeName) {
-        document.querySelectorAll('.tool-btn').forEach(btn => {
+        document.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tool === activeName);
         });
         const toolKey = 'tool.' + activeName;
@@ -238,9 +282,10 @@ const UI = (() => {
                 Canvas.render();
             });
         });
-        // Language selector
+        // Language selector (in settings)
         document.getElementById('lang-select').addEventListener('change', (e) => {
             I18n.setLang(e.target.value);
+            document.querySelectorAll('.lang-flag').forEach(b => b.classList.toggle('active', b.dataset.lang === e.target.value));
         });
         // Background image
         document.getElementById('btn-bg-image').addEventListener('click', () => {
