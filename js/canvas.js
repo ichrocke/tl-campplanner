@@ -842,7 +842,7 @@ const Canvas = (() => {
     let _compassImg = null;
     let _compassLoading = false;
     function drawCompass() {
-        const size = 60;
+        const size = 120;
         const cx = 10;
         const cy = canvas.height - size - 10;
 

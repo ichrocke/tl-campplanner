@@ -3,7 +3,7 @@
 ## [1.8.3] - 2026-03-16
 
 ### Geändert
-- **Nordkompass**: Verwendet jetzt das Kompassrosen-Bild aus img/compass.png statt gezeichnetem Kompass
+- **Nordkompass**: Verwendet das Kompassrosen-Bild aus img/compass.png, doppelte Größe (120px Canvas, 90px Druck)
 
 ## [1.8.2] - 2026-03-16
 

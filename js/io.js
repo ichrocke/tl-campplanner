@@ -285,7 +285,7 @@ const IO = (() => {
 
         // Compass image
         if (_compassImg.complete && _compassImg.naturalWidth > 0) {
-            const compSize = 45;
+            const compSize = 90;
             pctx.globalAlpha = 0.7;
             pctx.drawImage(_compassImg, ox, canvasH - margin * pxPerMm - compSize, compSize, compSize);
             pctx.globalAlpha = 1;
