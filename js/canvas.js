@@ -310,11 +310,48 @@ const Canvas = (() => {
         return Math.abs(area / 2);
     }
 
-    // Centroid of polygon
+    // Weighted area centroid of polygon (more accurate than simple average)
     function polygonCentroid(pts) {
-        let cx = 0, cy = 0;
-        pts.forEach(p => { cx += p.x; cy += p.y; });
-        return { x: cx / pts.length, y: cy / pts.length };
+        let cx = 0, cy = 0, a = 0;
+        for (let i = 0; i < pts.length; i++) {
+            const j = (i + 1) % pts.length;
+            const cross = pts[i].x * pts[j].y - pts[j].x * pts[i].y;
+            cx += (pts[i].x + pts[j].x) * cross;
+            cy += (pts[i].y + pts[j].y) * cross;
+            a += cross;
+        }
+        if (Math.abs(a) < 1e-10) {
+            // Degenerate: fall back to simple average
+            let sx = 0, sy = 0;
+            pts.forEach(p => { sx += p.x; sy += p.y; });
+            return { x: sx / pts.length, y: sy / pts.length };
+        }
+        a /= 2;
+        cx /= (6 * a);
+        cy /= (6 * a);
+        // If centroid is outside polygon, find nearest interior point
+        if (!pointInPolygon(cx, cy, pts)) {
+            // Try midpoints of edges, pick the one closest to centroid that's inside
+            let best = null, bestD = Infinity;
+            for (let i = 0; i < pts.length; i++) {
+                const j = (i + 1) % pts.length;
+                const mx = (pts[i].x + pts[j].x) / 2;
+                const my = (pts[i].y + pts[j].y) / 2;
+                // Nudge toward centroid
+                const nx = mx * 0.7 + cx * 0.3;
+                const ny = my * 0.7 + cy * 0.3;
+                if (pointInPolygon(nx, ny, pts)) {
+                    const d = (nx - cx) ** 2 + (ny - cy) ** 2;
+                    if (d < bestD) { bestD = d; best = { x: nx, y: ny }; }
+                }
+            }
+            if (best) return best;
+            // Last resort: simple average
+            let sx = 0, sy = 0;
+            pts.forEach(p => { sx += p.x; sy += p.y; });
+            return { x: sx / pts.length, y: sy / pts.length };
+        }
+        return { x: cx, y: cy };
     }
 
     function drawGround(site) {
