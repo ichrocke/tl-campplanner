@@ -240,7 +240,8 @@ body {
 }
 
 .tab .tab-close,
-.tab .tab-edit {
+.tab .tab-edit,
+.tab .tab-dup {
     display: none;
     width: 16px;
     height: 16px;
@@ -256,9 +257,11 @@ body {
 }
 
 .tab:hover .tab-close,
-.tab:hover .tab-edit { display: block; }
+.tab:hover .tab-edit,
+.tab:hover .tab-dup { display: block; }
 .tab .tab-close:hover { background: var(--danger); color: white; }
 .tab .tab-edit:hover { background: var(--primary-light); color: var(--primary); }
+.tab .tab-dup:hover { background: var(--primary-light); color: var(--primary); }
 
 .tab-name { cursor: pointer; }
 .tab-name:hover { text-decoration: underline dotted; text-underline-offset: 2px; }

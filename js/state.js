@@ -95,6 +95,19 @@ const State = (() => {
 
         createSite,
 
+        duplicateSite(index) {
+            const src = _sites[index];
+            if (!src) return;
+            const copy = JSON.parse(JSON.stringify(src));
+            copy.id = generateId();
+            copy.name = src.name + ' (Copy)';
+            // Give all objects new IDs
+            copy.objects.forEach(o => { o.id = generateId(); });
+            _sites.splice(index + 1, 0, copy);
+            _activeSiteIndex = index + 1;
+            notify();
+        },
+
         deleteSite(index) {
             if (_sites.length <= 1) return;
             _sites.splice(index, 1);

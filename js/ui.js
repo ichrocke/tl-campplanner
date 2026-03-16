@@ -229,6 +229,11 @@ const UI = (() => {
             editBtn.title = I18n.t('tab.rename');
             editBtn.innerHTML = '&#9998;';
 
+            const dupBtn = document.createElement('button');
+            dupBtn.className = 'tab-dup';
+            dupBtn.title = I18n.t('props.duplicate');
+            dupBtn.innerHTML = '&#10697;';
+
             const closeBtn = document.createElement('button');
             closeBtn.className = 'tab-close';
             closeBtn.title = I18n.t('tab.close');
@@ -236,6 +241,7 @@ const UI = (() => {
 
             tab.appendChild(nameSpan);
             tab.appendChild(editBtn);
+            tab.appendChild(dupBtn);
             tab.appendChild(closeBtn);
 
             tab.addEventListener('click', (e) => {
@@ -243,6 +249,10 @@ const UI = (() => {
                     if (State.sites.length > 1 && confirm(I18n.t('tab.confirmDelete', { name: site.name }))) {
                         State.deleteSite(i);
                     }
+                    return;
+                }
+                if (e.target === dupBtn) {
+                    State.duplicateSite(i);
                     return;
                 }
                 if (e.target === editBtn || e.target.tagName === 'INPUT') return;
