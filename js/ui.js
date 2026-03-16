@@ -47,8 +47,42 @@ const UI = (() => {
         document.addEventListener('mouseup', () => { dragging = false; });
 
         // Bind tool buttons inside floating panel
-        panel.querySelectorAll('.tool-btn').forEach(btn => {
+        panel.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
             btn.addEventListener('click', () => Tools.setTool(btn.dataset.tool));
+        });
+
+        // Background image button
+        document.getElementById('btn-add-bgimage').addEventListener('click', () => {
+            document.getElementById('bg-file-input').click();
+        });
+        document.getElementById('bg-file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const site = State.activeSite;
+                if (!site) return;
+                // Get image dimensions for aspect ratio
+                const img = new Image();
+                img.onload = () => {
+                    const aspect = img.naturalHeight / img.naturalWidth;
+                    const w = 50;
+                    const obj = State.addObject({
+                        type: 'bgimage', name: I18n.t('modal.settings.bgImage'),
+                        width: w, height: w * aspect,
+                        guyRopeDistance: 0, color: '#888', shape: 'rect',
+                        dataUrl: ev.target.result, opacity: 0.3,
+                    }, 0, 0);
+                    if (obj) {
+                        Canvas.selectedId = obj.id;
+                        showProperties(obj);
+                        Canvas.render();
+                    }
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
         });
     }
 
@@ -287,36 +321,7 @@ const UI = (() => {
             I18n.setLang(e.target.value);
             document.querySelectorAll('.lang-flag').forEach(b => b.classList.toggle('active', b.dataset.lang === e.target.value));
         });
-        // Background image
-        document.getElementById('btn-bg-image').addEventListener('click', () => {
-            document.getElementById('bg-file-input').click();
-        });
-        document.getElementById('bg-file-input').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                const site = State.activeSite;
-                if (!site) return;
-                site.bgImage = { dataUrl: ev.target.result, x: 0, y: 0, width: 50, opacity: 0.3 };
-                document.getElementById('bg-image-controls').classList.remove('hidden');
-                State.notifyChange(true);
-                Canvas.render();
-            };
-            reader.readAsDataURL(file);
-        });
-        document.getElementById('bg-opacity').addEventListener('input', (e) => {
-            const site = State.activeSite;
-            if (site && site.bgImage) { site.bgImage.opacity = parseFloat(e.target.value); Canvas.render(); }
-        });
-        document.getElementById('bg-width').addEventListener('change', (e) => {
-            const site = State.activeSite;
-            if (site && site.bgImage) { site.bgImage.width = parseFloat(e.target.value) || 50; Canvas.render(); }
-        });
-        document.getElementById('btn-bg-remove').addEventListener('click', () => {
-            const site = State.activeSite;
-            if (site) { site.bgImage = null; document.getElementById('bg-image-controls').classList.add('hidden'); Canvas.render(); }
-        });
+        // (Background image controls moved to floating toolbar)
     }
 
     function syncSettings() {
@@ -331,14 +336,6 @@ const UI = (() => {
         document.getElementById('set-ropescale').value = ds.ropeScale;
         document.getElementById('set-hatchscale').value = ds.hatchScale;
         document.getElementById('lang-select').value = I18n.lang;
-        const bgCtrl = document.getElementById('bg-image-controls');
-        if (site.bgImage && site.bgImage.dataUrl) {
-            bgCtrl.classList.remove('hidden');
-            document.getElementById('bg-opacity').value = site.bgImage.opacity || 0.3;
-            document.getElementById('bg-width').value = site.bgImage.width || 50;
-        } else {
-            bgCtrl.classList.add('hidden');
-        }
     }
 
     // --- Properties Panel ---
@@ -358,7 +355,12 @@ const UI = (() => {
         if (obj.type === 'text') {
             html += `<label>${I18n.t('props.textSection')} <input type="text" id="prop-text" value="${obj.text || ''}"></label>`;
         }
-        html += `<label>${I18n.t('props.color')} <input type="color" id="prop-color" value="${obj.color}"></label>`;
+        if (obj.type !== 'bgimage') {
+            html += `<label>${I18n.t('props.color')} <input type="color" id="prop-color" value="${obj.color}"></label>`;
+        }
+        if (obj.type === 'bgimage') {
+            html += `<label>${I18n.t('modal.settings.bgOpacity')} <input type="range" id="prop-opacity" min="0.05" max="1" step="0.05" value="${obj.opacity || 0.3}" style="width:100%"></label>`;
+        }
         if (obj.type === 'area') {
             let texOpts = '';
             Canvas.AREA_TEXTURES.forEach(t => {
@@ -378,14 +380,14 @@ const UI = (() => {
                     <label>${I18n.t('props.width')} <input type="number" id="prop-width" value="${obj.width}" min="0.1" step="0.1"></label>
                     <label>${I18n.t('props.depth')} <input type="number" id="prop-height" value="${obj.height}" min="0.1" step="0.1"></label>
                 </div>
-                <label>${I18n.t('props.shape')}
+                ${obj.type === 'bgimage' ? '' : `<label>${I18n.t('props.shape')}
                     <select id="prop-shape">
                         <option value="rect" ${obj.shape === 'rect' ? 'selected' : ''}>${I18n.t('props.shape.rect')}</option>
                         <option value="hexagon" ${obj.shape === 'hexagon' ? 'selected' : ''}>${I18n.t('props.shape.hexagon')}</option>
                         <option value="octagon" ${obj.shape === 'octagon' ? 'selected' : ''}>${I18n.t('props.shape.octagon')}</option>
                         <option value="circle" ${obj.shape === 'circle' ? 'selected' : ''}>${I18n.t('props.shape.circle')}</option>
                     </select>
-                </label>
+                </label>`}
             </div>`;
         }
 
@@ -422,7 +424,7 @@ const UI = (() => {
         }
 
         // --- Section: Guy ropes ---
-        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence') {
+        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'bgimage') {
             const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.guyRope')}</div>
@@ -440,7 +442,7 @@ const UI = (() => {
         }
 
         // --- Section: Display ---
-        if (obj.type !== 'text' && obj.type !== 'fence') {
+        if (obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'bgimage') {
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.display')}</div>
                 <div class="prop-grid">
@@ -476,6 +478,15 @@ const UI = (() => {
         bind('prop-fontsize', 'fontSize', parseFloat);
         bind('prop-fenceheight', 'fenceHeight', parseFloat);
         bind('prop-texture', 'texture');
+        // Opacity slider for bgimage
+        const opSlider = document.getElementById('prop-opacity');
+        if (opSlider) {
+            opSlider.addEventListener('input', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                State.updateObject(obj.id, { opacity: parseFloat(opSlider.value) });
+                Canvas.render();
+            });
+        }
         bind('prop-labelsize', 'labelSize', parseFloat);
         bind('prop-linewidth', 'lineWidth', parseFloat);
         bind('prop-ropewidth', 'ropeWidth', parseFloat);

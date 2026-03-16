@@ -96,6 +96,10 @@
                     <button data-tool="measure" class="tool-btn" data-i18n-title="tool.measure.title">
                         <svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 14L14 2M2 14l2-1M2 14l1-2M14 2l-2 1M14 2l-1 2" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
                     </button>
+                    <div class="float-sep"></div>
+                    <button id="btn-add-bgimage" class="tool-btn" data-i18n-title="modal.settings.bgImage">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="2" width="14" height="12" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="5" cy="6" r="1.5" fill="currentColor"/><path d="M1 12l4-4 2 2 3-3 5 5" stroke="currentColor" stroke-width="1.2" fill="none"/></svg>
+                    </button>
                 </div>
 
                 <div id="canvas-hint" class="canvas-hint"></div>
@@ -195,14 +199,6 @@
                                 <option value="it">Italiano</option>
                             </select>
                         </label>
-                        <div class="settings-divider"></div>
-                        <h4 class="settings-subtitle" data-i18n="modal.settings.bgImage">Hintergrundbild</h4>
-                        <button id="btn-bg-image" class="btn-secondary" style="width:100%;margin-bottom:6px" data-i18n="modal.settings.bgLoad">Bild laden...</button>
-                        <div id="bg-image-controls" class="hidden">
-                            <label><span data-i18n="modal.settings.bgOpacity">Deckkraft</span> <input type="range" id="bg-opacity" min="0.05" max="1" step="0.05" value="0.3" style="width:100px"></label>
-                            <label><span data-i18n="modal.settings.bgWidth">Breite (m)</span> <input type="number" id="bg-width" value="50" min="1" step="1" style="width:80px"></label>
-                            <button id="btn-bg-remove" class="btn-secondary" style="width:100%;color:var(--danger);margin-top:4px" data-i18n="modal.settings.bgRemove">Bild entfernen</button>
-                        </div>
                         <input type="file" id="bg-file-input" accept="image/*" style="display:none">
                     </div>
                     <div class="settings-divider"></div>

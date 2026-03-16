@@ -140,6 +140,10 @@ const State = (() => {
                 obj.points = template.points ? [...template.points] : [];
                 obj.fenceHeight = template.fenceHeight || 1.5;
             }
+            if (template.type === 'bgimage') {
+                obj.dataUrl = template.dataUrl || '';
+                obj.opacity = template.opacity || 0.3;
+            }
             site.objects.push(obj);
             notify();
             return obj;
@@ -224,6 +228,19 @@ const State = (() => {
                     s.offsetX = autoOff;
                     const b = getSiteContentBounds(s);
                     autoOff = b ? b.maxX + 10 : autoOff + 30;
+                }
+                // Migrate: old single bgImage → bgimage object
+                if (s.bgImage && s.bgImage.dataUrl) {
+                    s.objects.unshift({
+                        id: generateId(), type: 'bgimage', name: 'Hintergrundbild',
+                        x: s.bgImage.x || 0, y: s.bgImage.y || 0,
+                        width: s.bgImage.width || 50, height: (s.bgImage.width || 50) * 0.7,
+                        rotation: 0, guyRopeDistance: 0, color: '#888', shape: 'rect',
+                        description: '', labelSize: 0, lineWidth: 0, ropeWidth: 0,
+                        guyRopeSides: { top: true, right: true, bottom: true, left: true },
+                        dataUrl: s.bgImage.dataUrl, opacity: s.bgImage.opacity || 0.3,
+                    });
+                    delete s.bgImage;
                 }
                 // Migrate: ground → grounds (array of polygons)
                 if (s.ground && !s.grounds) {

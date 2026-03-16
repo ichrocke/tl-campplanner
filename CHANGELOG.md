@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.0.4] - 2026-03-16
+
+### Geändert
+- **Hintergrundbilder als Objekte**: Bilder sind jetzt normale Objekte, die verschoben, gedreht, skaliert und gelöscht werden können
+- **Mehrere Hintergrundbilder**: Beliebig viele Bilder pro Zeltplatz möglich
+- **Bild-Button in Werkzeugleiste**: Bild laden über den Bild-Icon-Button in der schwebenden Werkzeugleiste
+- **Eigenschaftspanel für Bilder**: Position, Größe, Drehung, Deckkraft direkt einstellbar
+- Hintergrundbild aus den Einstellungen entfernt
+- Alte Exporte mit einzelnem Hintergrundbild werden automatisch migriert
+
 ## [2.0.3] - 2026-03-16
 
 ### Hinzugefügt

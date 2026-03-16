@@ -113,7 +113,7 @@ const Canvas = (() => {
         const activeSite = State.activeSite;
         if (!activeSite) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        drawBgImage(activeSite);
+        drawBgImages(activeSite);
         drawGrid(activeSite);
 
         // Draw only the active site
@@ -189,24 +189,65 @@ const Canvas = (() => {
 
     // Background image cache
     const _bgImageCache = {};
-    function drawBgImage(site) {
-        const bg = site.bgImage;
-        if (!bg || !bg.dataUrl) return;
-        // Load/cache image
-        if (!_bgImageCache[bg.dataUrl]) {
-            const img = new Image();
-            img.src = bg.dataUrl;
-            img.onload = () => { _bgImageCache[bg.dataUrl] = img; render(); };
-            return;
-        }
-        const img = _bgImageCache[bg.dataUrl];
+    function loadBgImage(dataUrl) {
+        if (_bgImageCache[dataUrl]) return _bgImageCache[dataUrl];
+        const img = new Image();
+        img.src = dataUrl;
+        img.onload = () => { _bgImageCache[dataUrl] = img; render(); };
+        return null;
+    }
+
+    function drawBgImages(site) {
+        // Render bgimage objects behind everything
+        site.objects.forEach(obj => {
+            if (obj.type !== 'bgimage' || !obj.dataUrl) return;
+            drawBgImageObj(obj);
+        });
+    }
+
+    function drawBgImageObj(obj) {
+        const img = loadBgImage(obj.dataUrl);
+        if (!img) return;
         const z = zoom();
-        const p = w2s(bg.x || 0, bg.y || 0);
-        const w = (bg.width || 50) * z;
-        const h = w * (img.naturalHeight / img.naturalWidth);
-        ctx.globalAlpha = bg.opacity || 0.3;
-        ctx.drawImage(img, p.x, p.y, w, h);
+        const pos = w2s(obj.x, obj.y);
+        const w = obj.width * z;
+        const h = obj.height * z;
+        const isSel = selectedIds.has(obj.id);
+        const isHov = obj.id === hoveredId;
+
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        ctx.rotate((obj.rotation || 0) * Math.PI / 180);
+        ctx.globalAlpha = obj.opacity || 0.3;
+        ctx.drawImage(img, -w / 2, -h / 2, w, h);
         ctx.globalAlpha = 1;
+
+        if (isSel) {
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 3]);
+            ctx.strokeRect(-w / 2 - 2, -h / 2 - 2, w + 4, h + 4);
+            ctx.setLineDash([]);
+
+            // Rotation handle
+            const handleY = -h / 2 - 28;
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(0, -h / 2 - 4); ctx.lineTo(0, handleY); ctx.stroke();
+            ctx.beginPath(); ctx.arc(0, handleY, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#2563eb';
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        } else if (isHov) {
+            ctx.strokeStyle = '#2563eb55';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 3]);
+            ctx.strokeRect(-w / 2 - 1, -h / 2 - 1, w + 2, h + 2);
+            ctx.setLineDash([]);
+        }
+        ctx.restore();
     }
 
     function drawGrid(site) {
@@ -389,6 +430,9 @@ const Canvas = (() => {
         const z = zoom();
         const isSel = selectedIds.has(obj.id);
         const isHov = obj.id === hoveredId;
+
+        // --- Background image (rendered separately in drawBgImages) ---
+        if (obj.type === 'bgimage') return;
 
         // --- Area annotation ---
         if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
@@ -1035,6 +1079,14 @@ const Canvas = (() => {
     }
 
     function pointInObj(px, py, obj) {
+        // Background image: rotated rect
+        if (obj.type === 'bgimage') {
+            const dx = px - obj.x, dy = py - obj.y;
+            const rad = -(obj.rotation || 0) * Math.PI / 180;
+            const lx = dx * Math.cos(rad) - dy * Math.sin(rad);
+            const ly = dx * Math.sin(rad) + dy * Math.cos(rad);
+            return Math.abs(lx) <= obj.width / 2 && Math.abs(ly) <= obj.height / 2;
+        }
         // Area: point in polygon
         if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
             return pointInPolygon(px, py, obj.points);
