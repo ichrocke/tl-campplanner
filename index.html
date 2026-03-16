@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tyra Lorena Zeltplaner</title>
+    <script>
+        var _cbv = Date.now();
+        document.write('<link rel="stylesheet" href="css/style.css?v=' + _cbv + '">');
+    </script>
+</head>
+<body>
+    <div id="app">
+        <header id="toolbar">
+            <div class="toolbar-left">
+                <div class="app-logo-wrap">
+                    <img src="img/logo.png" alt="Logo" class="app-logo">
+                    <span class="app-title">Tyra Lorena Zeltplaner</span>
+                </div>
+                <div class="toolbar-group">
+                    <button data-tool="select" class="tool-btn active" title="Auswählen (V)">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 1l10 6-4 1 3 5-2 1-3-5-2 4z" fill="currentColor"/></svg>
+                        Auswählen
+                    </button>
+                    <button data-tool="pan" class="tool-btn" title="Verschieben (H)">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M8 1l3 3H9v3h3V5l3 3-3 3v-2H9v3h2l-3 3-3-3h2V9H4v2L1 8l3-3v2h3V4H5z" fill="currentColor"/></svg>
+                        Verschieben
+                    </button>
+                    <button data-tool="ground" class="tool-btn" title="Grundfläche zeichnen (G)">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><polygon points="8,1 14,5 14,11 8,15 2,11 2,5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+                        Grundfläche
+                    </button>
+                    <button data-tool="area" class="tool-btn" title="Gebiet markieren (A)">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><rect x="2" y="2" width="12" height="12" rx="1" fill="none" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3,2"/></svg>
+                        Gebiet
+                    </button>
+                    <button data-tool="text" class="tool-btn" title="Textfeld (T)">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><text x="3" y="13" font-size="13" font-weight="bold" fill="currentColor">T</text></svg>
+                        Text
+                    </button>
+                    <button data-tool="measure" class="tool-btn" title="Abstand messen (M)">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M2 14L14 2M2 14l2-1M2 14l1-2M14 2l-2 1M14 2l-1 2" stroke="currentColor" stroke-width="1.5" fill="none"/></svg>
+                        Messen
+                    </button>
+                </div>
+            </div>
+            <div class="toolbar-center">
+                <a href="https://paypal.me/marc85444" target="_blank" rel="noopener" class="donate-link" title="Wenn dir der Zeltplaner gefällt, freue ich mich über einen kleinen Kaffee!">Einen Kaffee spendieren &#9749;</a>
+            </div>
+            <div class="toolbar-right">
+                <button id="btn-settings" class="action-btn" title="Einstellungen">Einstellungen</button>
+                <button id="btn-undo" class="action-btn" title="Rückgängig (Strg+Z)">Rückgängig</button>
+                <div class="toolbar-sep"></div>
+                <button id="btn-clear-all" class="action-btn danger-btn" title="Alles löschen">Alles l&ouml;schen</button>
+                <div class="toolbar-sep"></div>
+                <button id="btn-import" class="action-btn" title="JSON importieren">Import</button>
+                <button id="btn-export" class="action-btn" title="JSON exportieren">Export</button>
+                <button id="btn-print" class="action-btn primary" title="Drucken">Drucken</button>
+            </div>
+        </header>
+
+        <div id="tabs-bar">
+            <div id="tabs-container"></div>
+            <button id="btn-add-tab" title="Neuer Zeltplatz">+</button>
+        </div>
+
+        <div id="main">
+            <aside id="sidebar">
+                <div class="sidebar-section">
+                    <button id="btn-custom-object" class="sidebar-btn-full">+ Neues Objekt...</button>
+                    <div class="sidebar-dropdown-header" id="palette-toggle">
+                        <h3>Objekte</h3>
+                        <span class="dropdown-arrow" id="palette-arrow">&#9660;</span>
+                    </div>
+                    <div id="object-palette" class="collapsible"></div>
+                </div>
+                <div class="sidebar-section">
+                    <h3>Platzierte Objekte</h3>
+                    <div id="placed-objects-list"></div>
+                </div>
+            </aside>
+
+            <div id="canvas-container">
+                <canvas id="canvas"></canvas>
+                <div id="canvas-hint" class="canvas-hint"></div>
+            </div>
+
+            <aside id="properties" class="hidden">
+                <div class="props-header">
+                    <h3>Eigenschaften</h3>
+                    <button id="btn-close-props" class="close-btn">&times;</button>
+                </div>
+                <div id="prop-content"></div>
+            </aside>
+        </div>
+
+        <footer id="statusbar">
+            <span id="status-tool">Auswählen</span>
+            <span id="status-coords">X: 0.0 m &nbsp; Y: 0.0 m</span>
+            <span id="status-zoom">100%</span>
+            <span id="status-info"></span>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div id="modal-custom-object" class="modal hidden">
+            <h3>Eigenes Objekt erstellen</h3>
+            <div class="modal-body">
+                <label>Name <input type="text" id="co-name" value="Mein Objekt"></label>
+                <label>Typ
+                    <select id="co-type">
+                        <option value="tent">Zelt</option>
+                        <option value="firepit">Feuerstelle</option>
+                        <option value="bar">Theke</option>
+                        <option value="entrance">Eingang</option>
+                        <option value="custom">Sonstiges</option>
+                    </select>
+                </label>
+                <label>Breite (m) <input type="number" id="co-width" value="3" min="0.1" step="0.1"></label>
+                <label>Tiefe (m) <input type="number" id="co-height" value="3" min="0.1" step="0.1"></label>
+                <label>Form
+                    <select id="co-shape">
+                        <option value="rect">Rechteck</option>
+                        <option value="hexagon">Sechseck</option>
+                        <option value="octagon">Achteck</option>
+                        <option value="circle">Kreis</option>
+                    </select>
+                </label>
+                <label>Abspannabstand (m) <input type="number" id="co-guyrope" value="0.5" min="0" step="0.1"></label>
+                <label>Farbe <input type="color" id="co-color" value="#4a90d9"></label>
+            </div>
+            <div class="modal-actions">
+                <button id="co-cancel" class="btn-secondary">Abbrechen</button>
+                <button id="co-create" class="btn-primary">Erstellen &amp; Platzieren</button>
+            </div>
+        </div>
+
+        <div id="modal-settings" class="modal modal-settings hidden">
+            <h3>Einstellungen</h3>
+            <div class="settings-columns">
+                <div class="settings-left">
+                    <div class="modal-body">
+                        <h4 class="settings-subtitle">Raster &amp; Abstände</h4>
+                        <label>Rastergröße
+                            <select id="grid-size">
+                                <option value="0.25">0.25 m</option>
+                                <option value="0.5" selected>0.5 m</option>
+                                <option value="1">1 m</option>
+                                <option value="2">2 m</option>
+                                <option value="5">5 m</option>
+                            </select>
+                        </label>
+                        <label><input type="checkbox" id="snap-to-grid" checked> Am Raster einrasten</label>
+                        <label>Mindestabstand (m)
+                            <input type="number" id="min-distance" value="2" min="0" step="0.5">
+                        </label>
+                        <div class="settings-divider"></div>
+                        <h4 class="settings-subtitle">Darstellung</h4>
+                        <label>Textgröße (Faktor)
+                            <input type="number" id="set-fontscale" value="1" min="0.3" max="3" step="0.1">
+                        </label>
+                        <label>Liniendicke (Faktor)
+                            <input type="number" id="set-linescale" value="1" min="0.3" max="3" step="0.1">
+                        </label>
+                        <label>Schnurdicke (Faktor)
+                            <input type="number" id="set-ropescale" value="1" min="0.3" max="3" step="0.1">
+                        </label>
+                        <label>Schraffurdicke (Faktor)
+                            <input type="number" id="set-hatchscale" value="1" min="0.3" max="3" step="0.1">
+                        </label>
+                        <div class="settings-divider"></div>
+                        <h4 class="settings-subtitle">Hintergrundbild</h4>
+                        <button id="btn-bg-image" class="btn-secondary" style="width:100%;margin-bottom:6px">Bild laden...</button>
+                        <div id="bg-image-controls" class="hidden">
+                            <label>Deckkraft <input type="range" id="bg-opacity" min="0.05" max="1" step="0.05" value="0.3" style="width:100px"></label>
+                            <label>Breite (m) <input type="number" id="bg-width" value="50" min="1" step="1" style="width:80px"></label>
+                            <button id="btn-bg-remove" class="btn-secondary" style="width:100%;color:var(--danger);margin-top:4px">Bild entfernen</button>
+                        </div>
+                        <input type="file" id="bg-file-input" accept="image/*" style="display:none">
+                    </div>
+                    <div class="settings-donate">
+                        <div class="settings-divider"></div>
+                        <p class="donate-text">Dir gef&auml;llt der Zeltplaner? Dann w&uuml;rde ich mich riesig &uuml;ber eine kleine Unterst&uuml;tzung freuen!</p>
+                        <a href="https://paypal.me/marc85444" target="_blank" rel="noopener" class="donate-link-big">Einen Kaffee spendieren &#9749;</a>
+                    </div>
+                </div>
+                <div class="settings-right">
+                    <h4 class="settings-subtitle">Tastenkürzel</h4>
+                    <table class="shortcuts-table">
+                        <tr><td><kbd>V</kbd></td><td>Auswählen</td></tr>
+                        <tr><td><kbd>H</kbd></td><td>Ansicht verschieben</td></tr>
+                        <tr><td><kbd>G</kbd></td><td>Grundfläche zeichnen</td></tr>
+                        <tr><td><kbd>A</kbd></td><td>Gebiet markieren</td></tr>
+                        <tr><td><kbd>T</kbd></td><td>Textfeld platzieren</td></tr>
+                        <tr><td><kbd>M</kbd></td><td>Abstand messen</td></tr>
+                        <tr><td><kbd>Entf</kbd></td><td>Objekt löschen</td></tr>
+                        <tr><td><kbd>Strg+D</kbd></td><td>Duplizieren</td></tr>
+                        <tr><td><kbd>Strg+Z</kbd></td><td>Rückgängig</td></tr>
+                        <tr><td><kbd>Esc</kbd></td><td>Abbrechen / Auswahl aufheben</td></tr>
+                        <tr><td><kbd>Enter</kbd></td><td>Zeichnung abschließen</td></tr>
+                        <tr><td><kbd>Shift+Drag</kbd></td><td>Ansicht verschieben</td></tr>
+                        <tr><td><kbd>Shift+Drehen</kbd></td><td>15°-Raster</td></tr>
+                        <tr><td><kbd>Mausrad</kbd></td><td>Zoom</td></tr>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="settings-ok" class="btn-primary">OK</button>
+            </div>
+        </div>
+
+        <div id="modal-print" class="modal hidden">
+            <h3>Druckeinstellungen</h3>
+            <div class="modal-body">
+                <label>Papierformat
+                    <select id="print-paper">
+                        <option value="a4">A4</option>
+                        <option value="a3">A3</option>
+                        <option value="a2">A2</option>
+                    </select>
+                </label>
+                <label>Ausrichtung
+                    <select id="print-orientation">
+                        <option value="landscape">Querformat</option>
+                        <option value="portrait">Hochformat</option>
+                    </select>
+                </label>
+                <label>Maßstab
+                    <select id="print-scale">
+                        <option value="auto">Automatisch (an Seite anpassen)</option>
+                        <option value="50">1:50</option>
+                        <option value="100">1:100</option>
+                        <option value="200">1:200</option>
+                        <option value="500">1:500</option>
+                    </select>
+                </label>
+                <label><input type="checkbox" id="print-grid" checked> Raster drucken</label>
+                <label><input type="checkbox" id="print-distances" checked> Abstände anzeigen</label>
+                <label>Titel <input type="text" id="print-title" placeholder="Zeltplatzname"></label>
+                <div class="settings-divider"></div>
+                <label>Exportformat
+                    <select id="print-format">
+                        <option value="print">Drucken (PDF)</option>
+                        <option value="png">Als PNG speichern</option>
+                        <option value="jpeg">Als JPEG speichern</option>
+                    </select>
+                </label>
+            </div>
+            <div class="modal-actions">
+                <button id="print-cancel" class="btn-secondary">Abbrechen</button>
+                <button id="print-go" class="btn-primary">Exportieren</button>
+            </div>
+        </div>
+
+        <div id="modal-rename-tab" class="modal hidden">
+            <h3>Zeltplatz umbenennen</h3>
+            <div class="modal-body">
+                <label>Name <input type="text" id="rename-tab-input"></label>
+            </div>
+            <div class="modal-actions">
+                <button id="rename-cancel" class="btn-secondary">Abbrechen</button>
+                <button id="rename-ok" class="btn-primary">OK</button>
+            </div>
+        </div>
+
+        <div id="modal-text" class="modal hidden">
+            <h3>Textfeld</h3>
+            <div class="modal-body">
+                <label>Text <input type="text" id="text-input" value="Beschriftung"></label>
+                <label>Schriftgröße (m) <input type="number" id="text-size" value="1" min="0.2" step="0.1"></label>
+                <label>Farbe <input type="color" id="text-color" value="#1a1a2e"></label>
+            </div>
+            <div class="modal-actions">
+                <button id="text-cancel" class="btn-secondary">Abbrechen</button>
+                <button id="text-ok" class="btn-primary">Platzieren</button>
+            </div>
+        </div>
+    </div>
+
+    <input type="file" id="file-import" accept=".json" style="display:none">
+
+    <script>
+        ['js/state.js','js/canvas.js','js/tools.js','js/ui.js','js/io.js','js/app.js']
+        .forEach(s => document.write('<script src="'+s+'?v='+_cbv+'"><\/script>'));
+    </script>
+</body>
+</html>
