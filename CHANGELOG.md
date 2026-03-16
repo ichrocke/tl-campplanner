@@ -2,8 +2,8 @@
 
 ## [1.8.3] - 2026-03-16
 
-### Hinzugefügt
-- **Nordkompass**: Kompassrose mit Nordpfeil (rot) auf der Zeichenfläche (links unten) und im Ausdruck
+### Geändert
+- **Nordkompass**: Verwendet jetzt das Kompassrosen-Bild aus img/compass.png statt gezeichnetem Kompass
 
 ## [1.8.2] - 2026-03-16
 

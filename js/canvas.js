@@ -838,68 +838,26 @@ const Canvas = (() => {
         return (obj.x + hw >= minX && obj.x - hw <= maxX && obj.y + hh >= minY && obj.y - hh <= maxY);
     }
 
+    // Compass image cache
+    let _compassImg = null;
+    let _compassLoading = false;
     function drawCompass() {
-        const cx = 40;
-        const cy = canvas.height - 50;
-        const r = 22;
+        const size = 60;
+        const cx = 10;
+        const cy = canvas.height - size - 10;
 
-        // Outer circle
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.fill();
-        ctx.strokeStyle = '#64748b';
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
+        if (!_compassImg && !_compassLoading) {
+            _compassLoading = true;
+            _compassImg = new Image();
+            _compassImg.onload = () => render();
+            _compassImg.src = 'img/compass.png';
+            return;
+        }
+        if (!_compassImg || !_compassImg.complete) return;
 
-        // North arrow (pointing up)
-        ctx.save();
-        ctx.translate(cx, cy);
-
-        // North half (filled)
-        ctx.beginPath();
-        ctx.moveTo(0, -r + 4);
-        ctx.lineTo(-6, 6);
-        ctx.lineTo(0, 2);
-        ctx.closePath();
-        ctx.fillStyle = '#dc2626';
-        ctx.fill();
-
-        // North half (right)
-        ctx.beginPath();
-        ctx.moveTo(0, -r + 4);
-        ctx.lineTo(6, 6);
-        ctx.lineTo(0, 2);
-        ctx.closePath();
-        ctx.fillStyle = '#ef4444';
-        ctx.fill();
-
-        // South half (left)
-        ctx.beginPath();
-        ctx.moveTo(0, r - 4);
-        ctx.lineTo(-6, -6);
-        ctx.lineTo(0, -2);
-        ctx.closePath();
-        ctx.fillStyle = '#94a3b8';
-        ctx.fill();
-
-        // South half (right)
-        ctx.beginPath();
-        ctx.moveTo(0, r - 4);
-        ctx.lineTo(6, -6);
-        ctx.lineTo(0, -2);
-        ctx.closePath();
-        ctx.fillStyle = '#cbd5e1';
-        ctx.fill();
-
-        // N label
-        ctx.font = 'bold 10px sans-serif';
-        ctx.fillStyle = '#dc2626';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText('N', 0, -r + 3);
-
-        ctx.restore();
+        ctx.globalAlpha = 0.7;
+        ctx.drawImage(_compassImg, cx, cy, size, size);
+        ctx.globalAlpha = 1;
     }
 
     function drawScaleBar(site) {
