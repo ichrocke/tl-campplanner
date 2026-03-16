@@ -16,7 +16,7 @@ const UI = (() => {
         bindPaletteToggle();
     }
 
-    // --- Object Palette (uses site.templates, deletable) ---
+    // --- Object Palette ---
     function buildPalette() {
         const container = document.getElementById('object-palette');
         container.innerHTML = '';
@@ -31,13 +31,15 @@ const UI = (() => {
                 : t.shape === 'octagon' ? 'clip-path:polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%)'
                 : t.shape === 'triangle' ? 'clip-path:polygon(50% 0%,100% 100%,0% 100%)'
                 : '';
+            const shortcutLabel = idx < 10 ? `<span class="palette-shortcut">${(idx + 1) % 10}</span>` : '';
             el.innerHTML = `
                 <div class="palette-swatch" style="background:${t.color};${shapeStyle}"></div>
                 <div class="palette-info">
                     <div class="palette-name">${t.name}</div>
                     <div class="palette-dims">${t.width} \u00d7 ${t.height} m</div>
                 </div>
-                <button class="palette-delete" title="Vorlage entfernen">&times;</button>`;
+                ${shortcutLabel}
+                <button class="palette-delete" title="${I18n.t('palette.removeTemplate')}">&times;</button>`;
             el.querySelector('.palette-delete').addEventListener('click', (e) => {
                 e.stopPropagation();
                 State.removeTemplate(idx);
@@ -57,7 +59,7 @@ const UI = (() => {
         site.objects.forEach(obj => {
             const el = document.createElement('div');
             el.className = 'placed-item' + (Canvas.isSelected(obj.id) ? ' active' : '');
-            const dims = (obj.type === 'area' || obj.type === 'text') ? obj.type : `${obj.width}\u00d7${obj.height}`;
+            const dims = (obj.type === 'area' || obj.type === 'text' || obj.type === 'fence') ? obj.type : `${obj.width}\u00d7${obj.height}`;
             const desc = obj.description ? ` - ${obj.description}` : '';
             el.innerHTML = `
                 <div class="placed-item-color" style="background:${obj.color}"></div>
@@ -84,11 +86,10 @@ const UI = (() => {
     }
 
     // --- Tabs ---
-    let _renamingTabIndex = -1; // prevent rebuild while renaming
+    let _renamingTabIndex = -1;
 
     function buildTabs() {
         const container = document.getElementById('tabs-container');
-        // Don't rebuild if an inline rename is active
         if (_renamingTabIndex >= 0) return;
 
         container.innerHTML = '';
@@ -102,22 +103,21 @@ const UI = (() => {
 
             const editBtn = document.createElement('button');
             editBtn.className = 'tab-edit';
-            editBtn.title = 'Umbenennen';
+            editBtn.title = I18n.t('tab.rename');
             editBtn.innerHTML = '&#9998;';
 
             const closeBtn = document.createElement('button');
             closeBtn.className = 'tab-close';
-            closeBtn.title = 'Schlie\u00dfen';
+            closeBtn.title = I18n.t('tab.close');
             closeBtn.innerHTML = '&times;';
 
             tab.appendChild(nameSpan);
             tab.appendChild(editBtn);
             tab.appendChild(closeBtn);
 
-            // Click to select
             tab.addEventListener('click', (e) => {
                 if (e.target === closeBtn) {
-                    if (State.sites.length > 1 && confirm(`"${site.name}" wirklich l\u00f6schen?`)) {
+                    if (State.sites.length > 1 && confirm(I18n.t('tab.confirmDelete', { name: site.name }))) {
                         State.deleteSite(i);
                     }
                     return;
@@ -128,7 +128,6 @@ const UI = (() => {
                 State.activeSiteIndex = i;
             });
 
-            // Edit button or double-click to rename
             function startRename() {
                 if (_renamingTabIndex >= 0) return;
                 _renamingTabIndex = i;
@@ -176,11 +175,9 @@ const UI = (() => {
         });
 
         document.getElementById('btn-add-tab').addEventListener('click', () => {
-            // Blur any focused input first to flush pending change events
             if (document.activeElement && document.activeElement.blur) {
                 document.activeElement.blur();
             }
-            // Force-clear all canvas state
             Canvas.clearSelection();
             Canvas.placementPreview = null;
             Canvas.dragDistances = [];
@@ -196,7 +193,7 @@ const UI = (() => {
         });
 
         document.getElementById('btn-clear-all').addEventListener('click', () => {
-            if (confirm('Wirklich ALLES l\u00f6schen? Alle Zeltpl\u00e4tze und Objekte werden unwiderruflich entfernt.\n\nTipp: Vorher exportieren, um nichts zu verlieren!')) {
+            if (confirm(I18n.t('msg.confirmClearAll'))) {
                 Canvas.clearSelection();
                 hideProperties();
                 State.clear();
@@ -208,8 +205,8 @@ const UI = (() => {
         document.querySelectorAll('.tool-btn').forEach(btn => {
             btn.classList.toggle('active', btn.dataset.tool === activeName);
         });
-        const toolNames = { select: 'Ausw\u00e4hlen', pan: 'Verschieben', ground: 'Grundfl\u00e4che', area: 'Gebiet', text: 'Text', measure: 'Messen', place: 'Platzieren' };
-        document.getElementById('status-tool').textContent = toolNames[activeName] || activeName;
+        const toolKey = 'tool.' + activeName;
+        document.getElementById('status-tool').textContent = I18n.t(toolKey);
     }
 
     // --- Palette dropdown toggle ---
@@ -220,7 +217,7 @@ const UI = (() => {
         });
     }
 
-    // --- Settings (now in modal) ---
+    // --- Settings ---
     function bindSettings() {
         document.getElementById('grid-size').addEventListener('change', (e) => {
             const site = State.activeSite;
@@ -233,7 +230,6 @@ const UI = (() => {
         document.getElementById('min-distance').addEventListener('change', (e) => {
             State.minDistance = parseFloat(e.target.value) || 0;
         });
-        // Display scale settings
         ['fontScale', 'lineScale', 'ropeScale', 'hatchScale'].forEach(key => {
             const id = 'set-' + key.replace('Scale', 'scale');
             const el = document.getElementById(id);
@@ -241,6 +237,10 @@ const UI = (() => {
                 State.displaySettings[key] = parseFloat(el.value) || 1;
                 Canvas.render();
             });
+        });
+        // Language selector
+        document.getElementById('lang-select').addEventListener('change', (e) => {
+            I18n.setLang(e.target.value);
         });
         // Background image
         document.getElementById('btn-bg-image').addEventListener('click', () => {
@@ -285,7 +285,7 @@ const UI = (() => {
         document.getElementById('set-linescale').value = ds.lineScale;
         document.getElementById('set-ropescale').value = ds.ropeScale;
         document.getElementById('set-hatchscale').value = ds.hatchScale;
-        // Background image controls visibility
+        document.getElementById('lang-select').value = I18n.lang;
         const bgCtrl = document.getElementById('bg-image-controls');
         if (site.bgImage && site.bgImage.dataUrl) {
             bgCtrl.classList.remove('hidden');
@@ -305,56 +305,64 @@ const UI = (() => {
         const descVal = (obj.description || '').replace(/"/g, '&quot;');
         let html = '';
 
-        // --- Section: Allgemein ---
+        // --- Section: General ---
         html += `<div class="prop-section">
-            <div class="prop-section-title">Allgemein</div>
-            <label>Name <input type="text" id="prop-name" value="${obj.name}"></label>
-            <label>Beschreibung <input type="text" id="prop-desc" value="${descVal}" placeholder="Freitext..."></label>`;
+            <div class="prop-section-title">${I18n.t('props.general')}</div>
+            <label>${I18n.t('props.name')} <input type="text" id="prop-name" value="${obj.name}"></label>
+            <label>${I18n.t('props.description')} <input type="text" id="prop-desc" value="${descVal}" placeholder="${I18n.t('props.descPlaceholder')}"></label>`;
         if (obj.type === 'text') {
-            html += `<label>Text <input type="text" id="prop-text" value="${obj.text || ''}"></label>`;
+            html += `<label>${I18n.t('props.textSection')} <input type="text" id="prop-text" value="${obj.text || ''}"></label>`;
         }
-        html += `<label>Farbe <input type="color" id="prop-color" value="${obj.color}"></label>`;
+        html += `<label>${I18n.t('props.color')} <input type="color" id="prop-color" value="${obj.color}"></label>`;
         if (obj.type === 'area') {
             let texOpts = '';
             Canvas.AREA_TEXTURES.forEach(t => {
-                texOpts += `<option value="${t.id}" ${(obj.texture || 'solid') === t.id ? 'selected' : ''}>${t.name}</option>`;
+                texOpts += `<option value="${t.id}" ${(obj.texture || 'solid') === t.id ? 'selected' : ''}>${I18n.t('texture.' + t.id)}</option>`;
             });
-            html += `<label>Textur <select id="prop-texture">${texOpts}</select></label>`;
+            html += `<label>${I18n.t('props.texture')} <select id="prop-texture">${texOpts}</select></label>`;
         }
         html += `</div>`;
 
-        // --- Section: Position & Größe ---
-        if (obj.type !== 'area' && obj.type !== 'text') {
+        // --- Section: Position & Size ---
+        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence') {
             html += `<div class="prop-section">
-                <div class="prop-section-title">Position &amp; Gr\u00f6\u00dfe</div>
+                <div class="prop-section-title">${I18n.t('props.posSize')}</div>
                 <div class="prop-grid">
                     <label>X <input type="number" id="prop-x" value="${obj.x}" step="0.1"></label>
                     <label>Y <input type="number" id="prop-y" value="${obj.y}" step="0.1"></label>
-                    <label>Breite <input type="number" id="prop-width" value="${obj.width}" min="0.1" step="0.1"></label>
-                    <label>Tiefe <input type="number" id="prop-height" value="${obj.height}" min="0.1" step="0.1"></label>
+                    <label>${I18n.t('props.width')} <input type="number" id="prop-width" value="${obj.width}" min="0.1" step="0.1"></label>
+                    <label>${I18n.t('props.depth')} <input type="number" id="prop-height" value="${obj.height}" min="0.1" step="0.1"></label>
                 </div>
-                <label>Form
+                <label>${I18n.t('props.shape')}
                     <select id="prop-shape">
-                        <option value="rect" ${obj.shape === 'rect' ? 'selected' : ''}>Rechteck</option>
-                        <option value="hexagon" ${obj.shape === 'hexagon' ? 'selected' : ''}>Sechseck</option>
-                        <option value="octagon" ${obj.shape === 'octagon' ? 'selected' : ''}>Achteck</option>
-                        <option value="circle" ${obj.shape === 'circle' ? 'selected' : ''}>Kreis</option>
+                        <option value="rect" ${obj.shape === 'rect' ? 'selected' : ''}>${I18n.t('props.shape.rect')}</option>
+                        <option value="hexagon" ${obj.shape === 'hexagon' ? 'selected' : ''}>${I18n.t('props.shape.hexagon')}</option>
+                        <option value="octagon" ${obj.shape === 'octagon' ? 'selected' : ''}>${I18n.t('props.shape.octagon')}</option>
+                        <option value="circle" ${obj.shape === 'circle' ? 'selected' : ''}>${I18n.t('props.shape.circle')}</option>
                     </select>
                 </label>
             </div>`;
         }
 
-        if (obj.type === 'text') {
+        // --- Fence height ---
+        if (obj.type === 'fence') {
             html += `<div class="prop-section">
-                <div class="prop-section-title">Text</div>
-                <label>Schriftgr\u00f6\u00dfe (m) <input type="number" id="prop-fontsize" value="${obj.fontSize || 1}" min="0.2" step="0.1"></label>
+                <div class="prop-section-title">${I18n.t('tool.fence')}</div>
+                <label>${I18n.t('props.fenceHeight')} <input type="number" id="prop-fenceheight" value="${obj.fenceHeight || 1.5}" min="0.1" step="0.1"></label>
             </div>`;
         }
 
-        // --- Section: Drehung ---
-        if (obj.type !== 'area' && obj.type !== 'text') {
+        if (obj.type === 'text') {
             html += `<div class="prop-section">
-                <div class="prop-section-title">Drehung</div>
+                <div class="prop-section-title">${I18n.t('props.textSection')}</div>
+                <label>${I18n.t('props.fontSize')} <input type="number" id="prop-fontsize" value="${obj.fontSize || 1}" min="0.2" step="0.1"></label>
+            </div>`;
+        }
+
+        // --- Section: Rotation ---
+        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence') {
+            html += `<div class="prop-section">
+                <div class="prop-section-title">${I18n.t('props.rotation')}</div>
                 <div class="prop-row">
                     <input type="number" id="prop-rotation" value="${Math.round(obj.rotation)}" step="15" class="prop-rot-input">&deg;
                 </div>
@@ -368,30 +376,39 @@ const UI = (() => {
             </div>`;
         }
 
-        // --- Section: Abspannung ---
-        if (obj.type !== 'area' && obj.type !== 'text') {
+        // --- Section: Guy ropes ---
+        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence') {
+            const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
             html += `<div class="prop-section">
-                <div class="prop-section-title">Abspannung</div>
-                <label>Abstand (m) <input type="number" id="prop-guyrope" value="${obj.guyRopeDistance}" min="0" step="0.1"></label>
-                ${obj.guyRopeDistance > 0 ? '<label>Schnurdicke <input type="number" id="prop-ropewidth" value="' + (obj.ropeWidth || 0) + '" min="0" max="3" step="0.1" placeholder="auto"></label>' : ''}
+                <div class="prop-section-title">${I18n.t('props.guyRope')}</div>
+                <label>${I18n.t('props.guyRope.distance')} <input type="number" id="prop-guyrope" value="${obj.guyRopeDistance}" min="0" step="0.1"></label>
+                ${obj.guyRopeDistance > 0 ? `<label>${I18n.t('props.guyRope.ropeWidth')} <input type="number" id="prop-ropewidth" value="${obj.ropeWidth || 0}" min="0" max="3" step="0.1" placeholder="auto"></label>` : ''}
+                ${obj.guyRopeDistance > 0 && obj.shape === 'rect' ? `
+                <div class="prop-section-subtitle">${I18n.t('props.guyRope.sides')}</div>
+                <div class="guyrope-sides">
+                    <label><input type="checkbox" id="gr-top" ${sides.top ? 'checked' : ''}> ${I18n.t('props.guyRope.top')}</label>
+                    <label><input type="checkbox" id="gr-right" ${sides.right ? 'checked' : ''}> ${I18n.t('props.guyRope.right')}</label>
+                    <label><input type="checkbox" id="gr-bottom" ${sides.bottom ? 'checked' : ''}> ${I18n.t('props.guyRope.bottom')}</label>
+                    <label><input type="checkbox" id="gr-left" ${sides.left ? 'checked' : ''}> ${I18n.t('props.guyRope.left')}</label>
+                </div>` : ''}
             </div>`;
         }
 
-        // --- Section: Darstellung ---
-        if (obj.type !== 'text') {
+        // --- Section: Display ---
+        if (obj.type !== 'text' && obj.type !== 'fence') {
             html += `<div class="prop-section">
-                <div class="prop-section-title">Darstellung</div>
+                <div class="prop-section-title">${I18n.t('props.display')}</div>
                 <div class="prop-grid">
-                    <label>Textgr. <input type="number" id="prop-labelsize" value="${obj.labelSize || 0}" min="0" max="3" step="0.1" placeholder="auto"></label>
-                    <label>Linien <input type="number" id="prop-linewidth" value="${obj.lineWidth || 0}" min="0" max="3" step="0.1" placeholder="auto"></label>
+                    <label>${I18n.t('props.labelSize')} <input type="number" id="prop-labelsize" value="${obj.labelSize || 0}" min="0" max="3" step="0.1" placeholder="auto"></label>
+                    <label>${I18n.t('props.lineWidth')} <input type="number" id="prop-linewidth" value="${obj.lineWidth || 0}" min="0" max="3" step="0.1" placeholder="auto"></label>
                 </div>
             </div>`;
         }
 
         // --- Actions ---
         html += `<div class="prop-actions">
-            <button class="btn-duplicate" id="prop-duplicate">Duplizieren</button>
-            <button class="btn-danger" id="prop-delete">L\u00f6schen</button>
+            <button class="btn-duplicate" id="prop-duplicate">${I18n.t('props.duplicate')}</button>
+            <button class="btn-danger" id="prop-delete">${I18n.t('props.delete')}</button>
         </div>`;
 
         content.innerHTML = html;
@@ -400,7 +417,6 @@ const UI = (() => {
             const el = document.getElementById(id);
             if (!el) return;
             el.addEventListener('change', () => {
-                // Don't update if selection was cleared (e.g. site switched)
                 if (!Canvas.isSelected(obj.id)) return;
                 const val = parser ? parser(el.value) : el.value;
                 State.updateObject(obj.id, { [key]: val });
@@ -413,6 +429,7 @@ const UI = (() => {
         bind('prop-desc', 'description');
         bind('prop-text', 'text');
         bind('prop-fontsize', 'fontSize', parseFloat);
+        bind('prop-fenceheight', 'fenceHeight', parseFloat);
         bind('prop-texture', 'texture');
         bind('prop-labelsize', 'labelSize', parseFloat);
         bind('prop-linewidth', 'lineWidth', parseFloat);
@@ -437,7 +454,6 @@ const UI = (() => {
                 rotSlider.value = rotInput.value;
             });
         }
-        // Rotation preset buttons
         document.querySelectorAll('.rot-preset').forEach(btn => {
             btn.addEventListener('click', () => {
                 if (!Canvas.isSelected(obj.id)) return;
@@ -451,6 +467,20 @@ const UI = (() => {
         bind('prop-guyrope', 'guyRopeDistance', parseFloat);
         bind('prop-color', 'color');
         bind('prop-shape', 'shape');
+
+        // Guy rope sides checkboxes
+        ['top', 'right', 'bottom', 'left'].forEach(side => {
+            const cb = document.getElementById('gr-' + side);
+            if (cb) {
+                cb.addEventListener('change', () => {
+                    if (!Canvas.isSelected(obj.id)) return;
+                    const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
+                    sides[side] = cb.checked;
+                    State.updateObject(obj.id, { guyRopeSides: { ...sides } });
+                    Canvas.render();
+                });
+            }
+        });
 
         document.getElementById('prop-duplicate').addEventListener('click', () => {
             const dup = State.duplicateObject(obj.id);
@@ -480,11 +510,11 @@ const UI = (() => {
         const count = Canvas.selectionCount;
         content.innerHTML = `
             <div style="text-align:center;padding:8px 0;color:var(--text-secondary);font-size:12px;">
-                <strong>${count} Objekte</strong> ausgew\u00e4hlt
+                <strong>${I18n.t('props.multiSelected', { count: count })}</strong>
             </div>
             <div class="prop-actions">
-                <button class="btn-duplicate" id="prop-multi-dup">Alle duplizieren</button>
-                <button class="btn-danger" id="prop-multi-del">Alle l\u00f6schen</button>
+                <button class="btn-duplicate" id="prop-multi-dup">${I18n.t('props.duplicateAll')}</button>
+                <button class="btn-danger" id="prop-multi-del">${I18n.t('props.deleteAll')}</button>
             </div>`;
         document.getElementById('prop-multi-dup').addEventListener('click', () => {
             const newIds = [];
@@ -535,7 +565,6 @@ const UI = (() => {
                 guyRopeDistance: parseFloat(document.getElementById('co-guyrope').value) || 0,
                 color: document.getElementById('co-color').value,
             };
-            // Add to site templates so it appears in palette
             State.addTemplate(template);
             buildPalette();
             closeModal();
@@ -566,14 +595,12 @@ const UI = (() => {
         document.getElementById('btn-import').addEventListener('click', () => IO.importFile());
         document.getElementById('btn-export').addEventListener('click', () => IO.exportFile());
 
-        // Settings modal
         document.getElementById('btn-settings').addEventListener('click', () => {
             syncSettings();
             openModal('modal-settings');
         });
         document.getElementById('settings-ok').addEventListener('click', closeModal);
 
-        // Text modal
         document.getElementById('text-cancel').addEventListener('click', () => {
             closeModal();
             Tools.setTool('select');
@@ -585,7 +612,7 @@ const UI = (() => {
             const pos = _pendingTextPos;
             closeModal();
             if (pos) {
-                const obj = State.addObject({
+                State.addObject({
                     type: 'text', name: text, text: text,
                     width: 0, height: 0, guyRopeDistance: 0,
                     color: color, shape: 'rect', fontSize: fontSize,
@@ -606,24 +633,15 @@ const UI = (() => {
         setTimeout(() => document.getElementById('text-input').select(), 50);
     }
 
-    function openRenameTabModal(index) {
-        const site = State.sites[index];
-        const input = document.getElementById('rename-tab-input');
-        input.value = site.name;
-        input.dataset.siteIndex = index;
-        openModal('modal-rename-tab');
-        setTimeout(() => input.select(), 50);
-    }
-
     // --- Context Menu ---
     function showContextMenu(x, y, obj) {
         createContextMenuAt(x, y, [
-            { label: 'Eigenschaften...', action: () => showProperties(obj) },
-            { label: 'Duplizieren', action: () => {
+            { label: I18n.t('ctx.properties'), action: () => showProperties(obj) },
+            { label: I18n.t('ctx.duplicate'), action: () => {
                 const dup = State.duplicateObject(obj.id);
                 if (dup) { Canvas.selectedId = dup.id; showProperties(dup); Canvas.render(); buildPlacedList(); }
             }},
-            { label: 'Nach vorne', action: () => {
+            { label: I18n.t('ctx.toFront'), action: () => {
                 const site = State.activeSite;
                 const idx = site.objects.findIndex(o => o.id === obj.id);
                 if (idx < site.objects.length - 1) {
@@ -633,7 +651,7 @@ const UI = (() => {
                     Canvas.render();
                 }
             }},
-            { label: 'Nach hinten', action: () => {
+            { label: I18n.t('ctx.toBack'), action: () => {
                 const site = State.activeSite;
                 const idx = site.objects.findIndex(o => o.id === obj.id);
                 if (idx > 0) {
@@ -644,7 +662,7 @@ const UI = (() => {
                 }
             }},
             { sep: true },
-            { label: 'L\u00f6schen', className: 'danger', action: () => {
+            { label: I18n.t('ctx.delete'), className: 'danger', action: () => {
                 State.removeObject(obj.id);
                 Canvas.clearSelection();
                 hideProperties();
@@ -690,14 +708,14 @@ const UI = (() => {
         const site = State.activeSite;
         if (!site) return;
         createContextMenuAt(x, y, [
-            { label: 'Eckpunkt l\u00f6schen', className: site.ground.length <= 3 ? '' : 'danger', action: () => {
+            { label: I18n.t('ctx.deleteVertex'), className: site.ground.length <= 3 ? '' : 'danger', action: () => {
                 if (site.ground.length <= 3) return;
                 site.ground.splice(vertexIndex, 1);
                 State.notifyChange();
                 Canvas.render();
             }},
             { sep: true },
-            { label: 'Grundfl\u00e4che l\u00f6schen', className: 'danger', action: () => {
+            { label: I18n.t('ctx.deleteGround'), className: 'danger', action: () => {
                 site.ground = [];
                 State.notifyChange();
                 Canvas.render();
@@ -709,14 +727,58 @@ const UI = (() => {
         const site = State.activeSite;
         if (!site) return;
         createContextMenuAt(x, y, [
-            { label: 'Eckpunkt hier einf\u00fcgen', action: () => {
+            { label: I18n.t('ctx.addVertex'), action: () => {
                 site.ground.splice(edgeIndex + 1, 0, { x: worldPos.x, y: worldPos.y });
                 State.notifyChange();
                 Canvas.render();
             }},
             { sep: true },
-            { label: 'Grundfl\u00e4che l\u00f6schen', className: 'danger', action: () => {
+            { label: I18n.t('ctx.deleteGround'), className: 'danger', action: () => {
                 site.ground = [];
+                State.notifyChange();
+                Canvas.render();
+            }},
+        ]);
+    }
+
+    function showAreaVertexMenu(x, y, obj, vertexIndex) {
+        createContextMenuAt(x, y, [
+            { label: I18n.t('ctx.deleteAreaVertex'), className: obj.points.length <= 3 ? '' : 'danger', action: () => {
+                if (obj.points.length <= 3) return;
+                obj.points.splice(vertexIndex, 1);
+                let cx = 0, cy = 0;
+                obj.points.forEach(p => { cx += p.x; cy += p.y; });
+                obj.x = cx / obj.points.length;
+                obj.y = cy / obj.points.length;
+                State.notifyChange();
+                Canvas.render();
+            }},
+        ]);
+    }
+
+    function showAreaEdgeMenu(x, y, obj, edgeIndex, worldPos) {
+        createContextMenuAt(x, y, [
+            { label: I18n.t('ctx.addAreaVertex'), action: () => {
+                obj.points.splice(edgeIndex + 1, 0, { x: worldPos.x, y: worldPos.y });
+                let cx = 0, cy = 0;
+                obj.points.forEach(p => { cx += p.x; cy += p.y; });
+                obj.x = cx / obj.points.length;
+                obj.y = cy / obj.points.length;
+                State.notifyChange();
+                Canvas.render();
+            }},
+        ]);
+    }
+
+    function showFenceVertexMenu(x, y, obj, vertexIndex) {
+        createContextMenuAt(x, y, [
+            { label: I18n.t('ctx.deleteAreaVertex'), className: obj.points.length <= 2 ? '' : 'danger', action: () => {
+                if (obj.points.length <= 2) return;
+                obj.points.splice(vertexIndex, 1);
+                let cx = 0, cy = 0;
+                obj.points.forEach(p => { cx += p.x; cy += p.y; });
+                obj.x = cx / obj.points.length;
+                obj.y = cy / obj.points.length;
                 State.notifyChange();
                 Canvas.render();
             }},
@@ -748,10 +810,21 @@ const UI = (() => {
         el.classList.toggle('visible', !!text);
     }
 
+    // --- Translate static UI ---
+    function translateUI() {
+        I18n.updateDOM();
+        // Rebuild dynamic elements
+        buildPalette();
+        buildTabs();
+        buildPlacedList();
+    }
+
     return {
-        init, buildTabs, buildPalette, buildPlacedList, syncSettings,
+        init, buildTabs, buildPalette, buildPlacedList, syncSettings, translateUI,
         showProperties, hideProperties,
         updateToolButtons, updateCoords, updateZoom, showHint,
-        showContextMenu, showGroundVertexMenu, showGroundEdgeMenu, removeContextMenu, openTextModal, showMultiProperties,
+        showContextMenu, showGroundVertexMenu, showGroundEdgeMenu,
+        showAreaVertexMenu, showAreaEdgeMenu, showFenceVertexMenu,
+        removeContextMenu, openTextModal, showMultiProperties,
     };
 })();

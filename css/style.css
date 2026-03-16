@@ -348,6 +348,21 @@ body {
     color: var(--text-secondary);
 }
 
+.palette-shortcut {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 10px;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
 .palette-delete {
     display: none;
     position: absolute;
@@ -702,6 +717,34 @@ body {
     border-color: var(--primary);
     color: var(--primary);
     background: var(--primary-light);
+}
+
+.prop-section-subtitle {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 6px 0 4px;
+}
+
+.guyrope-sides {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2px 8px;
+}
+
+.guyrope-sides label {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 11px !important;
+    margin-bottom: 2px !important;
+    cursor: pointer;
+}
+
+.guyrope-sides input[type="checkbox"] {
+    width: auto !important;
+    margin: 0 !important;
 }
 
 .prop-actions {

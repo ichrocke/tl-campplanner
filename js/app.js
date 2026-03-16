@@ -12,6 +12,14 @@
     // Initialize UI
     UI.init();
     UI.syncSettings();
+    I18n.updateDOM();
+
+    // Language change handler
+    I18n.onChange(() => {
+        UI.translateUI();
+        UI.syncSettings();
+        Canvas.render();
+    });
 
     // State change handler
     State.onChange(() => {
@@ -37,9 +45,8 @@
     // Prevent browser context menu on canvas
     c.addEventListener('contextmenu', (e) => e.preventDefault());
 
-    // Warn before leaving page (F5, tab close, navigate away)
+    // Warn before leaving page
     window.addEventListener('beforeunload', (e) => {
-        // Only warn if there is actual content (objects or ground on any site)
         const hasContent = State.sites.some(s => s.objects.length > 0 || s.ground.length > 0);
         if (hasContent) {
             e.preventDefault();

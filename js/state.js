@@ -11,18 +11,20 @@ const State = (() => {
     let _undoStack = [];
     let _undoPointer = -1;
 
-    const _defaultTemplates = [
-        { type: 'tent', name: 'Zelt 2P', width: 2, height: 1.5, guyRopeDistance: 0.5, color: '#4a90d9', shape: 'rect' },
-        { type: 'tent', name: 'Zelt 4P', width: 3, height: 2.5, guyRopeDistance: 0.6, color: '#3b82f6', shape: 'rect' },
-        { type: 'tent', name: 'Familienzelt', width: 4, height: 3, guyRopeDistance: 0.8, color: '#2563eb', shape: 'rect' },
-        { type: 'tent', name: 'Gruppenzelt', width: 6, height: 4, guyRopeDistance: 1.0, color: '#1d4ed8', shape: 'rect' },
-        { type: 'tent', name: 'Jurte (rund)', width: 5, height: 5, guyRopeDistance: 1.0, color: '#7c3aed', shape: 'circle' },
-        { type: 'tent', name: 'Jurte (6-Eck)', width: 5, height: 5, guyRopeDistance: 1.0, color: '#6d28d9', shape: 'hexagon' },
-        { type: 'tent', name: 'Jurte (8-Eck)', width: 5, height: 5, guyRopeDistance: 1.0, color: '#5b21b6', shape: 'octagon' },
-        { type: 'firepit', name: 'Feuerstelle', width: 2, height: 2, guyRopeDistance: 0, color: '#ea580c', shape: 'circle' },
-        { type: 'bar', name: 'Theke', width: 3, height: 1, guyRopeDistance: 0, color: '#9333ea', shape: 'rect' },
-        { type: 'entrance', name: 'Eingang', width: 2, height: 0.25, guyRopeDistance: 0, color: '#16a34a', shape: 'rect' },
-    ];
+    function defaultTemplates() {
+        return [
+            { type: 'tent', name: I18n.t('template.tent2p'), width: 2, height: 1.5, guyRopeDistance: 0.5, color: '#4a90d9', shape: 'rect' },
+            { type: 'tent', name: I18n.t('template.tent4p'), width: 3, height: 2.5, guyRopeDistance: 0.6, color: '#3b82f6', shape: 'rect' },
+            { type: 'tent', name: I18n.t('template.familyTent'), width: 4, height: 3, guyRopeDistance: 0.8, color: '#2563eb', shape: 'rect' },
+            { type: 'tent', name: I18n.t('template.groupTent'), width: 6, height: 4, guyRopeDistance: 1.0, color: '#1d4ed8', shape: 'rect' },
+            { type: 'tent', name: I18n.t('template.yurtRound'), width: 5, height: 5, guyRopeDistance: 1.0, color: '#7c3aed', shape: 'circle' },
+            { type: 'tent', name: I18n.t('template.yurt6'), width: 5, height: 5, guyRopeDistance: 1.0, color: '#6d28d9', shape: 'hexagon' },
+            { type: 'tent', name: I18n.t('template.yurt8'), width: 5, height: 5, guyRopeDistance: 1.0, color: '#5b21b6', shape: 'octagon' },
+            { type: 'firepit', name: I18n.t('template.firepit'), width: 2, height: 2, guyRopeDistance: 0, color: '#ea580c', shape: 'circle' },
+            { type: 'bar', name: I18n.t('template.bar'), width: 3, height: 1, guyRopeDistance: 0, color: '#9333ea', shape: 'rect' },
+            { type: 'entrance', name: I18n.t('template.entrance'), width: 2, height: 0.25, guyRopeDistance: 0, color: '#16a34a', shape: 'rect' },
+        ];
+    }
 
     function generateId() {
         return Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 6);
@@ -39,10 +41,6 @@ const State = (() => {
         _undoStack.push(snapshot);
         if (_undoStack.length > 50) _undoStack.shift();
         _undoPointer = _undoStack.length - 1;
-    }
-
-    function getDefaultTemplatesCopy() {
-        return JSON.parse(JSON.stringify(_defaultTemplates));
     }
 
     function getSiteContentBounds(site) {
@@ -62,30 +60,16 @@ const State = (() => {
         return { minX, maxX, minY, maxY, width: maxX - minX, height: maxY - minY };
     }
 
-    function calcNextOffsetX() {
-        let rightEdge = 0;
-        _sites.forEach(s => {
-            const b = getSiteContentBounds(s);
-            if (b) {
-                rightEdge = Math.max(rightEdge, b.maxX + 10);
-            } else {
-                // Empty site: use its offsetX + default width
-                rightEdge = Math.max(rightEdge, (s.offsetX || 0) + 30);
-            }
-        });
-        return rightEdge;
-    }
-
     function createSite(name) {
         const site = {
             id: generateId(),
-            name: name || 'Zeltplatz ' + (_sites.length + 1),
+            name: name || I18n.t('site.default') + ' ' + (_sites.length + 1),
             ground: [],
             gridSize: 0.5,
             snapToGrid: true,
             objects: [],
-            templates: getDefaultTemplatesCopy(),
-            bgImage: null, // { dataUrl, x, y, width, height, opacity }
+            templates: defaultTemplates(),
+            bgImage: null,
             view: { panX: 0, panY: 0, zoom: 1 }
         };
         _sites.push(site);
@@ -102,7 +86,7 @@ const State = (() => {
             notify(true);
         },
         get activeSite() { return _sites[_activeSiteIndex]; },
-        get defaultTemplates() { return _defaultTemplates; },
+        get defaultTemplates() { return defaultTemplates(); },
         get minDistance() { return _minDistance; },
         set minDistance(v) { _minDistance = v; },
         get displaySettings() { return _displaySettings; },
@@ -136,22 +120,25 @@ const State = (() => {
                 height: template.height || 0,
                 rotation: 0,
                 guyRopeDistance: template.guyRopeDistance || 0,
+                guyRopeSides: template.guyRopeSides || { top: true, right: true, bottom: true, left: true },
                 color: template.color,
                 shape: template.shape || 'rect',
                 description: template.description || '',
-                labelSize: template.labelSize || 0, // 0 = auto
-                lineWidth: template.lineWidth || 0, // 0 = default
-                ropeWidth: template.ropeWidth || 0, // 0 = default
+                labelSize: template.labelSize || 0,
+                lineWidth: template.lineWidth || 0,
+                ropeWidth: template.ropeWidth || 0,
             };
-            // Area annotation: polygon points + texture
             if (template.type === 'area') {
                 obj.texture = template.texture || 'solid';
                 obj.points = template.points ? [...template.points] : [];
             }
-            // Text field
             if (template.type === 'text') {
                 obj.text = template.text || 'Text';
                 obj.fontSize = template.fontSize || 1;
+            }
+            if (template.type === 'fence') {
+                obj.points = template.points ? [...template.points] : [];
+                obj.fenceHeight = template.fenceHeight || 1.5;
             }
             site.objects.push(obj);
             notify();
@@ -228,17 +215,20 @@ const State = (() => {
 
         importJSON(json) {
             const data = JSON.parse(json);
-            if (!data.sites || !Array.isArray(data.sites)) throw new Error('Ungültiges Format');
+            if (!data.sites || !Array.isArray(data.sites)) throw new Error('Invalid format');
             _sites = data.sites;
-            // Ensure each site has templates (restore defaults if missing from old exports)
             let autoOff = 0;
             _sites.forEach(s => {
-                if (!s.templates) s.templates = getDefaultTemplatesCopy();
+                if (!s.templates) s.templates = defaultTemplates();
                 if (s.offsetX === undefined) {
                     s.offsetX = autoOff;
                     const b = getSiteContentBounds(s);
                     autoOff = b ? b.maxX + 10 : autoOff + 30;
                 }
+                // Migrate: ensure guyRopeSides exists on all objects
+                s.objects.forEach(o => {
+                    if (!o.guyRopeSides) o.guyRopeSides = { top: true, right: true, bottom: true, left: true };
+                });
             });
             _minDistance = data.minDistance || 2;
             if (data.displaySettings) Object.assign(_displaySettings, data.displaySettings);

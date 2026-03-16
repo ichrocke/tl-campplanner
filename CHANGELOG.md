@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.0.0] - 2026-03-16
+
+### Hinzugefügt
+- **Mehrsprachigkeit**: Deutsch, English, Español. Sprache umschaltbar in den Einstellungen. Übersetzungen in JSON-Dateien (lang/*.json), erweiterbar
+- **Zaun-Werkzeug** (F): Zäune zeichnen durch Klicken von Punkten. Darstellung als Pfosten mit Querbalken
+- **Gebiet-Punkte bearbeiten**: Ausgewählte Gebiete zeigen Vertex-Handles. Punkte per Drag verschieben, per Rechtsklick hinzufügen/löschen
+- **Zaun-Punkte bearbeiten**: Zaunpunkte per Drag verschieben, per Rechtsklick löschen
+- **Abspannung pro Seite**: Bei Rechteck-Objekten kann die Abspannung pro Seite (Oben, Rechts, Unten, Links) einzeln aktiviert/deaktiviert werden
+- **Tastenkürzel 1-0**: Die ersten 10 Objekte in der Palette können per Zifferntaste schnell platziert werden
+- **F2**: Tastenkürzel zum Umbenennen des ausgewählten Objekts
+- **X**: Zusätzlich zu Entf zum Löschen von Objekten
+
+### Geändert
+- **Einzelplatzierung**: Zelte/Objekte werden nur einzeln platziert, danach wechselt das Werkzeug zurück auf Auswählen
+- Palette zeigt Tastenkürzel-Nummern neben den Objekten
+
 ## [1.8.3] - 2026-03-16
 
 ### Geändert

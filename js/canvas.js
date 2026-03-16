@@ -151,7 +151,7 @@ const Canvas = (() => {
                 ctx.fillStyle = '#9ca3af';
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText('Grundfl\u00e4che hier zeichnen', cp.x, cp.y);
+                ctx.fillText(I18n.t('canvas.drawGround'), cp.x, cp.y);
             }
         }
         const p = w2s(labelX, labelY);
@@ -384,9 +384,14 @@ const Canvas = (() => {
         const isSel = selectedIds.has(obj.id);
         const isHov = obj.id === hoveredId;
 
-        // --- Area annotation (Gebiet) ---
+        // --- Area annotation ---
         if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
             drawArea(obj, z, isSel, isHov);
+            return;
+        }
+        // --- Fence ---
+        if (obj.type === 'fence' && obj.points && obj.points.length >= 2) {
+            drawFence(obj, z, isSel, isHov);
             return;
         }
         // --- Text ---
@@ -408,35 +413,58 @@ const Canvas = (() => {
         const w = obj.width * z;
         const h = obj.height * z;
 
-        // Guy ropes
+        // Guy ropes (with per-side control for rect)
         if (obj.guyRopeDistance > 0) {
             const gd = obj.guyRopeDistance;
-            ctx.setLineDash([4, 4]);
-            ctx.strokeStyle = '#9ca3af';
-            ctx.lineWidth = 1 * rs;
-            traceShapePath(obj, z, gd);
-            ctx.stroke();
-            ctx.setLineDash([]);
+            const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
 
-            ctx.strokeStyle = '#d1d5db';
-            ctx.lineWidth = 0.8 * rs;
-            const bodyPts = getLocalShapePath(obj, 0);
-            const ropePts = getLocalShapePath(obj, gd);
-            const count = Math.min(bodyPts.length, ropePts.length);
-            for (let i = 0; i < count; i++) {
-                ctx.beginPath();
-                ctx.moveTo(bodyPts[i].x * z, bodyPts[i].y * z);
-                ctx.lineTo(ropePts[i].x * z, ropePts[i].y * z);
-                ctx.stroke();
-            }
-            // Mid-edge ropes for rect
             if (obj.shape === 'rect') {
-                [[0, -1], [1, 0], [0, 1], [-1, 0]].forEach(([mx, my]) => {
+                const hw = w / 2, hh = h / 2;
+                const ghw = hw + gd * z, ghh = hh + gd * z;
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = '#9ca3af';
+                ctx.lineWidth = 1 * rs;
+
+                // Draw outer dashed lines per side
+                if (sides.top) { ctx.beginPath(); ctx.moveTo(-ghw, -ghh); ctx.lineTo(ghw, -ghh); ctx.stroke(); }
+                if (sides.right) { ctx.beginPath(); ctx.moveTo(ghw, -ghh); ctx.lineTo(ghw, ghh); ctx.stroke(); }
+                if (sides.bottom) { ctx.beginPath(); ctx.moveTo(ghw, ghh); ctx.lineTo(-ghw, ghh); ctx.stroke(); }
+                if (sides.left) { ctx.beginPath(); ctx.moveTo(-ghw, ghh); ctx.lineTo(-ghw, -ghh); ctx.stroke(); }
+                ctx.setLineDash([]);
+
+                // Corner and mid-edge ropes
+                ctx.strokeStyle = '#d1d5db';
+                ctx.lineWidth = 0.8 * rs;
+                // Corners: draw if both adjacent sides enabled
+                if (sides.top && sides.left) { ctx.beginPath(); ctx.moveTo(-hw, -hh); ctx.lineTo(-ghw, -ghh); ctx.stroke(); }
+                if (sides.top && sides.right) { ctx.beginPath(); ctx.moveTo(hw, -hh); ctx.lineTo(ghw, -ghh); ctx.stroke(); }
+                if (sides.bottom && sides.right) { ctx.beginPath(); ctx.moveTo(hw, hh); ctx.lineTo(ghw, ghh); ctx.stroke(); }
+                if (sides.bottom && sides.left) { ctx.beginPath(); ctx.moveTo(-hw, hh); ctx.lineTo(-ghw, ghh); ctx.stroke(); }
+                // Mid-edge ropes
+                if (sides.top) { ctx.beginPath(); ctx.moveTo(0, -hh); ctx.lineTo(0, -ghh); ctx.stroke(); }
+                if (sides.right) { ctx.beginPath(); ctx.moveTo(hw, 0); ctx.lineTo(ghw, 0); ctx.stroke(); }
+                if (sides.bottom) { ctx.beginPath(); ctx.moveTo(0, hh); ctx.lineTo(0, ghh); ctx.stroke(); }
+                if (sides.left) { ctx.beginPath(); ctx.moveTo(-hw, 0); ctx.lineTo(-ghw, 0); ctx.stroke(); }
+            } else {
+                // Non-rect: draw full outline as before
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = '#9ca3af';
+                ctx.lineWidth = 1 * rs;
+                traceShapePath(obj, z, gd);
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                ctx.strokeStyle = '#d1d5db';
+                ctx.lineWidth = 0.8 * rs;
+                const bodyPts = getLocalShapePath(obj, 0);
+                const ropePts = getLocalShapePath(obj, gd);
+                const count = Math.min(bodyPts.length, ropePts.length);
+                for (let i = 0; i < count; i++) {
                     ctx.beginPath();
-                    ctx.moveTo(mx * w / 2, my * h / 2);
-                    ctx.lineTo(mx * (w / 2 + gd * z), my * (h / 2 + gd * z));
+                    ctx.moveTo(bodyPts[i].x * z, bodyPts[i].y * z);
+                    ctx.lineTo(ropePts[i].x * z, ropePts[i].y * z);
                     ctx.stroke();
-                });
+                }
             }
         }
 
@@ -649,6 +677,20 @@ const Canvas = (() => {
             ctx.setLineDash([]);
         }
 
+        // Vertex handles when selected
+        if (isSel) {
+            obj.points.forEach(pt => {
+                const p = w2s(pt.x, pt.y);
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#2563eb';
+                ctx.fill();
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+            });
+        }
+
         // Label at centroid
         const center = polygonCentroid(obj.points);
         const cp = w2s(center.x, center.y);
@@ -656,7 +698,7 @@ const Canvas = (() => {
         ctx.fillStyle = color;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(obj.name || 'Gebiet', cp.x, cp.y);
+        ctx.fillText(obj.name || I18n.t('msg.defaultArea'), cp.x, cp.y);
     }
 
     function drawTextField(obj, z, isSel, isHov) {
@@ -689,6 +731,98 @@ const Canvas = (() => {
         }
 
         ctx.restore();
+    }
+
+    function drawFence(obj, z, isSel, isHov) {
+        if (!obj.points || obj.points.length < 2) return;
+        const color = obj.color || '#8B4513';
+        const fh = (obj.fenceHeight || 1.5) * z * 0.3;
+
+        // Draw fence line
+        ctx.beginPath();
+        const p0 = w2s(obj.points[0].x, obj.points[0].y);
+        ctx.moveTo(p0.x, p0.y);
+        for (let i = 1; i < obj.points.length; i++) {
+            const p = w2s(obj.points[i].x, obj.points[i].y);
+            ctx.lineTo(p.x, p.y);
+        }
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+
+        // Draw posts at each vertex
+        obj.points.forEach(pt => {
+            const p = w2s(pt.x, pt.y);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y - fh);
+            ctx.lineTo(p.x, p.y + fh);
+            ctx.stroke();
+            // Post cap
+            ctx.beginPath();
+            ctx.arc(p.x, p.y - fh, 2, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+        });
+
+        // Draw horizontal rails
+        for (let i = 0; i < obj.points.length - 1; i++) {
+            const a = w2s(obj.points[i].x, obj.points[i].y);
+            const b = w2s(obj.points[i + 1].x, obj.points[i + 1].y);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 1;
+            // Top rail
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y - fh * 0.8);
+            ctx.lineTo(b.x, b.y - fh * 0.8);
+            ctx.stroke();
+            // Bottom rail
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y + fh * 0.8);
+            ctx.lineTo(b.x, b.y + fh * 0.8);
+            ctx.stroke();
+        }
+
+        // Selection/hover
+        if (isSel || isHov) {
+            ctx.beginPath();
+            ctx.moveTo(p0.x, p0.y);
+            for (let i = 1; i < obj.points.length; i++) {
+                const p = w2s(obj.points[i].x, obj.points[i].y);
+                ctx.lineTo(p.x, p.y);
+            }
+            ctx.strokeStyle = isSel ? '#2563eb' : '#2563eb55';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 3]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Vertex handles when selected
+            if (isSel) {
+                obj.points.forEach(pt => {
+                    const p = w2s(pt.x, pt.y);
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#2563eb';
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                });
+            }
+        }
+
+        // Name label
+        if (obj.points.length >= 2) {
+            const mid = Math.floor(obj.points.length / 2);
+            const mp = w2s(obj.points[mid].x, obj.points[mid].y);
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillStyle = color;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(obj.name || I18n.t('msg.defaultFence'), mp.x, mp.y - fh - 4);
+        }
     }
 
     function drawPlacementPreview() {
@@ -898,6 +1032,15 @@ const Canvas = (() => {
         // Area: point in polygon
         if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
             return pointInPolygon(px, py, obj.points);
+        }
+        // Fence: proximity to any segment
+        if (obj.type === 'fence' && obj.points && obj.points.length >= 2) {
+            const threshold = 1.0; // 1 meter hit zone
+            for (let i = 0; i < obj.points.length - 1; i++) {
+                const d = pointToSegDist(px, py, obj.points[i], obj.points[i + 1]);
+                if (d < threshold) return true;
+            }
+            return false;
         }
         // Text: simple bounding box
         if (obj.type === 'text') {

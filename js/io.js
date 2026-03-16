@@ -32,7 +32,7 @@ const IO = (() => {
                 try {
                     State.importJSON(e.target.result);
                 } catch (err) {
-                    alert('Fehler beim Importieren: ' + err.message);
+                    alert(I18n.t('msg.importError') + err.message);
                 }
             };
             reader.readAsText(file);
@@ -61,7 +61,7 @@ const IO = (() => {
         if (orientation === 'portrait') paper = { w: paper.h, h: paper.w };
 
         const bounds = getContentBounds(site);
-        if (!bounds) { alert('Keine Inhalte zum Drucken.'); return; }
+        if (!bounds) { alert(I18n.t('msg.noPrintContent')); return; }
 
         const margin = 15;
         const printableW = paper.w - 2 * margin;
@@ -141,7 +141,7 @@ const IO = (() => {
             pctx.fillStyle = '#999';
             pctx.textAlign = 'left';
             pctx.textBaseline = 'top';
-            pctx.fillText('Raster: ' + gridStep + ' m', ox, oy + bounds.height * ppm + 4);
+            pctx.fillText(I18n.t('canvas.grid') + ': ' + gridStep + ' m', ox, oy + bounds.height * ppm + 4);
         }
 
         // Ground
@@ -305,11 +305,11 @@ const IO = (() => {
             p2.font = `bold ${14 * ds.fontScale}px sans-serif`;
             p2.fillStyle = '#1a1a2e';
             p2.textAlign = 'left';
-            p2.fillText((title || site.name) + ' \u2013 Objektliste', tx, ty + 12);
+            p2.fillText((title || site.name) + ' \u2013 ' + I18n.t('print.objectList'), tx, ty + 12);
 
             const rowH = 18;
             const colW = [30, 130, 120, 55, 55, 55, 55];
-            const headers = ['Nr.', 'Name', 'Beschreibung', 'Breite', 'Tiefe', 'Drehung', 'Typ'];
+            const headers = [I18n.t('print.nr'), I18n.t('print.name'), I18n.t('print.description'), I18n.t('print.width'), I18n.t('print.depth'), I18n.t('print.rotation'), I18n.t('print.type')];
             const totalW = colW.reduce((a, b) => a + b, 0);
             const headerY = ty + 28;
 
@@ -380,7 +380,7 @@ const IO = (() => {
             const mapUrl = pc.toDataURL('image/png');
             const listUrl = page2 ? page2.toDataURL('image/png') : null;
             const win = window.open('', '_blank');
-            if (!win) { alert('Popup-Blocker verhindert das Druckfenster.'); return; }
+            if (!win) { alert(I18n.t('msg.popupBlocked')); return; }
             win.document.write(`<!DOCTYPE html><html><head><title>${title || site.name}</title>
                 <style>
                     @page { size: ${orientation}; margin: 0; }

@@ -7,7 +7,7 @@ const Tools = (() => {
     let drag = null;
     let pendingTemplate = null;
     let groundEditVertex = -1;
-    let lastClickTime = 0; // to prevent dblclick adding extra points
+    let lastClickTime = 0;
 
     function setTool(name) {
         activeTool = name;
@@ -22,20 +22,21 @@ const Tools = (() => {
         if (name !== 'place') pendingTemplate = null;
         updateHint();
         UI.updateToolButtons(name);
-        const crosshairTools = ['place', 'area', 'text'];
+        const crosshairTools = ['place', 'area', 'text', 'fence'];
         Canvas.canvas.style.cursor = crosshairTools.includes(name) ? 'crosshair' : 'default';
         Canvas.render();
     }
 
     function updateHint() {
         const hints = {
-            select: 'Objekte anklicken zum Ausw\u00e4hlen. Grundfl\u00e4chen-Eckpunkte ziehbar.',
-            pan: 'Klicken und ziehen zum Verschieben der Ansicht',
-            ground: 'Klicken um Eckpunkte zu setzen. Doppelklick oder Enter zum Abschlie\u00dfen. Esc zum Abbrechen.',
-            area: 'Klicken um Gebietspunkte zu setzen. Doppelklick oder Enter zum Abschlie\u00dfen. Esc zum Abbrechen.',
-            text: 'Klicken um ein Textfeld zu platzieren.',
-            measure: 'Klicken und ziehen um Abst\u00e4nde zu messen',
-            place: pendingTemplate ? `"${pendingTemplate.name}" platzieren \u2013 Klick auf die Fl\u00e4che. Esc zum Abbrechen.` : '',
+            select: I18n.t('hint.select'),
+            pan: I18n.t('hint.pan'),
+            ground: I18n.t('hint.ground'),
+            area: I18n.t('hint.area'),
+            text: I18n.t('hint.text'),
+            measure: I18n.t('hint.measure'),
+            fence: I18n.t('hint.fence'),
+            place: pendingTemplate ? I18n.t('hint.place', { name: pendingTemplate.name }) : '',
         };
         UI.showHint(hints[activeTool] || '');
     }
@@ -54,7 +55,6 @@ const Tools = (() => {
         Canvas.render();
     }
 
-    // --- Mouse position helpers ---
     function getMouseWorld(e) {
         const rect = Canvas.canvas.getBoundingClientRect();
         return Canvas.s2w(e.clientX - rect.left, e.clientY - rect.top);
@@ -69,10 +69,9 @@ const Tools = (() => {
         };
     }
 
-    // --- Ground vertex hit-testing ---
     function findGroundVertex(world, site) {
         if (!site.ground || site.ground.length === 0) return -1;
-        const threshold = 8 / Canvas.zoom(); // 8 screen pixels
+        const threshold = 8 / Canvas.zoom();
         for (let i = 0; i < site.ground.length; i++) {
             const pt = site.ground[i];
             const d = Math.sqrt((world.x - pt.x) ** 2 + (world.y - pt.y) ** 2);
@@ -93,6 +92,42 @@ const Tools = (() => {
         return -1;
     }
 
+    // Find area vertex near world point (for selected area objects)
+    function findAreaVertex(world, obj) {
+        if (!obj || obj.type !== 'area' || !obj.points) return -1;
+        const threshold = 8 / Canvas.zoom();
+        for (let i = 0; i < obj.points.length; i++) {
+            const pt = obj.points[i];
+            const d = Math.sqrt((world.x - pt.x) ** 2 + (world.y - pt.y) ** 2);
+            if (d < threshold) return i;
+        }
+        return -1;
+    }
+
+    function findAreaEdge(world, obj) {
+        if (!obj || obj.type !== 'area' || !obj.points || obj.points.length < 2) return -1;
+        const threshold = 5 / Canvas.zoom();
+        for (let i = 0; i < obj.points.length; i++) {
+            const a = obj.points[i];
+            const b = obj.points[(i + 1) % obj.points.length];
+            const dist = pointToSegmentDist(world, a, b);
+            if (dist < threshold) return i;
+        }
+        return -1;
+    }
+
+    // Find fence vertex near world point
+    function findFenceVertex(world, obj) {
+        if (!obj || obj.type !== 'fence' || !obj.points) return -1;
+        const threshold = 8 / Canvas.zoom();
+        for (let i = 0; i < obj.points.length; i++) {
+            const pt = obj.points[i];
+            const d = Math.sqrt((world.x - pt.x) ** 2 + (world.y - pt.y) ** 2);
+            if (d < threshold) return i;
+        }
+        return -1;
+    }
+
     function pointToSegmentDist(p, a, b) {
         const dx = b.x - a.x, dy = b.y - a.y;
         const len2 = dx * dx + dy * dy;
@@ -103,14 +138,12 @@ const Tools = (() => {
         return Math.sqrt((p.x - proj.x) ** 2 + (p.y - proj.y) ** 2);
     }
 
-    // --- Event handlers ---
     function onMouseDown(e) {
         const site = State.activeSite;
         if (!site) return;
         const world = getMouseWorld(e);
         const snapped = snapWorld(world);
 
-        // Middle mouse or shift+click: always pan
         if (e.button === 1 || (e.button === 0 && e.shiftKey)) {
             drag = { type: 'pan', lastX: e.clientX, lastY: e.clientY };
             return;
@@ -123,6 +156,7 @@ const Tools = (() => {
             case 'pan': drag = { type: 'pan', lastX: e.clientX, lastY: e.clientY }; break;
             case 'ground': onGroundClick(snapped, site); break;
             case 'area': onAreaClick(snapped, site); break;
+            case 'fence': onFenceClick(snapped, site); break;
             case 'text': onTextClick(snapped, site); break;
             case 'measure': drag = { type: 'measure', x1: snapped.x, y1: snapped.y, x2: snapped.x, y2: snapped.y }; break;
             case 'place': onPlaceClick(snapped, site); break;
@@ -143,6 +177,15 @@ const Tools = (() => {
                 };
                 return;
             }
+
+            // 1b. Check area/fence vertex drag
+            if (sel && (sel.type === 'area' || sel.type === 'fence') && sel.points) {
+                const vi = sel.type === 'area' ? findAreaVertex(world, sel) : findFenceVertex(world, sel);
+                if (vi >= 0) {
+                    drag = { type: 'areaVertex', objId: sel.id, vertexIndex: vi };
+                    return;
+                }
+            }
         }
 
         // 2. Check ground vertex drag
@@ -160,7 +203,6 @@ const Tools = (() => {
         const hit = [...site.objects].reverse().find(o => Canvas.pointInObj(world.x, world.y, o));
         if (hit) {
             if (ctrlKey) {
-                // Ctrl+click: toggle selection
                 Canvas.toggleSelection(hit.id);
                 if (Canvas.selectionCount === 1) {
                     UI.showProperties(site.objects.find(o => o.id === Canvas.selectedId));
@@ -170,11 +212,9 @@ const Tools = (() => {
             } else if (Canvas.isSelected(hit.id) && Canvas.selectionCount > 1) {
                 // Clicking on already-selected object in multi-selection: start move
             } else {
-                // Normal click: select only this one
                 Canvas.selectedId = hit.id;
                 UI.showProperties(hit);
             }
-            // Start move drag for all selected
             drag = {
                 type: 'move',
                 offsetX: world.x, offsetY: world.y,
@@ -183,10 +223,8 @@ const Tools = (() => {
             };
         } else {
             if (ctrlKey) {
-                // Ctrl+click on empty: don't clear, start rect select additive
                 drag = { type: 'rectSelect', x1: world.x, y1: world.y, additive: true };
             } else {
-                // Click on empty: clear and start rect select
                 Canvas.clearSelection();
                 UI.hideProperties();
                 drag = { type: 'rectSelect', x1: world.x, y1: world.y, additive: false };
@@ -207,23 +245,16 @@ const Tools = (() => {
 
     function onGroundClick(pos, site) {
         const preview = Canvas.groundPreview;
-
-        // First click: if ground already exists, ask whether to replace
         if (preview.length === 0 && site.ground.length >= 3) {
-            if (!confirm('Es gibt bereits eine Grundfl\u00e4che. Soll diese ersetzt werden?')) {
+            if (!confirm(I18n.t('msg.replaceGround'))) {
                 setTool('select');
                 return;
             }
         }
-
-        // Close polygon if clicking near first point
         if (preview.length >= 3) {
             const first = preview[0];
             const dist = Math.sqrt((pos.x - first.x) ** 2 + (pos.y - first.y) ** 2);
-            if (dist < 0.5) {
-                finishGround(site);
-                return;
-            }
+            if (dist < 0.5) { finishGround(site); return; }
         }
         preview.push({ x: pos.x, y: pos.y });
         Canvas.render();
@@ -240,7 +271,6 @@ const Tools = (() => {
 
     function onPlaceClick(pos, site) {
         if (!pendingTemplate) return;
-        // Snap edge to grid instead of center
         let placeX = pos.x, placeY = pos.y;
         if (site.snapToGrid) {
             const snapped = Canvas.snapObjToGrid(pendingTemplate, pos.x, pos.y, site.gridSize);
@@ -252,7 +282,9 @@ const Tools = (() => {
             Canvas.selectedId = obj.id;
             UI.showProperties(obj);
         }
-        Canvas.render();
+        // Single placement: return to select after placing
+        Canvas.placementPreview = null;
+        setTool('select');
     }
 
     // --- Area tool ---
@@ -273,7 +305,7 @@ const Tools = (() => {
     function finishArea(site) {
         const pts = Canvas.pathPreview;
         if (pts.length >= 3) {
-            const name = prompt('Gebiet benennen:', 'Gebiet') || 'Gebiet';
+            const name = prompt(I18n.t('msg.nameArea'), I18n.t('msg.defaultArea')) || I18n.t('msg.defaultArea');
             let cx = 0, cy = 0;
             pts.forEach(p => { cx += p.x; cy += p.y; });
             cx /= pts.length; cy /= pts.length;
@@ -288,8 +320,35 @@ const Tools = (() => {
         setTool('select');
     }
 
+    // --- Fence tool ---
+    function onFenceClick(pos) {
+        const now = Date.now();
+        if (now - lastClickTime < 300) return;
+        lastClickTime = now;
+        Canvas.pathPreview.push({ x: pos.x, y: pos.y });
+        Canvas.render();
+    }
+
+    function finishFence(site) {
+        const pts = Canvas.pathPreview;
+        if (pts.length >= 2) {
+            const name = prompt(I18n.t('msg.nameFence'), I18n.t('msg.defaultFence')) || I18n.t('msg.defaultFence');
+            let cx = 0, cy = 0;
+            pts.forEach(p => { cx += p.x; cy += p.y; });
+            cx /= pts.length; cy /= pts.length;
+            const obj = State.addObject({
+                type: 'fence', name: name, width: 0, height: 0,
+                guyRopeDistance: 0, color: '#8B4513', shape: 'rect',
+                points: [...pts], fenceHeight: 1.5,
+            }, cx, cy);
+            if (obj) obj.points = [...pts];
+        }
+        Canvas.pathPreview = [];
+        setTool('select');
+    }
+
     // --- Text tool ---
-    function onTextClick(pos, site) {
+    function onTextClick(pos) {
         UI.openTextModal(pos);
     }
 
@@ -320,7 +379,6 @@ const Tools = (() => {
                         dx = Canvas.snapToGrid(dx, site.gridSize);
                         dy = Canvas.snapToGrid(dy, site.gridSize);
                     }
-                    // Move all selected objects by delta from original positions
                     site.objects.forEach(obj => {
                         if (!Canvas.isSelected(obj.id)) return;
                         const orig = drag.origPositions[obj.id];
@@ -328,7 +386,6 @@ const Tools = (() => {
                         const nx = orig.x + dx;
                         const ny = orig.y + dy;
                         if (obj.points && orig.points) {
-                            const ddx = nx - obj.x, ddy = ny - obj.y;
                             obj.points.forEach((p, i) => { p.x = orig.points[i].x + dx; p.y = orig.points[i].y + dy; });
                         }
                         obj.x = nx;
@@ -366,6 +423,20 @@ const Tools = (() => {
                     Canvas.render();
                     break;
                 }
+                case 'areaVertex': {
+                    const obj = site.objects.find(o => o.id === drag.objId);
+                    if (obj && obj.points && obj.points[drag.vertexIndex]) {
+                        const pt = site.snapToGrid ? snapped : world;
+                        obj.points[drag.vertexIndex] = { x: pt.x, y: pt.y };
+                        // Update centroid
+                        let cx = 0, cy = 0;
+                        obj.points.forEach(p => { cx += p.x; cy += p.y; });
+                        obj.x = cx / obj.points.length;
+                        obj.y = cy / obj.points.length;
+                        Canvas.render();
+                    }
+                    break;
+                }
                 case 'measure': {
                     drag.x2 = snapped.x;
                     drag.y2 = snapped.y;
@@ -375,20 +446,30 @@ const Tools = (() => {
                 }
             }
         } else {
-            // Hover detection for select tool
             if (activeTool === 'select') {
-                // Check ground vertices first
                 const vi = findGroundVertex(world, site);
                 if (vi >= 0) {
                     Canvas.canvas.style.cursor = 'grab';
                     Canvas.hoveredId = null;
-                    Canvas.render();
-                    // Highlight the vertex
                     Canvas.highlightGroundVertex = vi;
                     Canvas.render();
                     return;
                 }
                 Canvas.highlightGroundVertex = -1;
+
+                // Check area/fence vertex hover
+                if (Canvas.selectionCount === 1) {
+                    const sel = site.objects.find(o => o.id === Canvas.selectedId);
+                    if (sel && (sel.type === 'area' || sel.type === 'fence') && sel.points) {
+                        const avi = sel.type === 'area' ? findAreaVertex(world, sel) : findFenceVertex(world, sel);
+                        if (avi >= 0) {
+                            Canvas.canvas.style.cursor = 'grab';
+                            Canvas.hoveredId = sel.id;
+                            Canvas.render();
+                            return;
+                        }
+                    }
+                }
 
                 const hit = [...site.objects].reverse().find(o => Canvas.pointInObj(world.x, world.y, o));
                 const newHov = hit ? hit.id : null;
@@ -409,7 +490,6 @@ const Tools = (() => {
                 Canvas.render();
             }
 
-            // Ground tool: preview line to cursor
             if (activeTool === 'ground' && Canvas.groundPreview.length > 0) {
                 Canvas.render();
                 const ctx = Canvas.canvas.getContext('2d');
@@ -428,15 +508,14 @@ const Tools = (() => {
                 ctx.fillText(dist.toFixed(1) + ' m', (p1.x + p2.x) / 2, (p1.y + p2.y) / 2 - 8);
             }
 
-            // Path/Area tool: preview line to cursor
-            if (activeTool === 'area' && Canvas.pathPreview.length > 0) {
+            if ((activeTool === 'area' || activeTool === 'fence') && Canvas.pathPreview.length > 0) {
                 Canvas.render();
                 const ctx = Canvas.canvas.getContext('2d');
                 const last = Canvas.pathPreview[Canvas.pathPreview.length - 1];
                 const p1 = Canvas.w2s(last.x, last.y);
                 const p2 = Canvas.w2s(snapped.x, snapped.y);
                 ctx.setLineDash([6, 4]);
-                ctx.strokeStyle = '#6366f188';
+                ctx.strokeStyle = activeTool === 'fence' ? '#8B451388' : '#6366f188';
                 ctx.lineWidth = 1.5;
                 ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
                 ctx.setLineDash([]);
@@ -461,8 +540,12 @@ const Tools = (() => {
             if (drag.type === 'groundVertex') {
                 State.notifyChange();
             }
+            if (drag.type === 'areaVertex') {
+                State.notifyChange();
+                const obj = State.activeSite?.objects.find(o => o.id === drag.objId);
+                if (obj) UI.showProperties(obj);
+            }
             if (drag.type === 'rectSelect') {
-                // Select objects within rectangle
                 const site = State.activeSite;
                 const r = Canvas.selectionRect;
                 if (site && r) {
@@ -511,6 +594,19 @@ const Tools = (() => {
     function onKeyDown(e) {
         if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
 
+        // Number keys 1-0 for quick template placement
+        if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+            const numKeys = ['1','2','3','4','5','6','7','8','9','0'];
+            const numIdx = numKeys.indexOf(e.key);
+            if (numIdx >= 0) {
+                const site = State.activeSite;
+                if (site && site.templates && site.templates[numIdx]) {
+                    setPendingTemplate(site.templates[numIdx]);
+                }
+                return;
+            }
+        }
+
         switch (e.key) {
             case 'v': case 'V': setTool('select'); break;
             case 'h': case 'H': setTool('pan'); break;
@@ -518,11 +614,26 @@ const Tools = (() => {
             case 'a': case 'A': setTool('area'); break;
             case 't': case 'T': setTool('text'); break;
             case 'm': case 'M': setTool('measure'); break;
+            case 'f': case 'F': setTool('fence'); break;
+            case 'F2':
+                // Rename selected object
+                if (Canvas.selectionCount === 1) {
+                    const sel = State.activeSite?.objects.find(o => o.id === Canvas.selectedId);
+                    if (sel) {
+                        const newName = prompt(I18n.t('props.name') + ':', sel.name);
+                        if (newName && newName.trim()) {
+                            State.updateObject(sel.id, { name: newName.trim() });
+                            Canvas.render();
+                            UI.showProperties(State.activeSite.objects.find(o => o.id === sel.id));
+                        }
+                    }
+                }
+                break;
             case 'Escape':
                 if (activeTool === 'ground') {
                     Canvas.groundPreview = [];
                     setTool('select');
-                } else if (activeTool === 'area') {
+                } else if (activeTool === 'area' || activeTool === 'fence') {
                     Canvas.pathPreview = [];
                     setTool('select');
                 } else if (activeTool === 'place' || activeTool === 'text') {
@@ -536,9 +647,12 @@ const Tools = (() => {
             case 'Enter':
                 if (activeTool === 'ground') finishGround(State.activeSite);
                 if (activeTool === 'area') finishArea(State.activeSite);
+                if (activeTool === 'fence') finishFence(State.activeSite);
                 break;
             case 'Delete':
             case 'Backspace':
+            case 'x': case 'X':
+                if ((e.key === 'x' || e.key === 'X') && (e.ctrlKey || e.metaKey)) break; // don't intercept Ctrl+X
                 if (Canvas.selectionCount > 0) {
                     [...Canvas.selectedIds].forEach(id => State.removeObject(id));
                     Canvas.clearSelection();
@@ -576,14 +690,36 @@ const Tools = (() => {
         const site = State.activeSite;
         if (!site) return;
 
-        // Check ground vertex right-click (to delete/add)
+        // Check area/fence vertex right-click (for selected object)
+        if (Canvas.selectionCount === 1) {
+            const sel = site.objects.find(o => o.id === Canvas.selectedId);
+            if (sel && sel.type === 'area' && sel.points) {
+                const avi = findAreaVertex(world, sel);
+                if (avi >= 0) {
+                    UI.showAreaVertexMenu(e.clientX, e.clientY, sel, avi);
+                    return;
+                }
+                const aei = findAreaEdge(world, sel);
+                if (aei >= 0) {
+                    UI.showAreaEdgeMenu(e.clientX, e.clientY, sel, aei, snapWorld(world));
+                    return;
+                }
+            }
+            if (sel && sel.type === 'fence' && sel.points) {
+                const fvi = findFenceVertex(world, sel);
+                if (fvi >= 0) {
+                    UI.showFenceVertexMenu(e.clientX, e.clientY, sel, fvi);
+                    return;
+                }
+            }
+        }
+
+        // Check ground vertex right-click
         const vi = findGroundVertex(world, site);
         if (vi >= 0) {
             UI.showGroundVertexMenu(e.clientX, e.clientY, vi);
             return;
         }
-
-        // Check ground edge right-click (to add vertex)
         const ei = findGroundEdge(world, site);
         if (ei >= 0) {
             UI.showGroundEdgeMenu(e.clientX, e.clientY, ei, snapWorld(world));
@@ -601,6 +737,7 @@ const Tools = (() => {
     function onDblClick(e) {
         if (activeTool === 'ground') { finishGround(State.activeSite); return; }
         if (activeTool === 'area') { finishArea(State.activeSite); return; }
+        if (activeTool === 'fence') { finishFence(State.activeSite); return; }
         const world = getMouseWorld(e);
         const site = State.activeSite;
         if (!site) return;
