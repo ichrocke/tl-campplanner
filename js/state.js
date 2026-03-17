@@ -159,6 +159,10 @@ const State = (() => {
                 labelSize: template.labelSize || 0,
                 lineWidth: template.lineWidth || 0,
                 ropeWidth: template.ropeWidth || 0,
+                entranceSide: template.entranceSide || 'none',
+                descColor: template.descColor || '',
+                descSize: template.descSize || 0,
+                groupId: template.groupId || '',
             };
             if (template.type === 'area') {
                 obj.texture = template.texture || 'solid';

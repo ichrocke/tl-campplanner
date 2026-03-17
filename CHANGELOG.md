@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.3.0] - 2026-03-17
+
+### Added
+- **Color palette**: Floating color swatch panel (6 default colors, up to 10). Right-click swatches to change color, + to add, x to remove
+- **Paint tool** (P): Select a color from the palette and click objects to recolor them
+- **Object grouping**: Select multiple objects and group via Ctrl+G or "Group" button. Click one grouped object to select all. Ungroup with Ctrl+Shift+G
+- **Tent entrance markers**: Green triangle marker on tent objects, configurable side (top/right/bottom/left) in properties
+- **Multiline descriptions**: Object descriptions now support multiple lines with configurable color and text size
+- **Multiline text fields**: Text tool and text properties now use textarea for multiline text
+- **Export reminder**: Browser shows a reminder to export data when closing/refreshing the page
+- **Donate hint in print dialog**: Small PayPal link shown in print settings
+
+### Fixed
+- Sidebar scrolling: Both palette and placed objects list now properly scroll with many items
+
 ## [2.2.0] - 2026-03-16
 
 ### Added

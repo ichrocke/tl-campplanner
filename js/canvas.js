@@ -599,6 +599,25 @@ const Canvas = (() => {
             ctx.globalAlpha = 1;
         }
 
+        // Entrance marker
+        if (obj.entranceSide && obj.entranceSide !== 'none') {
+            const es = obj.entranceSide;
+            const ew = Math.min(w, h) * 0.3;
+            const eh = 4;
+            ctx.fillStyle = '#16a34a';
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1;
+            if (es === 'top') {
+                ctx.beginPath(); ctx.moveTo(-ew/2, -h/2); ctx.lineTo(0, -h/2 - eh); ctx.lineTo(ew/2, -h/2); ctx.fill(); ctx.stroke();
+            } else if (es === 'bottom') {
+                ctx.beginPath(); ctx.moveTo(-ew/2, h/2); ctx.lineTo(0, h/2 + eh); ctx.lineTo(ew/2, h/2); ctx.fill(); ctx.stroke();
+            } else if (es === 'left') {
+                ctx.beginPath(); ctx.moveTo(-w/2, -ew/2); ctx.lineTo(-w/2 - eh, 0); ctx.lineTo(-w/2, ew/2); ctx.fill(); ctx.stroke();
+            } else if (es === 'right') {
+                ctx.beginPath(); ctx.moveTo(w/2, -ew/2); ctx.lineTo(w/2 + eh, 0); ctx.lineTo(w/2, ew/2); ctx.fill(); ctx.stroke();
+            }
+        }
+
         // Name label – if object too small, render above instead of inside
         const fontSize = Math.max(9, Math.min(13, z * 0.4)) * fs;
         ctx.font = `600 ${fontSize}px sans-serif`;
@@ -623,15 +642,19 @@ const Canvas = (() => {
             ctx.fillText(`${obj.width}\u00d7${obj.height}m`, 0, h / 2 + 3);
         }
 
-        // Description (free text) below dimensions
+        // Description (free text, multiline) below dimensions
         if (obj.description) {
-            const descFs = Math.max(7, fontSize - 2);
+            const descFs = obj.descSize ? Math.max(6, obj.descSize * z * 0.4) : Math.max(7, fontSize - 2);
             ctx.font = `italic ${descFs}px sans-serif`;
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = obj.descColor || '#94a3b8';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'top';
-            const descY = fitsInside ? fontSize * 0.55 + descFs + 1 : h / 2 + 3 + descFs + 2;
-            ctx.fillText(obj.description, 0, descY - descFs);
+            let descY = fitsInside ? fontSize * 0.55 + descFs + 1 : h / 2 + 3 + descFs + 2;
+            const lines = obj.description.split('\n');
+            lines.forEach(line => {
+                ctx.fillText(line, 0, descY - descFs);
+                descY += descFs + 1;
+            });
         }
 
         // Selection / hover
@@ -820,25 +843,36 @@ const Canvas = (() => {
         ctx.translate(pos.x, pos.y);
         ctx.rotate((obj.rotation || 0) * Math.PI / 180);
 
-        ctx.font = `bold ${Math.max(8, fontSize)}px sans-serif`;
+        const fs = Math.max(8, fontSize);
+        ctx.font = `bold ${fs}px sans-serif`;
         ctx.fillStyle = obj.color || '#1a1a2e';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(obj.text || obj.name || 'Text', 0, 0);
+        const textContent = obj.text || obj.name || 'Text';
+        const textLines = textContent.split('\n');
+        const totalH = textLines.length * fs * 1.2;
+        let ty = -(totalH / 2) + fs * 0.6;
+        textLines.forEach(line => {
+            ctx.fillText(line, 0, ty);
+            ty += fs * 1.2;
+        });
 
         if (isSel) {
-            const tw = ctx.measureText(obj.text || obj.name || 'Text').width;
+            let maxW = 0;
+            textLines.forEach(l => { maxW = Math.max(maxW, ctx.measureText(l).width); });
+            const tw = maxW;
             ctx.strokeStyle = '#2563eb';
             ctx.lineWidth = 1.5;
             ctx.setLineDash([4, 3]);
-            ctx.strokeRect(-tw / 2 - 4, -fontSize / 2 - 2, tw + 8, fontSize + 4);
+            ctx.strokeRect(-tw / 2 - 4, -totalH / 2 - 2, tw + 8, totalH + 4);
             ctx.setLineDash([]);
         } else if (isHov) {
-            const tw = ctx.measureText(obj.text || obj.name || 'Text').width;
+            let maxW = 0;
+            textLines.forEach(l => { maxW = Math.max(maxW, ctx.measureText(l).width); });
             ctx.strokeStyle = '#2563eb55';
             ctx.lineWidth = 1;
             ctx.setLineDash([4, 3]);
-            ctx.strokeRect(-tw / 2 - 4, -fontSize / 2 - 2, tw + 8, fontSize + 4);
+            ctx.strokeRect(-maxW / 2 - 4, -totalH / 2 - 2, maxW + 8, totalH + 4);
             ctx.setLineDash([]);
         }
 

@@ -215,5 +215,21 @@
   "btn.newFolder": "Neuer Ordner",
   "btn.newFolderPrompt": "Ordnername:",
   "modal.print.treasure": "Schatzkarten-Stil",
-  "msg.copyTemplates": "Objekt-Vorlagen und Ordner vom aktuellen Zeltplatz uebernehmen?"
+  "msg.copyTemplates": "Objekt-Vorlagen und Ordner vom aktuellen Zeltplatz uebernehmen?",
+  "tool.paint": "Einfärben",
+  "tool.paint.title": "Einfärben (P)",
+  "hint.paint": "Auf Objekte klicken um die ausgewählte Farbe anzuwenden",
+  "ctx.group": "Gruppieren",
+  "ctx.ungroup": "Gruppierung aufheben",
+  "msg.exportReminder": "Tipp: Exportiere deine Daten regelmäßig um Datenverlust zu vermeiden!",
+  "props.descColor": "Beschreibungsfarbe",
+  "props.descSize": "Beschreibungsgröße",
+  "props.entrance": "Eingang",
+  "props.entranceSide": "Eingangsseite",
+  "props.entranceSide.none": "Keine",
+  "props.entranceSide.top": "Oben",
+  "props.entranceSide.right": "Rechts",
+  "props.entranceSide.bottom": "Unten",
+  "props.entranceSide.left": "Links",
+  "modal.print.donate": "Wenn dir der Zeltplaner gefällt, freue ich mich über eine kleine Unterstützung!"
 }

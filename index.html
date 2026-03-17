@@ -122,6 +122,15 @@
                     </button>
                 </div>
 
+                <!-- Color palette -->
+                <div id="color-palette">
+                    <button data-tool="paint" class="tool-btn color-paint-btn" data-i18n-title="tool.paint.title">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><path d="M11 1.5l3.5 3.5-9 9H2v-3.5l9-9z" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M9 3.5l3.5 3.5" stroke="currentColor" stroke-width="1"/></svg>
+                    </button>
+                    <div id="color-swatches"></div>
+                    <button id="btn-add-color" class="color-add-btn" title="+">+</button>
+                </div>
+
                 <div id="canvas-hint" class="canvas-hint"></div>
             </div>
 
@@ -306,9 +315,13 @@
                     </select>
                 </label>
             </div>
+            <div class="print-donate-hint">
+                <span data-i18n="modal.print.donate">If you like the camp planner, I would appreciate a small support!</span>
+                <a href="https://paypal.me/marc85444" target="_blank" rel="noopener" class="donate-link-small">PayPal &#9749;</a>
+            </div>
             <div class="modal-actions">
-                <button id="print-cancel" class="btn-secondary" data-i18n="modal.print.cancel">Abbrechen</button>
-                <button id="print-go" class="btn-primary" data-i18n="modal.print.export">Exportieren</button>
+                <button id="print-cancel" class="btn-secondary" data-i18n="modal.print.cancel">Cancel</button>
+                <button id="print-go" class="btn-primary" data-i18n="modal.print.export">Export</button>
             </div>
         </div>
 
@@ -326,7 +339,7 @@
         <div id="modal-text" class="modal hidden">
             <h3 data-i18n="modal.text.title">Textfeld</h3>
             <div class="modal-body">
-                <label><span data-i18n="modal.text.text">Text</span> <input type="text" id="text-input" value="Beschriftung"></label>
+                <label><span data-i18n="modal.text.text">Text</span> <textarea id="text-input" rows="3" style="resize:vertical;font-family:var(--font)">Label</textarea></label>
                 <label><span data-i18n="modal.text.fontSize">Schriftgröße (m)</span> <input type="number" id="text-size" value="1" min="0.2" step="0.1"></label>
                 <label><span data-i18n="modal.text.color">Farbe</span> <input type="color" id="text-color" value="#1a1a2e"></label>
             </div>

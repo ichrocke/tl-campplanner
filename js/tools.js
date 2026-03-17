@@ -22,7 +22,7 @@ const Tools = (() => {
         if (name !== 'place') pendingTemplate = null;
         updateHint();
         UI.updateToolButtons(name);
-        const crosshairTools = ['place', 'area', 'text', 'fence'];
+        const crosshairTools = ['place', 'area', 'text', 'fence', 'paint'];
         Canvas.canvas.style.cursor = crosshairTools.includes(name) ? 'crosshair' : 'default';
         Canvas.render();
     }
@@ -36,6 +36,7 @@ const Tools = (() => {
             text: I18n.t('hint.text'),
             measure: I18n.t('hint.measure'),
             fence: I18n.t('hint.fence'),
+            paint: I18n.t('hint.paint'),
             place: pendingTemplate ? I18n.t('hint.place', { name: pendingTemplate.name }) : '',
         };
         UI.showHint(hints[activeTool] || '');
@@ -167,6 +168,7 @@ const Tools = (() => {
             case 'fence': onFenceClick(snapped, site); break;
             case 'text': onTextClick(snapped, site); break;
             case 'measure': drag = { type: 'measure', x1: snapped.x, y1: snapped.y, x2: snapped.x, y2: snapped.y }; break;
+            case 'paint': onPaintClick(world, site); break;
             case 'place': onPlaceClick(snapped, site); break;
         }
     }
@@ -247,7 +249,15 @@ const Tools = (() => {
                 // Clicking on already-selected object in multi-selection: start move
             } else {
                 Canvas.selectedId = hit.id;
-                UI.showProperties(hit);
+                // Auto-select group members
+                if (hit.groupId) {
+                    site.objects.forEach(o => { if (o.groupId === hit.groupId) Canvas.addToSelection(o.id); });
+                }
+                if (Canvas.selectionCount === 1) {
+                    UI.showProperties(hit);
+                } else {
+                    UI.showMultiProperties();
+                }
             }
             drag = {
                 type: 'move',
@@ -381,6 +391,18 @@ const Tools = (() => {
         }
         Canvas.pathPreview = [];
         setTool('select');
+    }
+
+    // --- Paint tool ---
+    function onPaintClick(world, site) {
+        const hit = [...site.objects].reverse().find(o => Canvas.pointInObj(world.x, world.y, o));
+        if (hit) {
+            const color = UI.getActiveColor();
+            if (color) {
+                State.updateObject(hit.id, { color: color });
+                Canvas.render();
+            }
+        }
     }
 
     // --- Text tool ---
@@ -712,11 +734,11 @@ const Tools = (() => {
         switch (e.key) {
             case 'v': case 'V': setTool('select'); break;
             case 'h': case 'H': setTool('pan'); break;
-            case 'g': case 'G': setTool('ground'); break;
             case 'a': case 'A': setTool('area'); break;
             case 't': case 'T': setTool('text'); break;
             case 'm': case 'M': setTool('measure'); break;
             case 'f': case 'F': setTool('fence'); break;
+            case 'p': case 'P': setTool('paint'); break;
             case 'F2':
                 // Rename selected object
                 if (Canvas.selectionCount === 1) {
@@ -777,6 +799,33 @@ const Tools = (() => {
                 break;
             case 'z':
                 if (e.ctrlKey || e.metaKey) { e.preventDefault(); State.undo(); Canvas.render(); }
+                break;
+            case 'g':
+                if ((e.ctrlKey || e.metaKey) && !e.shiftKey && Canvas.selectionCount > 1) {
+                    e.preventDefault();
+                    // Group selected objects
+                    const groupId = State.generateId();
+                    [...Canvas.selectedIds].forEach(id => State.updateObject(id, { groupId }));
+                    Canvas.render();
+                    break;
+                }
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey && Canvas.selectionCount >= 1) {
+                    e.preventDefault();
+                    // Ungroup
+                    [...Canvas.selectedIds].forEach(id => State.updateObject(id, { groupId: '' }));
+                    Canvas.render();
+                    break;
+                }
+                if (!e.ctrlKey && !e.metaKey) { setTool('ground'); }
+                break;
+            case 'G':
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
+                    e.preventDefault();
+                    [...Canvas.selectedIds].forEach(id => State.updateObject(id, { groupId: '' }));
+                    Canvas.render();
+                    break;
+                }
+                if (!e.ctrlKey && !e.metaKey) { setTool('ground'); }
                 break;
             case 'd':
                 if ((e.ctrlKey || e.metaKey) && Canvas.selectionCount > 0) {

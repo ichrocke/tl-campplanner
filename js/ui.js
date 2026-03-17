@@ -5,6 +5,9 @@
 const UI = (() => {
     let contextMenuEl = null;
 
+    let _savedColors = ['#4a90d9', '#ea580c', '#22c55e', '#9333ea', '#ef4444', '#f59e0b'];
+    let _activeColorIdx = 0;
+
     function init() {
         buildPalette();
         buildTabs();
@@ -16,6 +19,48 @@ const UI = (() => {
         bindPaletteToggle();
         bindFloatingTools();
         bindLangFlags();
+        buildColorSwatches();
+    }
+
+    function getActiveColor() { return _savedColors[_activeColorIdx] || _savedColors[0]; }
+
+    function buildColorSwatches() {
+        const container = document.getElementById('color-swatches');
+        container.innerHTML = '';
+        _savedColors.forEach((color, i) => {
+            const el = document.createElement('div');
+            el.className = 'color-swatch' + (i === _activeColorIdx ? ' active' : '');
+            el.style.background = color;
+            el.innerHTML = '<button class="color-swatch-del">&times;</button>';
+            el.addEventListener('click', (e) => {
+                if (e.target.classList.contains('color-swatch-del')) {
+                    if (_savedColors.length > 1) {
+                        _savedColors.splice(i, 1);
+                        if (_activeColorIdx >= _savedColors.length) _activeColorIdx = _savedColors.length - 1;
+                        buildColorSwatches();
+                    }
+                    return;
+                }
+                _activeColorIdx = i;
+                buildColorSwatches();
+            });
+            // Right-click to change color
+            el.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                const input = document.createElement('input');
+                input.type = 'color';
+                input.value = color;
+                input.style.position = 'fixed'; input.style.opacity = '0';
+                document.body.appendChild(input);
+                input.addEventListener('input', () => {
+                    _savedColors[i] = input.value;
+                    buildColorSwatches();
+                });
+                input.addEventListener('change', () => { input.remove(); });
+                input.click();
+            });
+            container.appendChild(el);
+        });
     }
 
     // --- Floating tool palette drag ---
@@ -49,6 +94,27 @@ const UI = (() => {
         // Bind tool buttons inside floating panel
         panel.querySelectorAll('.tool-btn[data-tool]').forEach(btn => {
             btn.addEventListener('click', () => Tools.setTool(btn.dataset.tool));
+        });
+
+        // Add color button
+        document.getElementById('btn-add-color').addEventListener('click', () => {
+            if (_savedColors.length >= 10) return;
+            const input = document.createElement('input');
+            input.type = 'color'; input.value = '#888888';
+            input.style.position = 'fixed'; input.style.opacity = '0';
+            document.body.appendChild(input);
+            input.addEventListener('input', () => {
+                _savedColors.push(input.value);
+                _activeColorIdx = _savedColors.length - 1;
+                buildColorSwatches();
+            });
+            input.addEventListener('change', () => { input.remove(); });
+            input.click();
+        });
+
+        // Paint tool button
+        document.getElementById('color-palette').querySelector('.color-paint-btn').addEventListener('click', () => {
+            Tools.setTool('paint');
         });
 
         // Zoom buttons
@@ -546,10 +612,14 @@ const UI = (() => {
             ${obj.type === 'guideline'
                 ? `<div style="font-size:14px;font-weight:700;color:var(--primary);text-align:center;padding:4px 0">${obj.name}</div>`
                 : `<label>${I18n.t('props.name')} <input type="text" id="prop-name" value="${obj.name}"></label>
-                   <label>${I18n.t('props.description')} <input type="text" id="prop-desc" value="${descVal}" placeholder="${I18n.t('props.descPlaceholder')}"></label>`
+                   <label>${I18n.t('props.description')} <textarea id="prop-desc" rows="2" placeholder="${I18n.t('props.descPlaceholder')}" style="resize:vertical;font-family:var(--font);font-size:12px">${descVal}</textarea></label>
+                   <div class="prop-grid">
+                       <label>${I18n.t('props.descColor')} <input type="color" id="prop-desc-color" value="${obj.descColor || '#94a3b8'}"></label>
+                       <label>${I18n.t('props.descSize')} <input type="number" id="prop-desc-size" value="${obj.descSize || 0}" min="0" max="5" step="0.1" placeholder="auto"></label>
+                   </div>`
             }`;
         if (obj.type === 'text') {
-            html += `<label>${I18n.t('props.textSection')} <input type="text" id="prop-text" value="${obj.text || ''}"></label>`;
+            html += `<label>${I18n.t('props.textSection')} <textarea id="prop-text" rows="2" style="resize:vertical;font-family:var(--font);font-size:12px">${(obj.text || '').replace(/</g, '&lt;')}</textarea></label>`;
         }
         if (obj.type !== 'bgimage') {
             html += `<label>${I18n.t('props.color')} <input type="color" id="prop-color" value="${obj.color}"></label>`;
@@ -621,6 +691,23 @@ const UI = (() => {
             </div>`;
         }
 
+        // --- Section: Entrance ---
+        if (obj.type === 'tent') {
+            const eSide = obj.entranceSide || 'none';
+            html += `<div class="prop-section">
+                <div class="prop-section-title">${I18n.t('props.entrance')}</div>
+                <label>${I18n.t('props.entranceSide')}
+                    <select id="prop-entrance">
+                        <option value="none" ${eSide === 'none' ? 'selected' : ''}>${I18n.t('props.entranceSide.none')}</option>
+                        <option value="top" ${eSide === 'top' ? 'selected' : ''}>${I18n.t('props.entranceSide.top')}</option>
+                        <option value="right" ${eSide === 'right' ? 'selected' : ''}>${I18n.t('props.entranceSide.right')}</option>
+                        <option value="bottom" ${eSide === 'bottom' ? 'selected' : ''}>${I18n.t('props.entranceSide.bottom')}</option>
+                        <option value="left" ${eSide === 'left' ? 'selected' : ''}>${I18n.t('props.entranceSide.left')}</option>
+                    </select>
+                </label>
+            </div>`;
+        }
+
         // --- Section: Guy ropes ---
         if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'bgimage' && obj.type !== 'guideline') {
             const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
@@ -673,11 +760,30 @@ const UI = (() => {
         };
 
         bind('prop-name', 'name');
-        bind('prop-desc', 'description');
-        bind('prop-text', 'text');
+        // Description textarea (multiline)
+        const descEl = document.getElementById('prop-desc');
+        if (descEl) {
+            descEl.addEventListener('input', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                State.updateObject(obj.id, { description: descEl.value });
+                Canvas.render();
+                buildPlacedList();
+            });
+        }
+        const textEl = document.getElementById('prop-text');
+        if (textEl) {
+            textEl.addEventListener('input', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                State.updateObject(obj.id, { text: textEl.value });
+                Canvas.render();
+            });
+        }
         bind('prop-fontsize', 'fontSize', parseFloat);
         bind('prop-fenceheight', 'fenceHeight', parseFloat);
         bind('prop-texture', 'texture');
+        bind('prop-desc-color', 'descColor');
+        bind('prop-desc-size', 'descSize', parseFloat);
+        bind('prop-entrance', 'entranceSide');
         // Object opacity slider
         const objOpSlider = document.getElementById('prop-obj-opacity');
         if (objOpSlider) {
@@ -820,9 +926,23 @@ const UI = (() => {
                 <strong>${I18n.t('props.multiSelected', { count: count })}</strong>
             </div>
             <div class="prop-actions">
+                <button class="btn-duplicate" id="prop-multi-group">${I18n.t('ctx.group')}</button>
+                <button class="btn-duplicate" id="prop-multi-ungroup">${I18n.t('ctx.ungroup')}</button>
+            </div>
+            <div class="prop-actions">
                 <button class="btn-duplicate" id="prop-multi-dup">${I18n.t('props.duplicateAll')}</button>
                 <button class="btn-danger" id="prop-multi-del">${I18n.t('props.deleteAll')}</button>
             </div>`;
+        document.getElementById('prop-multi-group').addEventListener('click', () => {
+            const groupId = State.generateId();
+            [...Canvas.selectedIds].forEach(id => State.updateObject(id, { groupId }));
+            showMultiProperties();
+            Canvas.render();
+        });
+        document.getElementById('prop-multi-ungroup').addEventListener('click', () => {
+            [...Canvas.selectedIds].forEach(id => State.updateObject(id, { groupId: '' }));
+            Canvas.render();
+        });
         document.getElementById('prop-multi-dup').addEventListener('click', () => {
             const newIds = [];
             [...Canvas.selectedIds].forEach(id => {
@@ -1129,7 +1249,7 @@ const UI = (() => {
 
     return {
         init, buildTabs, buildPalette, buildPlacedList, syncSettings, translateUI,
-        showProperties, showGroundProperties, hideProperties,
+        showProperties, showGroundProperties, hideProperties, getActiveColor,
         updateToolButtons, updateCoords, updateZoom, showHint,
         showContextMenu, showGroundVertexMenu, showGroundEdgeMenu,
         showAreaVertexMenu, showAreaEdgeMenu, showFenceVertexMenu,

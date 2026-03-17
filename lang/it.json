@@ -215,5 +215,21 @@
   "btn.newFolder": "Nuova cartella",
   "btn.newFolderPrompt": "Nome cartella:",
   "modal.print.treasure": "Stile mappa del tesoro",
-  "msg.copyTemplates": "Copiare modelli e cartelle dal campeggio attuale?"
+  "msg.copyTemplates": "Copiare modelli e cartelle dal campeggio attuale?",
+  "tool.paint": "Colorare",
+  "tool.paint.title": "Colorare (P)",
+  "hint.paint": "Clicca sugli oggetti per applicare il colore selezionato",
+  "ctx.group": "Raggruppa",
+  "ctx.ungroup": "Separa",
+  "msg.exportReminder": "Consiglio: Esporta i tuoi dati regolarmente per evitare la perdita di dati!",
+  "props.descColor": "Colore descrizione",
+  "props.descSize": "Dimensione descrizione",
+  "props.entrance": "Ingresso",
+  "props.entranceSide": "Lato ingresso",
+  "props.entranceSide.none": "Nessuno",
+  "props.entranceSide.top": "Sopra",
+  "props.entranceSide.right": "Destra",
+  "props.entranceSide.bottom": "Sotto",
+  "props.entranceSide.left": "Sinistra",
+  "modal.print.donate": "Se ti piace il pianificatore, apprezzerei un piccolo supporto!"
 }

@@ -215,5 +215,21 @@
   "btn.newFolder": "New folder",
   "btn.newFolderPrompt": "Folder name:",
   "modal.print.treasure": "Treasure map style",
-  "msg.copyTemplates": "Copy object templates and folders from current camp site?"
+  "msg.copyTemplates": "Copy object templates and folders from current camp site?",
+  "tool.paint": "Paint",
+  "tool.paint.title": "Paint color (P)",
+  "hint.paint": "Click on objects to apply the selected color",
+  "ctx.group": "Group",
+  "ctx.ungroup": "Ungroup",
+  "msg.exportReminder": "Tip: Export your data regularly to avoid data loss!",
+  "props.descColor": "Description color",
+  "props.descSize": "Description size",
+  "props.entrance": "Entrance",
+  "props.entranceSide": "Entrance side",
+  "props.entranceSide.none": "None",
+  "props.entranceSide.top": "Top",
+  "props.entranceSide.right": "Right",
+  "props.entranceSide.bottom": "Bottom",
+  "props.entranceSide.left": "Left",
+  "modal.print.donate": "If you like the camp planner, I would appreciate a small support!"
 }
