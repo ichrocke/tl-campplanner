@@ -76,7 +76,8 @@ const IO = (() => {
             mmPerMeter = 1000 / parseFloat(scaleOption);
         }
 
-        const pxPerMm = 3.78;
+        // Higher resolution for image export (300 DPI), screen res for print
+        const pxPerMm = (format === 'png' || format === 'jpeg') ? 11.81 : 3.78; // 300 DPI vs 96 DPI
         const canvasW = Math.round(paper.w * pxPerMm);
         const canvasH = Math.round(paper.h * pxPerMm);
         const ppm = mmPerMeter * pxPerMm;
