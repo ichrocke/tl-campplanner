@@ -232,5 +232,7 @@
   "props.entranceSide.bottom": "Sotto",
   "props.entranceSide.left": "Sinistra",
   "modal.print.donate": "Se ti piace il pianificatore, apprezzerei un piccolo supporto!",
-  "props.groupName": "Nome del gruppo"
+  "props.groupName": "Nome del gruppo",
+  "modal.customObject.createOnly": "Crea",
+  "modal.settings.autosave": "Salvataggio automatico"
 }

@@ -43,13 +43,12 @@
     // Auto-save to localStorage on state change (debounced)
     let _saveTimer = null;
     function autoSave() {
+        if (localStorage.getItem('zeltplaner_autosave_enabled') === '0') return;
         clearTimeout(_saveTimer);
         _saveTimer = setTimeout(() => {
             try {
                 localStorage.setItem(STORAGE_KEY, State.exportJSON());
-            } catch (e) {
-                // localStorage full (e.g. too many large images) – silently ignore
-            }
+            } catch (e) {}
         }, 500);
     }
 

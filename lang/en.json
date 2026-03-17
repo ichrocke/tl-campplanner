@@ -232,5 +232,7 @@
   "props.entranceSide.bottom": "Bottom",
   "props.entranceSide.left": "Left",
   "modal.print.donate": "If you like the camp planner, I would appreciate a small support!",
-  "props.groupName": "Group name"
+  "props.groupName": "Group name",
+  "modal.customObject.createOnly": "Create",
+  "modal.settings.autosave": "Auto-save"
 }

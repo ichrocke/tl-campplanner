@@ -232,5 +232,7 @@
   "props.entranceSide.bottom": "Unten",
   "props.entranceSide.left": "Links",
   "modal.print.donate": "Wenn dir der Zeltplaner gefällt, freue ich mich über eine kleine Unterstützung!",
-  "props.groupName": "Gruppenname"
+  "props.groupName": "Gruppenname",
+  "modal.customObject.createOnly": "Erstellen",
+  "modal.settings.autosave": "Auto-Speichern"
 }

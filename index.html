@@ -182,8 +182,9 @@
                 <label><span data-i18n="modal.customObject.color">Farbe</span> <input type="color" id="co-color" value="#4a90d9"></label>
             </div>
             <div class="modal-actions">
-                <button id="co-cancel" class="btn-secondary" data-i18n="modal.customObject.cancel">Abbrechen</button>
-                <button id="co-create" class="btn-primary" data-i18n="modal.customObject.create">Erstellen &amp; Platzieren</button>
+                <button id="co-cancel" class="btn-secondary" data-i18n="modal.customObject.cancel">Cancel</button>
+                <button id="co-create-only" class="btn-secondary" data-i18n="modal.customObject.createOnly">Create</button>
+                <button id="co-create" class="btn-primary" data-i18n="modal.customObject.create">Create &amp; Place</button>
             </div>
         </div>
 
@@ -206,8 +207,9 @@
                         <label><span data-i18n="modal.settings.minDistance">Mindestabstand (m)</span>
                             <input type="number" id="min-distance" value="2" min="0" step="0.5">
                         </label>
+                        <label><input type="checkbox" id="autosave-toggle" checked> <span data-i18n="modal.settings.autosave">Auto-save</span></label>
                         <div class="settings-divider"></div>
-                        <h4 class="settings-subtitle" data-i18n="modal.settings.display">Darstellung</h4>
+                        <h4 class="settings-subtitle" data-i18n="modal.settings.display">Display</h4>
                         <label><span data-i18n="modal.settings.fontSize">Textgröße (Faktor)</span>
                             <input type="number" id="set-fontscale" value="1" min="0.3" max="3" step="0.1">
                         </label>

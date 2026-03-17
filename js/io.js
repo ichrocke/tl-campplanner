@@ -4,9 +4,9 @@
 
 const IO = (() => {
 
-    // Preload compass image
+    // Preload compass image (handle offline mode)
     const _compassImg = new Image();
-    _compassImg.src = 'img/compass.png';
+    try { _compassImg.src = 'img/compass.png'; } catch (e) {}
 
     function exportFile() {
         const json = State.exportJSON();
@@ -81,7 +81,20 @@ const IO = (() => {
         const canvasH = Math.round(paper.h * pxPerMm);
         const ppm = mmPerMeter * pxPerMm;
 
-        // Create offscreen canvas
+        // Calculate how many pages we need for fixed scale
+        const contentPxW = bounds.width * ppm;
+        const contentPxH = bounds.height * ppm;
+        const usableW = canvasW - 2 * margin * pxPerMm;
+        const usableH = canvasH - 2 * margin * pxPerMm - (title ? 20 : 0);
+        const pagesX = scaleOption === 'auto' ? 1 : Math.max(1, Math.ceil(contentPxW / usableW));
+        const pagesY = scaleOption === 'auto' ? 1 : Math.max(1, Math.ceil(contentPxH / usableH));
+
+        const mapPages = [];
+
+        for (let py = 0; py < pagesY; py++) {
+        for (let px = 0; px < pagesX; px++) {
+
+        // Create offscreen canvas for this page
         const pc = document.createElement('canvas');
         pc.width = canvasW;
         pc.height = canvasH;
@@ -105,8 +118,19 @@ const IO = (() => {
             pctx.fillText(title, ox, margin * pxPerMm + 14);
         }
 
+        const pageOffX = px * usableW;
+        const pageOffY = py * usableH;
         function wp(wx, wy) {
-            return { x: ox + (wx - bounds.minX) * ppm, y: oy + (wy - bounds.minY) * ppm };
+            return { x: ox + (wx - bounds.minX) * ppm - pageOffX, y: oy + (wy - bounds.minY) * ppm - pageOffY };
+        }
+
+        // Page label for multi-page
+        if (pagesX > 1 || pagesY > 1) {
+            pctx.font = `${8 * ds.fontScale}px sans-serif`;
+            pctx.fillStyle = '#999';
+            pctx.textAlign = 'right';
+            pctx.textBaseline = 'top';
+            pctx.fillText(`${px + 1}/${pagesX} \u00d7 ${py + 1}/${pagesY}`, canvasW - margin * pxPerMm, canvasH - margin * pxPerMm + 2);
         }
 
         // Grid
@@ -440,6 +464,10 @@ const IO = (() => {
             applyTreasureMapEffect(pctx, canvasW, canvasH);
         }
 
+        mapPages.push(pc);
+        } // end px loop
+        } // end py loop
+
         // --- Page 2: Object list table ---
         let page2 = null;
         if (showObjList && site.objects.length > 0) {
@@ -501,35 +529,35 @@ const IO = (() => {
         }
 
         // Output based on format
+        const allPages = [...mapPages];
+        if (page2) allPages.push(page2);
+
         if (format === 'png' || format === 'jpeg') {
             const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
             const ext = format;
-            // For image export: combine both pages vertically
-            if (page2) {
+            if (allPages.length > 1) {
                 const combined = document.createElement('canvas');
                 combined.width = canvasW;
-                combined.height = canvasH * 2 + 20;
+                combined.height = canvasH * allPages.length + (allPages.length - 1) * 20;
                 const cc = combined.getContext('2d');
                 cc.fillStyle = '#fff';
                 cc.fillRect(0, 0, combined.width, combined.height);
-                cc.drawImage(pc, 0, 0);
-                cc.drawImage(page2, 0, canvasH + 20);
+                allPages.forEach((p, i) => cc.drawImage(p, 0, i * (canvasH + 20)));
                 const a = document.createElement('a');
                 a.href = combined.toDataURL(mimeType, 0.95);
                 a.download = `${site.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.${ext}`;
                 a.click();
             } else {
                 const a = document.createElement('a');
-                a.href = pc.toDataURL(mimeType, 0.95);
+                a.href = allPages[0].toDataURL(mimeType, 0.95);
                 a.download = `${site.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.${ext}`;
                 a.click();
             }
         } else {
-            // Print via popup window – page 1 (map) + page 2 (object list)
-            const mapUrl = pc.toDataURL('image/png');
-            const listUrl = page2 ? page2.toDataURL('image/png') : null;
+            // Print via popup window
             const win = window.open('', '_blank');
             if (!win) { alert(I18n.t('msg.popupBlocked')); return; }
+            let imgsHtml = allPages.map(p => '<img src="' + p.toDataURL('image/png') + '">').join('\n');
             win.document.write(`<!DOCTYPE html><html><head><title>${title || site.name}</title>
                 <style>
                     @page { size: ${orientation}; margin: 0; }
@@ -537,8 +565,7 @@ const IO = (() => {
                     img { display: block; width: ${paper.w}mm; page-break-after: always; }
                     @media screen { img { width: 100%; max-width: 900px; margin: 10px auto; } }
                 </style></head><body>
-                <img src="${mapUrl}">
-                ${listUrl ? '<img src="' + listUrl + '">' : ''}
+                ${imgsHtml}
                 <script>window.onload=function(){setTimeout(function(){window.print()},300)}<\/script>
                 </body></html>`);
             win.document.close();

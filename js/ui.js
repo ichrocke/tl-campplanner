@@ -662,6 +662,11 @@ const UI = (() => {
             I18n.setLang(e.target.value);
             document.querySelectorAll('.lang-flag').forEach(b => b.classList.toggle('active', b.dataset.lang === e.target.value));
         });
+        // Auto-save toggle
+        document.getElementById('autosave-toggle').addEventListener('change', (e) => {
+            localStorage.setItem('zeltplaner_autosave_enabled', e.target.checked ? '1' : '0');
+        });
+
         // (Background image controls moved to floating toolbar)
     }
 
@@ -677,6 +682,7 @@ const UI = (() => {
         document.getElementById('set-ropescale').value = ds.ropeScale;
         document.getElementById('set-hatchscale').value = ds.hatchScale;
         document.getElementById('lang-select').value = I18n.lang;
+        document.getElementById('autosave-toggle').checked = localStorage.getItem('zeltplaner_autosave_enabled') !== '0';
     }
 
     // --- Properties Panel ---
@@ -1152,16 +1158,25 @@ const UI = (() => {
 
     function bindModals() {
         document.getElementById('co-cancel').addEventListener('click', closeModal);
-        document.getElementById('co-create').addEventListener('click', () => {
-            const template = {
+        function getCustomTemplate() {
+            return {
                 type: document.getElementById('co-type').value,
-                name: document.getElementById('co-name').value || 'Objekt',
+                name: document.getElementById('co-name').value || 'Object',
                 width: parseFloat(document.getElementById('co-width').value) || 2,
                 height: parseFloat(document.getElementById('co-height').value) || 2,
                 shape: document.getElementById('co-shape').value,
                 guyRopeDistance: parseFloat(document.getElementById('co-guyrope').value) || 0,
                 color: document.getElementById('co-color').value,
             };
+        }
+        document.getElementById('co-create-only').addEventListener('click', () => {
+            const template = getCustomTemplate();
+            State.addTemplate(template);
+            buildPalette();
+            closeModal();
+        });
+        document.getElementById('co-create').addEventListener('click', () => {
+            const template = getCustomTemplate();
             State.addTemplate(template);
             buildPalette();
             closeModal();
