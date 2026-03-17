@@ -852,6 +852,19 @@ body {
     -webkit-backdrop-filter: blur(8px);
 }
 
+#color-palette-handle {
+    text-align: center;
+    color: #666;
+    font-size: 10px;
+    letter-spacing: -2px;
+    cursor: grab;
+    padding: 2px 0;
+    line-height: 1;
+    user-select: none;
+}
+
+#color-palette-handle:active { cursor: grabbing; }
+
 #color-palette .color-paint-btn {
     display: flex;
     align-items: center;

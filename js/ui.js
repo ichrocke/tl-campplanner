@@ -96,6 +96,29 @@ const UI = (() => {
             btn.addEventListener('click', () => Tools.setTool(btn.dataset.tool));
         });
 
+        // Color palette drag
+        const cpanel = document.getElementById('color-palette');
+        const chandle = document.getElementById('color-palette-handle');
+        let cDragging = false, cOffX = 0, cOffY = 0;
+        chandle.addEventListener('mousedown', (e) => {
+            cDragging = true;
+            cOffX = e.clientX - cpanel.offsetLeft;
+            cOffY = e.clientY - cpanel.offsetTop;
+            e.preventDefault();
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!cDragging) return;
+            const container = document.getElementById('canvas-container');
+            const rect = container.getBoundingClientRect();
+            let nx = e.clientX - cOffX;
+            let ny = e.clientY - cOffY;
+            nx = Math.max(0, Math.min(rect.width - cpanel.offsetWidth, nx));
+            ny = Math.max(0, Math.min(rect.height - cpanel.offsetHeight, ny));
+            cpanel.style.left = nx + 'px';
+            cpanel.style.top = ny + 'px';
+        });
+        document.addEventListener('mouseup', () => { cDragging = false; });
+
         // Add color button
         document.getElementById('btn-add-color').addEventListener('click', () => {
             if (_savedColors.length >= 10) return;

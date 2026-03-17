@@ -396,7 +396,7 @@ const Tools = (() => {
     // --- Paint tool ---
     function onPaintClick(world, site) {
         const hit = [...site.objects].reverse().find(o => Canvas.pointInObj(world.x, world.y, o));
-        if (hit) {
+        if (hit && hit.type === 'tent') {
             const color = UI.getActiveColor();
             if (color) {
                 State.updateObject(hit.id, { color: color });
