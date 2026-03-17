@@ -388,33 +388,84 @@ const UI = (() => {
         container.dataset.empty = I18n.t('sidebar.noObjects');
         const site = State.activeSite;
         if (!site) return;
+
+        // Group objects by groupId
+        const groups = {};
+        const ungrouped = [];
+        const groupOrder = [];
         site.objects.forEach(obj => {
-            const el = document.createElement('div');
-            el.className = 'placed-item' + (Canvas.isSelected(obj.id) ? ' active' : '');
-            const dims = (obj.type === 'area' || obj.type === 'text' || obj.type === 'fence') ? obj.type : `${obj.width}\u00d7${obj.height}`;
-            const desc = obj.description ? ` - ${obj.description}` : '';
-            el.innerHTML = `
-                <div class="placed-item-color" style="background:${obj.color}"></div>
-                <span class="placed-item-name" title="${obj.name}${desc}">${obj.name}</span>
-                <span class="placed-item-dims">${dims}</span>`;
-            el.addEventListener('click', (e) => {
-                if (e.ctrlKey || e.metaKey) {
-                    Canvas.toggleSelection(obj.id);
-                } else {
-                    Canvas.selectedId = obj.id;
+            if (obj.groupId) {
+                if (!groups[obj.groupId]) {
+                    groups[obj.groupId] = [];
+                    groupOrder.push(obj.groupId);
                 }
-                if (Canvas.selectionCount === 1) {
-                    showProperties(State.activeSite.objects.find(o => o.id === Canvas.selectedId));
-                } else if (Canvas.selectionCount > 1) {
-                    showMultiProperties();
-                } else {
-                    hideProperties();
-                }
+                groups[obj.groupId].push(obj);
+            } else {
+                ungrouped.push(obj);
+            }
+        });
+
+        // Render groups
+        groupOrder.forEach(gid => {
+            const members = groups[gid];
+            const gName = (site.groupNames && site.groupNames[gid]) || I18n.t('ctx.group');
+            const anySelected = members.some(o => Canvas.isSelected(o.id));
+
+            // Group header
+            const gh = document.createElement('div');
+            gh.className = 'placed-group-header' + (anySelected ? ' active' : '');
+            gh.innerHTML = `<span class="placed-group-icon">&#9654;</span> <strong>${gName}</strong> <span class="placed-item-dims">${members.length}</span>`;
+            gh.addEventListener('click', () => {
+                Canvas.selectMultiple(members.map(o => o.id));
+                showMultiProperties();
                 Canvas.render();
                 buildPlacedList();
             });
-            container.appendChild(el);
+            container.appendChild(gh);
+
+            // Group members (indented)
+            members.forEach(obj => {
+                container.appendChild(buildPlacedItem(obj, true));
+            });
         });
+
+        // Render ungrouped
+        ungrouped.forEach(obj => {
+            container.appendChild(buildPlacedItem(obj, false));
+        });
+    }
+
+    function buildPlacedItem(obj, indented) {
+        const el = document.createElement('div');
+        el.className = 'placed-item' + (Canvas.isSelected(obj.id) ? ' active' : '') + (indented ? ' placed-item-indented' : '');
+        const dims = (obj.type === 'area' || obj.type === 'text' || obj.type === 'fence') ? obj.type : `${obj.width}\u00d7${obj.height}`;
+        const desc = obj.description ? ` - ${obj.description.split('\n')[0]}` : '';
+        el.innerHTML = `
+            <div class="placed-item-color" style="background:${obj.color}"></div>
+            <span class="placed-item-name" title="${obj.name}${desc}">${obj.name}</span>
+            <span class="placed-item-dims">${dims}</span>`;
+        el.addEventListener('click', (e) => {
+            if (e.ctrlKey || e.metaKey) {
+                Canvas.toggleSelection(obj.id);
+            } else {
+                Canvas.selectedId = obj.id;
+                // Auto-select group
+                if (obj.groupId) {
+                    const site = State.activeSite;
+                    site.objects.forEach(o => { if (o.groupId === obj.groupId) Canvas.addToSelection(o.id); });
+                }
+            }
+            if (Canvas.selectionCount === 1) {
+                showProperties(State.activeSite.objects.find(o => o.id === Canvas.selectedId));
+            } else if (Canvas.selectionCount > 1) {
+                showMultiProperties();
+            } else {
+                hideProperties();
+            }
+            Canvas.render();
+            buildPlacedList();
+        });
+        return el;
     }
 
     // --- Tabs ---
@@ -951,12 +1002,44 @@ const UI = (() => {
         const panel = document.getElementById('properties');
         const content = document.getElementById('prop-content');
         panel.classList.remove('hidden');
+        const site = State.activeSite;
         const count = Canvas.selectionCount;
-        content.innerHTML = `
-            <div style="text-align:center;padding:8px 0;color:var(--text-secondary);font-size:12px;">
+        const selObjs = site ? site.objects.filter(o => Canvas.isSelected(o.id)) : [];
+
+        // Check if all are in the same group
+        const groupIds = [...new Set(selObjs.map(o => o.groupId).filter(Boolean))];
+        const isGroup = groupIds.length === 1;
+        const groupId = isGroup ? groupIds[0] : '';
+        const groupName = isGroup && site.groupNames ? (site.groupNames[groupId] || '') : '';
+
+        let html = `<div style="text-align:center;padding:8px 0;color:var(--text-secondary);font-size:12px;">
                 <strong>${I18n.t('props.multiSelected', { count: count })}</strong>
+            </div>`;
+
+        // Group name (if grouped)
+        if (isGroup) {
+            html += `<div class="prop-section">
+                <div class="prop-section-title">${I18n.t('ctx.group')}</div>
+                <label>${I18n.t('props.groupName')} <input type="text" id="prop-group-name" value="${groupName}" placeholder="${I18n.t('ctx.group')}..."></label>
+            </div>`;
+        }
+
+        // Group rotation
+        html += `<div class="prop-section">
+            <div class="prop-section-title">${I18n.t('props.rotation')}</div>
+            <div class="prop-row">
+                <input type="number" id="prop-group-rot" value="0" step="15" class="prop-rot-input">&deg;
             </div>
-            <div class="prop-actions">
+            <input type="range" id="prop-group-rot-slider" min="-180" max="180" step="1" value="0" class="rotation-slider">
+            <div class="rotation-presets">
+                <button class="grp-rot-preset" data-rot="0">0&deg;</button>
+                <button class="grp-rot-preset" data-rot="90">90&deg;</button>
+                <button class="grp-rot-preset" data-rot="180">180&deg;</button>
+                <button class="grp-rot-preset" data-rot="-90">-90&deg;</button>
+            </div>
+        </div>`;
+
+        html += `<div class="prop-actions">
                 <button class="btn-duplicate" id="prop-multi-group">${I18n.t('ctx.group')}</button>
                 <button class="btn-duplicate" id="prop-multi-ungroup">${I18n.t('ctx.ungroup')}</button>
             </div>
@@ -964,15 +1047,71 @@ const UI = (() => {
                 <button class="btn-duplicate" id="prop-multi-dup">${I18n.t('props.duplicateAll')}</button>
                 <button class="btn-danger" id="prop-multi-del">${I18n.t('props.deleteAll')}</button>
             </div>`;
+
+        content.innerHTML = html;
+
+        // Group name handler
+        const gnInput = document.getElementById('prop-group-name');
+        if (gnInput) {
+            gnInput.addEventListener('change', () => {
+                if (!site.groupNames) site.groupNames = {};
+                site.groupNames[groupId] = gnInput.value;
+                State.notifyChange(true);
+                buildPlacedList();
+            });
+        }
+
+        // Group rotation handler
+        const origStates = selObjs.map(o => ({ id: o.id, x: o.x, y: o.y, rotation: o.rotation }));
+        let cx = 0, cy = 0;
+        selObjs.forEach(o => { cx += o.x; cy += o.y; });
+        cx /= selObjs.length; cy /= selObjs.length;
+
+        function applyGroupRotation(deg) {
+            const rad = deg * Math.PI / 180;
+            const cos = Math.cos(rad), sin = Math.sin(rad);
+            origStates.forEach(orig => {
+                const obj = site.objects.find(o => o.id === orig.id);
+                if (!obj) return;
+                const dx = orig.x - cx, dy = orig.y - cy;
+                obj.x = cx + dx * cos - dy * sin;
+                obj.y = cy + dx * sin + dy * cos;
+                obj.rotation = ((orig.rotation + deg) % 360 + 360) % 360;
+            });
+            State.notifyChange();
+            Canvas.render();
+        }
+
+        const grpRotInput = document.getElementById('prop-group-rot');
+        const grpRotSlider = document.getElementById('prop-group-rot-slider');
+        grpRotSlider.addEventListener('input', () => {
+            grpRotInput.value = grpRotSlider.value;
+            applyGroupRotation(parseFloat(grpRotSlider.value));
+        });
+        grpRotInput.addEventListener('change', () => {
+            grpRotSlider.value = grpRotInput.value;
+            applyGroupRotation(parseFloat(grpRotInput.value));
+        });
+        document.querySelectorAll('.grp-rot-preset').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const rot = parseFloat(btn.dataset.rot);
+                grpRotInput.value = rot;
+                grpRotSlider.value = rot;
+                applyGroupRotation(rot);
+            });
+        });
+
         document.getElementById('prop-multi-group').addEventListener('click', () => {
-            const groupId = State.generateId();
-            [...Canvas.selectedIds].forEach(id => State.updateObject(id, { groupId }));
+            const gid = State.generateId();
+            [...Canvas.selectedIds].forEach(id => State.updateObject(id, { groupId: gid }));
             showMultiProperties();
             Canvas.render();
+            buildPlacedList();
         });
         document.getElementById('prop-multi-ungroup').addEventListener('click', () => {
             [...Canvas.selectedIds].forEach(id => State.updateObject(id, { groupId: '' }));
             Canvas.render();
+            buildPlacedList();
         });
         document.getElementById('prop-multi-dup').addEventListener('click', () => {
             const newIds = [];

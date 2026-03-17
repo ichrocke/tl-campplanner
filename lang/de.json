@@ -231,5 +231,6 @@
   "props.entranceSide.right": "Rechts",
   "props.entranceSide.bottom": "Unten",
   "props.entranceSide.left": "Links",
-  "modal.print.donate": "Wenn dir der Zeltplaner gefällt, freue ich mich über eine kleine Unterstützung!"
+  "modal.print.donate": "Wenn dir der Zeltplaner gefällt, freue ich mich über eine kleine Unterstützung!",
+  "props.groupName": "Gruppenname"
 }

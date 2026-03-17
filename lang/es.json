@@ -231,5 +231,6 @@
   "props.entranceSide.right": "Derecha",
   "props.entranceSide.bottom": "Abajo",
   "props.entranceSide.left": "Izquierda",
-  "modal.print.donate": "Si te gusta el planificador, agradecería un pequeño apoyo!"
+  "modal.print.donate": "Si te gusta el planificador, agradecería un pequeño apoyo!",
+  "props.groupName": "Nombre del grupo"
 }
