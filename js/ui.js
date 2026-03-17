@@ -24,6 +24,34 @@ const UI = (() => {
 
     function getActiveColor() { return _savedColors[_activeColorIdx] || _savedColors[0]; }
 
+    function openColorPicker(initialColor, callback) {
+        // Remove any existing picker
+        const existing = document.getElementById('_colorPickerTemp');
+        if (existing) existing.remove();
+        const input = document.createElement('input');
+        input.type = 'color';
+        input.id = '_colorPickerTemp';
+        input.value = initialColor;
+        // Position off-screen but focusable
+        input.style.cssText = 'position:fixed;top:50%;left:50%;width:1px;height:1px;opacity:0.01;pointer-events:none;';
+        document.body.appendChild(input);
+        let picked = false;
+        input.addEventListener('input', () => {
+            picked = true;
+            callback(input.value);
+        });
+        input.addEventListener('change', () => {
+            if (picked) callback(input.value);
+            input.remove();
+        });
+        // Fallback: remove if blurred without picking
+        input.addEventListener('blur', () => {
+            setTimeout(() => { if (document.getElementById('_colorPickerTemp')) input.remove(); }, 300);
+        });
+        // Trigger click after a microtask to ensure it's in the DOM
+        setTimeout(() => input.click(), 10);
+    }
+
     function buildColorSwatches() {
         const container = document.getElementById('color-swatches');
         container.innerHTML = '';
@@ -47,17 +75,10 @@ const UI = (() => {
             // Right-click to change color
             el.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
-                const input = document.createElement('input');
-                input.type = 'color';
-                input.value = color;
-                input.style.position = 'fixed'; input.style.opacity = '0';
-                document.body.appendChild(input);
-                input.addEventListener('input', () => {
-                    _savedColors[i] = input.value;
+                openColorPicker(color, (newColor) => {
+                    _savedColors[i] = newColor;
                     buildColorSwatches();
                 });
-                input.addEventListener('change', () => { input.remove(); });
-                input.click();
             });
             container.appendChild(el);
         });
@@ -122,17 +143,11 @@ const UI = (() => {
         // Add color button
         document.getElementById('btn-add-color').addEventListener('click', () => {
             if (_savedColors.length >= 10) return;
-            const input = document.createElement('input');
-            input.type = 'color'; input.value = '#888888';
-            input.style.position = 'fixed'; input.style.opacity = '0';
-            document.body.appendChild(input);
-            input.addEventListener('input', () => {
-                _savedColors.push(input.value);
+            openColorPicker('#888888', (color) => {
+                _savedColors.push(color);
                 _activeColorIdx = _savedColors.length - 1;
                 buildColorSwatches();
             });
-            input.addEventListener('change', () => { input.remove(); });
-            input.click();
         });
 
         // Paint tool button
