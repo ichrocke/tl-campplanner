@@ -127,6 +127,7 @@ const Canvas = (() => {
         drawDragDistances();
         drawMeasureLine();
         drawSelectionRect();
+        drawGroupRotHandle(activeSite);
         drawScaleBar(activeSite);
         drawCompass();
     }
@@ -1163,6 +1164,33 @@ const Canvas = (() => {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(text, mx, my - 8);
+    }
+
+    function drawGroupRotHandle(site) {
+        if (selectedIds.size <= 1) return;
+        const selObjs = site.objects.filter(o => selectedIds.has(o.id));
+        if (selObjs.length < 2) return;
+        let cx = 0, cy = 0, minY = Infinity;
+        selObjs.forEach(o => {
+            cx += o.x; cy += o.y;
+            minY = Math.min(minY, o.y - (o.height || 0) / 2);
+        });
+        cx /= selObjs.length; cy /= selObjs.length;
+        const cp = w2s(cx, cy);
+        const tp = w2s(cx, minY);
+        const handleY = tp.y - 28;
+
+        ctx.strokeStyle = '#2563eb';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 3]);
+        ctx.beginPath(); ctx.moveTo(cp.x, tp.y); ctx.lineTo(cp.x, handleY); ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(cp.x, handleY, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#2563eb';
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
     }
 
     function drawSelectionRect() {

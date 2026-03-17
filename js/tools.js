@@ -176,7 +176,7 @@ const Tools = (() => {
     function onSelectDown(e, world, snapped, site) {
         const ctrlKey = e.ctrlKey || e.metaKey;
 
-        // 1. Check rotation handle of single-selected object
+        // 1. Check rotation handle
         if (Canvas.selectionCount === 1) {
             const sel = site.objects.find(o => o.id === Canvas.selectedId);
             if (sel && Canvas.pointOnRotHandle(world.x, world.y, sel)) {
@@ -210,6 +210,28 @@ const Tools = (() => {
                     drag = { type: 'areaVertex', objId: sel.id, vertexIndex: vi };
                     return;
                 }
+            }
+        }
+
+        // 1c. Check group rotation handle (multi-selection)
+        if (Canvas.selectionCount > 1) {
+            const selObjs = site.objects.filter(o => Canvas.isSelected(o.id));
+            let cx = 0, cy = 0;
+            selObjs.forEach(o => { cx += o.x; cy += o.y; });
+            cx /= selObjs.length; cy /= selObjs.length;
+            // Virtual rotation handle above group center
+            const z = Canvas.zoom();
+            const bounds = { minY: Infinity };
+            selObjs.forEach(o => { bounds.minY = Math.min(bounds.minY, o.y - (o.height || 0) / 2); });
+            const handleObj = { x: cx, y: bounds.minY, height: 0, rotation: 0 };
+            if (Canvas.pointOnRotHandle(world.x, world.y, handleObj)) {
+                drag = {
+                    type: 'groupRotate',
+                    centerX: cx, centerY: cy,
+                    startAngle: Math.atan2(world.x - cx, -(world.y - cy)) * 180 / Math.PI,
+                    origStates: selObjs.map(o => ({ id: o.id, x: o.x, y: o.y, rotation: o.rotation })),
+                };
+                return;
             }
         }
 
@@ -493,6 +515,26 @@ const Tools = (() => {
                     }
                     break;
                 }
+                case 'groupRotate': {
+                    const angle = Math.atan2(world.x - drag.centerX, -(world.y - drag.centerY)) * 180 / Math.PI;
+                    let deltaRot = angle - drag.startAngle;
+                    if (e.shiftKey) deltaRot = Math.round(deltaRot / 15) * 15;
+                    const rad = deltaRot * Math.PI / 180;
+                    const cos = Math.cos(rad), sin = Math.sin(rad);
+                    drag.origStates.forEach(orig => {
+                        const obj = site.objects.find(o => o.id === orig.id);
+                        if (!obj) return;
+                        // Rotate position around group center
+                        const dx = orig.x - drag.centerX;
+                        const dy = orig.y - drag.centerY;
+                        obj.x = drag.centerX + dx * cos - dy * sin;
+                        obj.y = drag.centerY + dx * sin + dy * cos;
+                        // Add rotation delta to original rotation
+                        obj.rotation = ((orig.rotation + deltaRot) % 360 + 360) % 360;
+                    });
+                    Canvas.render();
+                    break;
+                }
                 case 'rectSelect': {
                     Canvas.selectionRect = { x1: drag.x1, y1: drag.y1, x2: world.x, y2: world.y };
                     Canvas.render();
@@ -633,6 +675,9 @@ const Tools = (() => {
                     const sel = State.activeSite?.objects.find(o => o.id === Canvas.selectedId);
                     if (sel) UI.showProperties(sel);
                 }
+            }
+            if (drag.type === 'groupRotate') {
+                State.notifyChange();
             }
             if (drag.type === 'rotate' || drag.type === 'resize') {
                 State.notifyChange();
