@@ -65,21 +65,27 @@ const IO = (() => {
         const bounds = getContentBounds(site);
         if (!bounds) { alert(I18n.t('msg.noPrintContent')); return; }
 
-        const pxPerMm = (format === 'png' || format === 'jpeg') ? 11.81 : 3.78;
-        const canvasW = Math.round(paper.w * pxPerMm);
-        const canvasH = Math.round(paper.h * pxPerMm);
-        const marginPx = Math.round(15 * pxPerMm);
-        const titleH = title ? Math.round(8 * pxPerMm) : 0;
+        // Always use 96 DPI logical dimensions, scale up for image export
+        const basePxPerMm = 3.78; // 96 DPI
+        const dpiScale = (format === 'png' || format === 'jpeg') ? 3 : 1; // 3x = ~300 DPI
+        const canvasW = Math.round(paper.w * basePxPerMm);
+        const canvasH = Math.round(paper.h * basePxPerMm);
+        const marginPx = Math.round(15 * basePxPerMm);
+        const titleH = title ? Math.round(8 * basePxPerMm) : 0;
 
-        // Use Canvas.renderOffscreen for the map - exact same look as on screen
+        // Use Canvas.renderOffscreen - same rendering as on screen, scaled up for DPI
         const mapCanvas = Canvas.renderOffscreen(canvasW, canvasH, bounds, {
             showGrid: showGrid,
             showDistances: showDistances,
             margin: marginPx + titleH,
+            dpiScale: dpiScale,
         });
 
         if (!mapCanvas) return;
         const pctx = mapCanvas.getContext('2d');
+
+        // Re-apply scale for post-processing (title, treasure map)
+        pctx.scale(dpiScale, dpiScale);
 
         // Title
         if (title) {
@@ -94,17 +100,20 @@ const IO = (() => {
             pctx.fillText(title, marginPx, Math.round(marginPx * 0.5));
         }
 
-        // Treasure map effect (post-processing)
+        // Treasure map effect (post-processing on full physical canvas)
+        pctx.setTransform(1, 0, 0, 1, 0, 0); // reset scale for pixel-level effect
         if (treasureMap) {
-            applyTreasureMapEffect(pctx, canvasW, canvasH);
+            applyTreasureMapEffect(pctx, mapCanvas.width, mapCanvas.height);
         }
 
         // Object list (page 2)
         let page2 = null;
         if (showObjList && site.objects.length > 0) {
             page2 = document.createElement('canvas');
-            page2.width = canvasW; page2.height = canvasH;
+            page2.width = Math.round(canvasW * dpiScale);
+            page2.height = Math.round(canvasH * dpiScale);
             const p2 = page2.getContext('2d');
+            p2.scale(dpiScale, dpiScale);
             const ds = State.displaySettings;
             p2.fillStyle = '#fff';
             p2.fillRect(0, 0, canvasW, canvasH);
@@ -113,12 +122,12 @@ const IO = (() => {
             p2.fillStyle = '#1a1a2e';
             p2.textAlign = 'left';
             p2.fillText((title || site.name) + ' \u2013 ' + I18n.t('print.objectList'), tx, ty + 12);
-            const rowH = Math.round(18 * (pxPerMm / 3.78));
-            const fs = Math.round(9 * ds.fontScale * (pxPerMm / 3.78));
-            const colW = [30, 130, 120, 55, 55, 55, 55].map(c => Math.round(c * (pxPerMm / 3.78)));
+            const rowH = Math.round(18);
+            const fs = Math.round(9 * ds.fontScale);
+            const colW = [30, 130, 120, 55, 55, 55, 55].map(c => Math.round(c));
             const headers = [I18n.t('print.nr'), I18n.t('print.name'), I18n.t('print.description'), I18n.t('print.width'), I18n.t('print.depth'), I18n.t('print.rotation'), I18n.t('print.type')];
             const totalW = colW.reduce((a, b) => a + b, 0);
-            const headerY = ty + Math.round(28 * (pxPerMm / 3.78));
+            const headerY = ty + Math.round(28);
             p2.fillStyle = '#f0f0f0';
             p2.fillRect(tx, headerY, totalW, rowH);
             p2.strokeStyle = '#999'; p2.lineWidth = 0.5;
@@ -135,14 +144,14 @@ const IO = (() => {
                 p2.strokeStyle = '#e5e5e5'; p2.lineWidth = 0.3;
                 p2.strokeRect(tx, rowY, totalW, rowH);
                 p2.fillStyle = obj.color;
-                p2.fillRect(tx + 3, rowY + 4, Math.round(10 * (pxPerMm / 3.78)), Math.round(10 * (pxPerMm / 3.78)));
+                p2.fillRect(tx + 3, rowY + 4, Math.round(10), Math.round(10));
                 p2.font = `${fs}px sans-serif`;
                 p2.fillStyle = '#333'; p2.textBaseline = 'middle';
                 const vals = [(idx + 1).toString(), obj.name, (obj.description || '').split('\n')[0],
                     obj.width ? obj.width + ' m' : '-', obj.height ? obj.height + ' m' : '-',
                     obj.rotation ? Math.round(obj.rotation) + '\u00b0' : '-', obj.type];
                 cx = tx;
-                vals.forEach((v, i) => { p2.fillText(v, cx + (i === 0 ? Math.round(16 * (pxPerMm / 3.78)) : 4), rowY + rowH / 2, colW[i] - 8); cx += colW[i]; });
+                vals.forEach((v, i) => { p2.fillText(v, cx + (i === 0 ? Math.round(16) : 4), rowY + rowH / 2, colW[i] - 8); cx += colW[i]; });
             });
         }
 

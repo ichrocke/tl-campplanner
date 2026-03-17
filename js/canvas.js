@@ -1487,12 +1487,14 @@ const Canvas = (() => {
         };
     }
 
-    // Render the current site onto an offscreen canvas at given resolution
-    // bounds: {minX, minY, width, height}, pxW/pxH: pixel dimensions
-    // options: { showGrid, showDistances, margin }
+    // Render the current site onto an offscreen canvas
+    // pxW/pxH: logical pixel dimensions (96 DPI equivalent)
+    // options: { showGrid, showDistances, margin, dpiScale }
     function renderOffscreen(pxW, pxH, worldBounds, options) {
         const site = State.activeSite;
         if (!site) return null;
+
+        const dpiScale = (options && options.dpiScale) || 1;
 
         // Save state
         const origCanvas = canvas;
@@ -1501,19 +1503,23 @@ const Canvas = (() => {
         const origSel = new Set(selectedIds);
         const origHov = hoveredId;
 
-        // Create offscreen canvas
+        // Create high-res offscreen canvas, but render in logical coordinates
         const oc = document.createElement('canvas');
-        oc.width = pxW;
-        oc.height = pxH;
-        canvas = oc;
-        ctx = oc.getContext('2d');
+        oc.width = Math.round(pxW * dpiScale);
+        oc.height = Math.round(pxH * dpiScale);
+        const octx = oc.getContext('2d');
+        octx.scale(dpiScale, dpiScale);
+
+        // Fake canvas object with logical dimensions (for w2s/s2w)
+        canvas = { width: pxW, height: pxH, getContext: () => octx, style: {} };
+        ctx = octx;
 
         // Clear selection visuals for print
         selectedIds.clear();
         hoveredId = null;
         selectionRect = null;
 
-        // Calculate view to fit bounds into the canvas
+        // Calculate view to fit bounds into the logical canvas
         const marginPx = (options && options.margin) || 40;
         const availW = pxW - 2 * marginPx;
         const availH = pxH - 2 * marginPx;
@@ -1528,11 +1534,11 @@ const Canvas = (() => {
         site.view.panX = -centerX;
         site.view.panY = -centerY;
 
-        // White background
+        // White background (full physical size)
         ctx.fillStyle = '#fff';
         ctx.fillRect(0, 0, pxW, pxH);
 
-        // Render
+        // Render using exact same functions as on-screen
         drawBgImages(site);
         if (!options || options.showGrid !== false) drawGrid(site);
         drawGround(site);
