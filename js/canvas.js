@@ -128,52 +128,34 @@ const Canvas = (() => {
         drawMeasureLine();
         drawSelectionRect();
         drawGroupRotHandle(activeSite);
+        drawSiteLabel(activeSite);
         drawScaleBar(activeSite);
         drawCompass();
     }
 
-    function drawSiteLabel(site, isActive) {
+    function drawSiteLabel(site) {
+        // Empty site placeholder
         const bounds = State.getSiteContentBounds(site);
-        let labelX, labelY;
-        if (bounds) {
-            labelX = (bounds.minX + bounds.maxX) / 2;
-            labelY = bounds.minY - 2.5;
-        } else {
-            labelX = 0;
-            labelY = -8;
-            // Draw empty site placeholder
-            if (isActive) {
-                const cp = w2s(0, 0);
-                ctx.strokeStyle = '#d1d5db';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([8, 5]);
-                ctx.strokeRect(cp.x - 60, cp.y - 40, 120, 80);
-                ctx.setLineDash([]);
-                ctx.font = '12px sans-serif';
-                ctx.fillStyle = '#9ca3af';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText(I18n.t('canvas.drawGround'), cp.x, cp.y);
-            }
+        if (!bounds) {
+            const cp = w2s(0, 0);
+            ctx.strokeStyle = '#d1d5db';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([8, 5]);
+            ctx.strokeRect(cp.x - 60, cp.y - 40, 120, 80);
+            ctx.setLineDash([]);
+            ctx.font = '12px sans-serif';
+            ctx.fillStyle = '#9ca3af';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(I18n.t('canvas.drawGround'), cp.x, cp.y);
         }
-        const p = w2s(labelX, labelY);
 
-        // Background pill
-        ctx.font = `bold 13px sans-serif`;
-        const tw = ctx.measureText(site.name).width;
-        const px = p.x - tw / 2 - 8;
-        const py = p.y - 10;
-        ctx.fillStyle = isActive ? '#2563eb' : '#64748b';
-        ctx.globalAlpha = isActive ? 1 : 0.7;
-        ctx.beginPath();
-        roundRect(ctx, px, py, tw + 16, 22, 11);
-        ctx.fill();
-        ctx.globalAlpha = 1;
-
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(site.name, p.x, p.y + 1);
+        // Small site name top-left
+        ctx.font = '600 7px sans-serif';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText(site.name, 8, 6);
     }
 
     function roundRect(c, x, y, w, h, r) {
