@@ -913,6 +913,16 @@ const Tools = (() => {
 
     function onContextMenu(e) {
         e.preventDefault();
+
+        // Right-click cancels placement/drawing tools
+        if (activeTool === 'place' || activeTool === 'text') {
+            setTool('select');
+            return;
+        }
+        if (activeTool === 'ground') { Canvas.groundPreview = []; setTool('select'); return; }
+        if (activeTool === 'area' || activeTool === 'fence') { Canvas.pathPreview = []; setTool('select'); return; }
+        if (activeTool === 'paint') { setTool('select'); return; }
+
         const world = getMouseWorld(e);
         const site = State.activeSite;
         if (!site) return;
