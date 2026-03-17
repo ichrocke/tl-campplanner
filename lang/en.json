@@ -234,5 +234,8 @@
   "modal.print.donate": "If you like the camp planner, I would appreciate a small support!",
   "props.groupName": "Group name",
   "modal.customObject.createOnly": "Create",
-  "modal.settings.autosave": "Auto-save"
+  "modal.settings.autosave": "Auto-save",
+  "ground.export": "Export ground area",
+  "ground.import": "Import ground area",
+  "ground.printOnly": "Print only this ground area"
 }

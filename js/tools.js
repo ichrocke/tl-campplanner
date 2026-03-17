@@ -798,6 +798,16 @@ const Tools = (() => {
             case 'v': case 'V': setTool('select'); break;
             case 'h': case 'H': setTool('pan'); break;
             case 'a': case 'A': setTool('area'); break;
+            case '+': case '=': {
+                const s = State.activeSite;
+                if (s) { s.gridSize = Math.min(10, Math.round((s.gridSize + 0.25) * 100) / 100); State.notifyChange(true); Canvas.render(); }
+                break;
+            }
+            case '-': case '_': {
+                const s = State.activeSite;
+                if (s) { s.gridSize = Math.max(0.25, Math.round((s.gridSize - 0.25) * 100) / 100); State.notifyChange(true); Canvas.render(); }
+                break;
+            }
             case 't': case 'T': setTool('text'); break;
             case 'm': case 'M': setTool('measure'); break;
             case 'f': case 'F': setTool('fence'); break;

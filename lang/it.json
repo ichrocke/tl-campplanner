@@ -234,5 +234,8 @@
   "modal.print.donate": "Se ti piace il pianificatore, apprezzerei un piccolo supporto!",
   "props.groupName": "Nome del gruppo",
   "modal.customObject.createOnly": "Crea",
-  "modal.settings.autosave": "Salvataggio automatico"
+  "modal.settings.autosave": "Salvataggio automatico",
+  "ground.export": "Esporta terreno",
+  "ground.import": "Importare terreno",
+  "ground.printOnly": "Stampa solo questo terreno"
 }

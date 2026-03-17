@@ -234,5 +234,8 @@
   "modal.print.donate": "Wenn dir der Zeltplaner gefällt, freue ich mich über eine kleine Unterstützung!",
   "props.groupName": "Gruppenname",
   "modal.customObject.createOnly": "Erstellen",
-  "modal.settings.autosave": "Auto-Speichern"
+  "modal.settings.autosave": "Auto-Speichern",
+  "ground.export": "Grundfläche exportieren",
+  "ground.import": "Grundfläche importieren",
+  "ground.printOnly": "Nur diese Grundfläche drucken"
 }

@@ -1031,9 +1031,94 @@ const UI = (() => {
                     ${ground.length} ${I18n.t('ctx.deleteVertex').split(' ')[0]}e &middot; ${area.toFixed(1)} m&sup2;
                 </div>
             </div>
+            <div class="prop-actions" style="flex-wrap:wrap">
+                <button class="btn-duplicate" id="prop-ground-print">${I18n.t('ground.printOnly')}</button>
+                <button class="btn-duplicate" id="prop-ground-export">${I18n.t('ground.export')}</button>
+                <button class="btn-duplicate" id="prop-ground-import">${I18n.t('ground.import')}</button>
+            </div>
             <div class="prop-actions">
                 <button class="btn-danger" id="prop-del-ground">${I18n.t('props.delete')}</button>
             </div>`;
+
+        // Print only this ground area
+        document.getElementById('prop-ground-print').addEventListener('click', () => {
+            // Temporarily replace grounds with just this one
+            const origGrounds = site.grounds;
+            const origObjects = site.objects;
+            // Find objects inside this ground
+            const pts = ground;
+            const insideObjs = site.objects.filter(o => {
+                if (o.type === 'bgimage') return true;
+                return Canvas.pointInPolygonCheck(o.x, o.y, pts);
+            });
+            site.grounds = [ground];
+            site.objects = insideObjs;
+            // Open print dialog
+            const printBtn = document.getElementById('btn-print');
+            if (printBtn) printBtn.click();
+            // Restore after a tick (modal is open)
+            setTimeout(() => {
+                site.grounds = origGrounds;
+                site.objects = origObjects;
+            }, 100);
+        });
+
+        // Export ground as JSON
+        document.getElementById('prop-ground-export').addEventListener('click', () => {
+            const data = {
+                type: 'ground_area',
+                version: 1,
+                ground: ground,
+                // Include objects inside this ground
+                objects: site.objects.filter(o => {
+                    if (o.type === 'bgimage') return false;
+                    return Canvas.pointInPolygonCheck(o.x, o.y, ground);
+                }),
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ground_${gi + 1}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // Import ground from JSON
+        document.getElementById('prop-ground-import').addEventListener('click', () => {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = () => {
+                const file = input.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    try {
+                        const data = JSON.parse(ev.target.result);
+                        if (data.type === 'ground_area' && data.ground) {
+                            site.grounds.push(data.ground);
+                            // Import objects if present
+                            if (data.objects && Array.isArray(data.objects)) {
+                                data.objects.forEach(o => {
+                                    o.id = State.generateId();
+                                    site.objects.push(o);
+                                });
+                            }
+                            State.notifyChange();
+                            Canvas.render();
+                        } else {
+                            alert(I18n.t('msg.importError') + 'Not a ground area file');
+                        }
+                    } catch (err) {
+                        alert(I18n.t('msg.importError') + err.message);
+                    }
+                };
+                reader.readAsText(file);
+            };
+            input.click();
+        });
+
         document.getElementById('prop-del-ground').addEventListener('click', () => {
             if (site.grounds) {
                 site.grounds.splice(gi, 1);
