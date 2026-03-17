@@ -327,6 +327,34 @@ body {
     overflow: hidden;
 }
 
+.sidebar-divider {
+    height: 6px;
+    background: var(--border);
+    cursor: row-resize;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.sidebar-divider::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 2px;
+    background: #aaa;
+    border-radius: 1px;
+}
+
+.sidebar-divider:hover {
+    background: var(--primary-light);
+}
+
+.sidebar-divider:hover::after {
+    background: var(--primary);
+}
+
 .sidebar-section:last-child {
     flex: 1;
     overflow: hidden;

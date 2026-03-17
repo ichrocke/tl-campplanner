@@ -20,6 +20,37 @@ const UI = (() => {
         bindFloatingTools();
         bindLangFlags();
         buildColorSwatches();
+        bindSidebarDivider();
+    }
+
+    // --- Sidebar resize divider ---
+    function bindSidebarDivider() {
+        const divider = document.getElementById('sidebar-divider');
+        const sidebar = document.getElementById('sidebar');
+        const sections = sidebar.querySelectorAll('.sidebar-section');
+        const topSection = sections[0];
+        const bottomSection = sections[1];
+        let dragging = false;
+
+        divider.addEventListener('mousedown', (e) => {
+            dragging = true;
+            e.preventDefault();
+        });
+
+        document.addEventListener('mousemove', (e) => {
+            if (!dragging) return;
+            const sidebarRect = sidebar.getBoundingClientRect();
+            const dividerH = 6;
+            const y = e.clientY - sidebarRect.top;
+            const total = sidebarRect.height - dividerH;
+            const topH = Math.max(60, Math.min(total - 60, y));
+            topSection.style.flex = 'none';
+            topSection.style.height = topH + 'px';
+            bottomSection.style.flex = 'none';
+            bottomSection.style.height = (total - topH) + 'px';
+        });
+
+        document.addEventListener('mouseup', () => { dragging = false; });
     }
 
     function getActiveColor() { return _savedColors[_activeColorIdx] || _savedColors[0]; }
