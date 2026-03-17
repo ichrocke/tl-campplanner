@@ -905,24 +905,26 @@ const UI = (() => {
 
         // Ground-specific handlers
         const gpBtn = document.getElementById('prop-ground-print');
-        if (gpBtn) {
+        if (gpBtn && obj.type === 'ground') {
             gpBtn.addEventListener('click', () => {
+                const site = State.activeSite;
                 const pts = obj.points;
                 State._printFilter = {
-                    grounds: [pts],
                     objects: site.objects.filter(o => {
                         if (o.type === 'bgimage') return true;
-                        if (o.type === 'ground') return o.id === obj.id;
-                        return o.points ? false : Canvas.pointInPolygonCheck(o.x, o.y, pts);
+                        if (o.id === obj.id) return true;
+                        if (o.type === 'ground') return false;
+                        return Canvas.pointInPolygonCheck(o.x, o.y, pts);
                     }),
                 };
-                if (site) document.getElementById('print-title').value = site.name;
+                document.getElementById('print-title').value = site.name;
                 openModal('modal-print');
             });
         }
         const geBtn = document.getElementById('prop-ground-export');
-        if (geBtn) {
+        if (geBtn && obj.type === 'ground') {
             geBtn.addEventListener('click', () => {
+                const site = State.activeSite;
                 const data = {
                     type: 'ground_area', version: 1, ground: obj.points,
                     objects: site.objects.filter(o => {
@@ -1059,117 +1061,7 @@ const UI = (() => {
         document.getElementById('btn-close-props').addEventListener('click', hideProperties);
     }
 
-    function showGroundProperties(gi) {
-        const panel = document.getElementById('properties');
-        const content = document.getElementById('prop-content');
-        panel.classList.remove('hidden');
-        const site = State.activeSite;
-        const ground = site && site.grounds ? site.grounds[gi] : null;
-        if (!ground) return;
-        const area = Canvas.polygonArea(ground);
-        content.innerHTML = `
-            <div class="prop-section">
-                <div class="prop-section-title">${I18n.t('tool.ground')} ${gi + 1}</div>
-                <div style="font-size:12px;color:var(--text-secondary);margin-bottom:4px;">
-                    ${ground.length} ${I18n.t('ctx.deleteVertex').split(' ')[0]}e &middot; ${area.toFixed(1)} m&sup2;
-                </div>
-            </div>
-            <div class="prop-actions" style="flex-wrap:wrap">
-                <button class="btn-duplicate" id="prop-ground-print">${I18n.t('ground.printOnly')}</button>
-                <button class="btn-duplicate" id="prop-ground-export">${I18n.t('ground.export')}</button>
-                <button class="btn-duplicate" id="prop-ground-import">${I18n.t('ground.import')}</button>
-            </div>
-            <div class="prop-actions">
-                <button class="btn-danger" id="prop-del-ground">${I18n.t('props.delete')}</button>
-            </div>`;
-
-        // Print only this ground area
-        document.getElementById('prop-ground-print').addEventListener('click', () => {
-            // Store print filter so IO.print uses only this ground + its objects
-            const pts = ground;
-            State._printFilter = {
-                grounds: [ground],
-                objects: site.objects.filter(o => {
-                    if (o.type === 'bgimage') return true;
-                    return Canvas.pointInPolygonCheck(o.x, o.y, pts);
-                }),
-            };
-            // Open print dialog
-            if (site) document.getElementById('print-title').value = site.name;
-            openModal('modal-print');
-        });
-
-        // Export ground as JSON
-        document.getElementById('prop-ground-export').addEventListener('click', () => {
-            const data = {
-                type: 'ground_area',
-                version: 1,
-                ground: ground,
-                // Include objects inside this ground
-                objects: site.objects.filter(o => {
-                    if (o.type === 'bgimage') return false;
-                    return Canvas.pointInPolygonCheck(o.x, o.y, ground);
-                }),
-            };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `ground_${gi + 1}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-        });
-
-        // Import ground from JSON
-        document.getElementById('prop-ground-import').addEventListener('click', () => {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.accept = '.json';
-            input.onchange = () => {
-                const file = input.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (ev) => {
-                    try {
-                        const data = JSON.parse(ev.target.result);
-                        if (data.type === 'ground_area' && data.ground) {
-                            site.grounds.push(data.ground);
-                            // Import objects if present
-                            if (data.objects && Array.isArray(data.objects)) {
-                                data.objects.forEach(o => {
-                                    o.id = State.generateId();
-                                    site.objects.push(o);
-                                });
-                            }
-                            State.notifyChange();
-                            Canvas.render();
-                        } else {
-                            alert(I18n.t('msg.importError') + 'Not a ground area file');
-                        }
-                    } catch (err) {
-                        alert(I18n.t('msg.importError') + err.message);
-                    }
-                };
-                reader.readAsText(file);
-            };
-            input.click();
-        });
-
-        document.getElementById('prop-del-ground').addEventListener('click', () => {
-            if (site.grounds) {
-                site.grounds.splice(gi, 1);
-                Canvas.selectedGroundIndex = -1;
-                hideProperties();
-                State.notifyChange();
-                Canvas.render();
-            }
-        });
-        document.getElementById('btn-close-props').addEventListener('click', () => {
-            Canvas.selectedGroundIndex = -1;
-            hideProperties();
-            Canvas.render();
-        });
-    }
+    // showGroundProperties removed - grounds are now regular objects
 
     function showMultiProperties() {
         const panel = document.getElementById('properties');

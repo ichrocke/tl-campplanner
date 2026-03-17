@@ -56,16 +56,16 @@ const IO = (() => {
 
         // Check for ground-only print filter
         const filter = State._printFilter;
-        let printSite = site;
         if (filter) {
-            // Create a temporary site copy with filtered data
-            printSite = JSON.parse(JSON.stringify(site));
-            printSite.grounds = filter.grounds;
-            printSite.objects = filter.objects;
             State._printFilter = null;
+            // Temporarily swap objects for filtered printing
+            const origObjects = site.objects;
+            site.objects = filter.objects;
+            printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, title, format);
+            site.objects = origObjects;
+        } else {
+            printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, title, format);
         }
-
-        printNew(printSite, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, title, format);
     }
 
     function printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, title, format) {
@@ -83,16 +83,6 @@ const IO = (() => {
         const canvasH = Math.round(paper.h * basePxPerMm);
         const marginPx = Math.round(15 * basePxPerMm);
 
-        // Temporarily swap site data for filtered printing
-        const realSite = State.activeSite;
-        const isFiltered = (site !== realSite);
-        if (isFiltered) {
-            realSite._origGrounds = realSite.grounds;
-            realSite._origObjects = realSite.objects;
-            realSite.grounds = site.grounds;
-            realSite.objects = site.objects;
-        }
-
         // Use Canvas.renderOffscreen - same rendering as on screen, scaled up for DPI
         const mapCanvas = Canvas.renderOffscreen(canvasW, canvasH, bounds, {
             showGrid: showGrid,
@@ -100,14 +90,6 @@ const IO = (() => {
             margin: marginPx,
             dpiScale: dpiScale,
         });
-
-        // Restore original site data
-        if (isFiltered) {
-            realSite.grounds = realSite._origGrounds;
-            realSite.objects = realSite._origObjects;
-            delete realSite._origGrounds;
-            delete realSite._origObjects;
-        }
 
         if (!mapCanvas) return;
         const pctx = mapCanvas.getContext('2d');
