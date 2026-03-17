@@ -51,6 +51,21 @@ const UI = (() => {
         });
 
         document.addEventListener('mouseup', () => { dragging = false; });
+
+        // Touch support for divider
+        divider.addEventListener('touchstart', (e) => { dragging = true; e.preventDefault(); }, { passive: false });
+        document.addEventListener('touchmove', (e) => {
+            if (!dragging || !e.touches.length) return;
+            const sidebarRect = sidebar.getBoundingClientRect();
+            const y = e.touches[0].clientY - sidebarRect.top;
+            const total = sidebarRect.height - 6;
+            const topH = Math.max(60, Math.min(total - 60, y));
+            topSection.style.flex = 'none';
+            topSection.style.height = topH + 'px';
+            bottomSection.style.flex = 'none';
+            bottomSection.style.height = (total - topH) + 'px';
+        }, { passive: true });
+        document.addEventListener('touchend', () => { dragging = false; });
     }
 
     function getActiveColor() { return _savedColors[_activeColorIdx] || _savedColors[0]; }

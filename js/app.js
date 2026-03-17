@@ -70,7 +70,7 @@
         autoSave();
     });
 
-    // Canvas events
+    // Canvas events (mouse)
     const c = Canvas.canvas;
     c.addEventListener('mousedown', (e) => Tools.onMouseDown(e));
     c.addEventListener('mousemove', (e) => Tools.onMouseMove(e));
@@ -78,6 +78,9 @@
     c.addEventListener('wheel', (e) => Tools.onWheel(e), { passive: false });
     c.addEventListener('contextmenu', (e) => Tools.onContextMenu(e));
     c.addEventListener('dblclick', (e) => Tools.onDblClick(e));
+
+    // Touch events (tablet)
+    Touch.init(c);
 
     // Keyboard events
     document.addEventListener('keydown', (e) => Tools.onKeyDown(e));
