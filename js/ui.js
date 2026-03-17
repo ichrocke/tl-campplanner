@@ -772,7 +772,7 @@ const UI = (() => {
         html += `</div>`;
 
         // --- Section: Position & Size ---
-        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'guideline') {
+        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'guideline' && obj.type !== 'ground') {
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.posSize')}</div>
                 <div class="prop-grid">
@@ -809,7 +809,7 @@ const UI = (() => {
         }
 
         // --- Section: Rotation ---
-        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'guideline') {
+        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'guideline' && obj.type !== 'ground') {
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.rotation')}</div>
                 <div class="prop-row">
@@ -873,6 +873,14 @@ const UI = (() => {
             </div>`;
         }
 
+        // --- Ground-specific actions ---
+        if (obj.type === 'ground') {
+            html += `<div class="prop-actions" style="flex-wrap:wrap">
+                <button class="btn-duplicate" id="prop-ground-print">${I18n.t('ground.printOnly')}</button>
+                <button class="btn-duplicate" id="prop-ground-export">${I18n.t('ground.export')}</button>
+            </div>`;
+        }
+
         // --- Actions ---
         html += `<div class="prop-actions">
             <button class="btn-duplicate" id="prop-duplicate">${I18n.t('props.duplicate')}</button>
@@ -894,6 +902,41 @@ const UI = (() => {
         };
 
         bind('prop-name', 'name');
+
+        // Ground-specific handlers
+        const gpBtn = document.getElementById('prop-ground-print');
+        if (gpBtn) {
+            gpBtn.addEventListener('click', () => {
+                const pts = obj.points;
+                State._printFilter = {
+                    grounds: [pts],
+                    objects: site.objects.filter(o => {
+                        if (o.type === 'bgimage') return true;
+                        if (o.type === 'ground') return o.id === obj.id;
+                        return o.points ? false : Canvas.pointInPolygonCheck(o.x, o.y, pts);
+                    }),
+                };
+                if (site) document.getElementById('print-title').value = site.name;
+                openModal('modal-print');
+            });
+        }
+        const geBtn = document.getElementById('prop-ground-export');
+        if (geBtn) {
+            geBtn.addEventListener('click', () => {
+                const data = {
+                    type: 'ground_area', version: 1, ground: obj.points,
+                    objects: site.objects.filter(o => {
+                        if (o.type === 'bgimage' || o.type === 'ground') return false;
+                        return Canvas.pointInPolygonCheck(o.x, o.y, obj.points);
+                    }),
+                };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = (obj.name || 'ground') + '.json'; a.click();
+                URL.revokeObjectURL(url);
+            });
+        }
         // Description textarea (multiline)
         const descEl = document.getElementById('prop-desc');
         if (descEl) {
@@ -1370,7 +1413,7 @@ const UI = (() => {
     }
 
     // --- Context Menu ---
-    function showCanvasContextMenu(x, y) {
+    function showCanvasContextMenu(x, y, worldPos) {
         createContextMenuAt(x, y, [
             { label: I18n.t('ground.import'), action: () => {
                 const input = document.createElement('input');
@@ -1384,9 +1427,28 @@ const UI = (() => {
                             const data = JSON.parse(ev.target.result);
                             const site = State.activeSite;
                             if (data.type === 'ground_area' && data.ground && site) {
-                                site.grounds.push(data.ground);
+                                const pts = data.ground;
+                                // Center on click position
+                                let cx = 0, cy = 0;
+                                pts.forEach(p => { cx += p.x; cy += p.y; });
+                                cx /= pts.length; cy /= pts.length;
+                                const dx = worldPos.x - cx, dy = worldPos.y - cy;
+                                pts.forEach(p => { p.x += dx; p.y += dy; });
+                                // Create ground object
+                                const obj = State.addObject({
+                                    type: 'ground', name: I18n.t('tool.ground'),
+                                    width: 0, height: 0, guyRopeDistance: 0,
+                                    color: '#22c55e', shape: 'rect', points: pts,
+                                }, worldPos.x, worldPos.y);
+                                if (obj) obj.points = pts;
+                                // Import contained objects with offset
                                 if (data.objects && Array.isArray(data.objects)) {
-                                    data.objects.forEach(o => { o.id = State.generateId(); site.objects.push(o); });
+                                    data.objects.forEach(o => {
+                                        o.id = State.generateId();
+                                        o.x += dx; o.y += dy;
+                                        if (o.points) o.points.forEach(p => { p.x += dx; p.y += dy; });
+                                        site.objects.push(o);
+                                    });
                                 }
                                 State.notifyChange();
                                 Canvas.render();
@@ -1592,7 +1654,7 @@ const UI = (() => {
 
     return {
         init, buildTabs, buildPalette, buildPlacedList, syncSettings, translateUI,
-        showProperties, showGroundProperties, hideProperties, getActiveColor,
+        showProperties, hideProperties, getActiveColor,
         updateToolButtons, updateCoords, updateZoom, showHint,
         showContextMenu, showCanvasContextMenu, showGroundVertexMenu, showGroundEdgeMenu,
         showAreaVertexMenu, showAreaEdgeMenu, showFenceVertexMenu,

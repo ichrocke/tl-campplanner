@@ -232,7 +232,11 @@ const IO = (() => {
             if (x < minX) minX = x; if (x > maxX) maxX = x;
             if (y < minY) minY = y; if (y > maxY) maxY = y;
         };
-        (site.grounds || []).forEach(g => g.forEach(p => expand(p.x, p.y)));
+        // Ground objects have points
+        site.objects.forEach(obj => {
+            if (obj.type === 'ground' && obj.points) obj.points.forEach(p => expand(p.x, p.y));
+        });
+        (site.grounds || []).forEach(g => g.forEach(p => expand(p.x, p.y))); // legacy
         site.objects.forEach(obj => {
             const pad = Math.max(obj.width || 0, obj.height || 0) / 2 + (obj.guyRopeDistance || 0) + 0.5;
             expand(obj.x - pad, obj.y - pad);

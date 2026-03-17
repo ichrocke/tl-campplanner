@@ -172,6 +172,9 @@ const State = (() => {
                 obj.text = template.text || 'Text';
                 obj.fontSize = template.fontSize || 1;
             }
+            if (template.type === 'ground') {
+                obj.points = template.points ? template.points.map(p => ({...p})) : [];
+            }
             if (template.type === 'guideline') {
                 obj.points = template.points ? template.points.map(p => ({...p})) : [];
             }
@@ -282,12 +285,29 @@ const State = (() => {
                     });
                     delete s.bgImage;
                 }
-                // Migrate: ground → grounds (array of polygons)
+                // Migrate: old ground/grounds → ground objects
                 if (s.ground && !s.grounds) {
                     s.grounds = s.ground.length >= 3 ? [s.ground] : [];
                     delete s.ground;
                 }
-                if (!s.grounds) s.grounds = [];
+                if (s.grounds && s.grounds.length > 0) {
+                    s.grounds.forEach((pts, i) => {
+                        if (pts.length < 3) return;
+                        let cx = 0, cy = 0;
+                        pts.forEach(p => { cx += p.x; cy += p.y; });
+                        cx /= pts.length; cy /= pts.length;
+                        s.objects.unshift({
+                            id: generateId(), type: 'ground',
+                            name: I18n.t('tool.ground') + ' ' + (i + 1),
+                            x: cx, y: cy, width: 0, height: 0, rotation: 0,
+                            guyRopeDistance: 0, color: '#22c55e', shape: 'rect',
+                            description: '', labelSize: 0, lineWidth: 0, ropeWidth: 0,
+                            guyRopeSides: { top: true, right: true, bottom: true, left: true },
+                            groupId: '', points: pts,
+                        });
+                    });
+                    delete s.grounds;
+                }
                 // Migrate: ensure guyRopeSides exists on all objects
                 s.objects.forEach(o => {
                     if (!o.guyRopeSides) o.guyRopeSides = { top: true, right: true, bottom: true, left: true };

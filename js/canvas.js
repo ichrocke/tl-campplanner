@@ -13,7 +13,7 @@ const Canvas = (() => {
     let measureLine = null;
     let groundPreview = [];
     let highlightGroundVertex = null; // {gi, vi} or null
-    let selectedGroundIndex = -1;
+    // selectedGroundIndex removed - grounds are now regular objects
     let placementPreview = null;
     let pathPreview = []; // for path/area drawing
 
@@ -338,10 +338,17 @@ const Canvas = (() => {
     }
 
     function drawGround(site) {
-        const grounds = site.grounds || [];
-        grounds.forEach((pts, gi) => {
-            if (pts.length < 2) return;
-            const isSel = (gi === selectedGroundIndex);
+        // Draw ground-type objects (rendered before other objects)
+        site.objects.forEach(obj => {
+            if (obj.type !== 'ground' || !obj.points || obj.points.length < 2) return;
+            const pts = obj.points;
+            const isSel = selectedIds.has(obj.id);
+            const isHov = obj.id === hoveredId;
+            const color = obj.color || '#22c55e';
+            const darkColor = color.replace(/[0-9a-f]{2}/gi, (m) => {
+                return Math.max(0, parseInt(m, 16) - 40).toString(16).padStart(2, '0');
+            });
+
             ctx.beginPath();
             const p0 = w2s(pts[0].x, pts[0].y);
             ctx.moveTo(p0.x, p0.y);
@@ -351,31 +358,41 @@ const Canvas = (() => {
             }
             if (pts.length >= 3) {
                 ctx.closePath();
-                ctx.fillStyle = isSel ? 'rgba(37, 99, 235, 0.10)' : 'rgba(34, 197, 94, 0.08)';
+                ctx.fillStyle = color + '14';
                 ctx.fill();
             }
-            ctx.strokeStyle = isSel ? '#2563eb' : '#22c55e';
+            ctx.strokeStyle = isSel ? '#2563eb' : color;
             ctx.lineWidth = isSel ? 3 : 2;
             if (isSel) { ctx.setLineDash([6, 3]); }
             ctx.stroke();
             if (isSel) { ctx.setLineDash([]); }
 
-            // Vertices
-            pts.forEach((pt, i) => {
-                const p = w2s(pt.x, pt.y);
-                const isHighlighted = (highlightGroundVertex && highlightGroundVertex.gi === gi && highlightGroundVertex.vi === i);
+            // Vertices (when selected)
+            if (isSel) {
+                pts.forEach(pt => {
+                    const p = w2s(pt.x, pt.y);
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#2563eb';
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 1.5;
+                    ctx.stroke();
+                });
+            } else if (isHov) {
+                ctx.strokeStyle = '#2563eb55';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([4, 3]);
                 ctx.beginPath();
-                ctx.arc(p.x, p.y, isHighlighted ? 7 : 5, 0, Math.PI * 2);
-                ctx.fillStyle = isHighlighted ? '#16a34a' : '#22c55e';
-                ctx.fill();
-                ctx.strokeStyle = '#fff';
-                ctx.lineWidth = isHighlighted ? 2.5 : 1.5;
-                ctx.stroke();
-            });
+                ctx.moveTo(p0.x, p0.y);
+                for (let i = 1; i < pts.length; i++) { const p = w2s(pts[i].x, pts[i].y); ctx.lineTo(p.x, p.y); }
+                ctx.closePath(); ctx.stroke();
+                ctx.setLineDash([]);
+            }
 
             // Edge lengths
             ctx.font = '10px sans-serif';
-            ctx.fillStyle = '#16a34a';
+            ctx.fillStyle = darkColor;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
             for (let i = 0; i < pts.length; i++) {
@@ -387,16 +404,20 @@ const Canvas = (() => {
                 ctx.fillText(dist.toFixed(1) + ' m', mp.x, mp.y - 4);
             }
 
-            // Area display
+            // Area + name display
             if (pts.length >= 3) {
                 const area = polygonArea(pts);
                 const center = polygonCentroid(pts);
                 const cp = w2s(center.x, center.y);
                 ctx.font = 'bold 12px sans-serif';
-                ctx.fillStyle = '#16a34a';
+                ctx.fillStyle = darkColor;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
                 ctx.fillText(area.toFixed(1) + ' m\u00b2', cp.x, cp.y);
+                if (obj.name) {
+                    ctx.font = '10px sans-serif';
+                    ctx.fillText(obj.name, cp.x, cp.y + 14);
+                }
             }
         });
     }
@@ -462,8 +483,8 @@ const Canvas = (() => {
         const isSel = selectedIds.has(obj.id);
         const isHov = obj.id === hoveredId;
 
-        // --- Background image (rendered separately in drawBgImages) ---
-        if (obj.type === 'bgimage') return;
+        // --- Background image and ground (rendered separately) ---
+        if (obj.type === 'bgimage' || obj.type === 'ground') return;
 
         // Apply object opacity
         const objOp = obj.objectOpacity !== undefined ? obj.objectOpacity : 1;
@@ -1269,8 +1290,8 @@ const Canvas = (() => {
             const ly = dx * Math.sin(rad) + dy * Math.cos(rad);
             return Math.abs(lx) <= obj.width / 2 && Math.abs(ly) <= obj.height / 2;
         }
-        // Area: point in polygon
-        if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
+        // Area/Ground: point in polygon
+        if ((obj.type === 'area' || obj.type === 'ground') && obj.points && obj.points.length >= 3) {
             return pointInPolygon(px, py, obj.points);
         }
         // Guideline: proximity to line segment
@@ -1591,8 +1612,8 @@ const Canvas = (() => {
         set groundPreview(p) { groundPreview = p; },
         get highlightGroundVertex() { return highlightGroundVertex; },
         set highlightGroundVertex(v) { highlightGroundVertex = v; },
-        get selectedGroundIndex() { return selectedGroundIndex; },
-        set selectedGroundIndex(v) { selectedGroundIndex = v; },
+        get selectedGroundIndex() { return -1; }, // legacy compat
+        set selectedGroundIndex(v) {},
         get placementPreview() { return placementPreview; },
         set placementPreview(p) { placementPreview = p; },
         get pathPreview() { return pathPreview; },

@@ -6,7 +6,7 @@ const Tools = (() => {
     let activeTool = 'select';
     let drag = null;
     let pendingTemplate = null;
-    let groundEditVertex = null;
+    // groundEditVertex removed - grounds are objects now
     let lastClickTime = 0;
 
     function setTool(name) {
@@ -18,7 +18,7 @@ const Tools = (() => {
         Canvas.placementPreview = null;
         Canvas.pathPreview = [];
         Canvas.selectionRect = null;
-        groundEditVertex = null;
+        // groundEditVertex removed
         if (name !== 'place') pendingTemplate = null;
         updateHint();
         UI.updateToolButtons(name);
@@ -49,7 +49,7 @@ const Tools = (() => {
         Canvas.measureLine = null;
         Canvas.groundPreview = [];
         Canvas.dragDistances = [];
-        groundEditVertex = null;
+        // groundEditVertex removed
         updateHint();
         UI.updateToolButtons('place');
         Canvas.canvas.style.cursor = 'crosshair';
@@ -70,40 +70,13 @@ const Tools = (() => {
         };
     }
 
-    // Returns {gi, vi} or null
-    function findGroundVertex(world, site) {
-        const grounds = site.grounds || [];
-        const threshold = 8 / Canvas.zoom();
-        for (let gi = 0; gi < grounds.length; gi++) {
-            for (let vi = 0; vi < grounds[gi].length; vi++) {
-                const pt = grounds[gi][vi];
-                const d = Math.sqrt((world.x - pt.x) ** 2 + (world.y - pt.y) ** 2);
-                if (d < threshold) return { gi, vi };
-            }
-        }
-        return null;
-    }
-
-    // Returns {gi, ei} or null
-    function findGroundEdge(world, site) {
-        const grounds = site.grounds || [];
-        const threshold = 5 / Canvas.zoom();
-        for (let gi = 0; gi < grounds.length; gi++) {
-            if (grounds[gi].length < 2) continue;
-            for (let i = 0; i < grounds[gi].length; i++) {
-                const a = grounds[gi][i];
-                const b = grounds[gi][(i + 1) % grounds[gi].length];
-                const dist = pointToSegmentDist(world, a, b);
-                if (dist < threshold) return { gi, ei: i };
-            }
-        }
-        return null;
-    }
+    // Ground vertex/edge finding removed - grounds are now objects,
+    // use findAreaVertex/findAreaEdge instead
 
     // Find area vertex near world point (for selected area objects)
     function findAreaVertex(world, obj) {
         if (!obj || !obj.points) return -1;
-        if (obj.type !== 'area' && obj.type !== 'guideline') return -1;
+        if (obj.type !== 'area' && obj.type !== 'guideline' && obj.type !== 'ground') return -1;
         const threshold = 8 / Canvas.zoom();
         for (let i = 0; i < obj.points.length; i++) {
             const pt = obj.points[i];
@@ -114,7 +87,8 @@ const Tools = (() => {
     }
 
     function findAreaEdge(world, obj) {
-        if (!obj || obj.type !== 'area' || !obj.points || obj.points.length < 2) return -1;
+        if (!obj || !obj.points || obj.points.length < 2) return -1;
+        if (obj.type !== 'area' && obj.type !== 'ground') return -1;
         const threshold = 5 / Canvas.zoom();
         for (let i = 0; i < obj.points.length; i++) {
             const a = obj.points[i];
@@ -203,8 +177,8 @@ const Tools = (() => {
                 }
             }
 
-            // 1b. Check area/fence/guideline vertex drag
-            if (sel && (sel.type === 'area' || sel.type === 'fence' || sel.type === 'guideline') && sel.points) {
+            // 1b. Check area/fence/guideline/ground vertex drag
+            if (sel && (sel.type === 'area' || sel.type === 'fence' || sel.type === 'guideline' || sel.type === 'ground') && sel.points) {
                 const vi = findAreaVertex(world, sel);
                 if (vi >= 0) {
                     drag = { type: 'areaVertex', objId: sel.id, vertexIndex: vi };
@@ -235,31 +209,9 @@ const Tools = (() => {
             }
         }
 
-        // 2. Check ground vertex drag
-        const gv = findGroundVertex(world, site);
-        if (gv) {
-            groundEditVertex = gv;
-            drag = { type: 'groundVertex', gi: gv.gi, vi: gv.vi };
-            Canvas.clearSelection();
-            UI.hideProperties();
-            Canvas.render();
-            return;
-        }
-
-        // 3. Check ground polygon hit
-        const grounds = site.grounds || [];
-        let groundHit = -1;
-        for (let gi = grounds.length - 1; gi >= 0; gi--) {
-            if (grounds[gi].length >= 3 && Canvas.pointInPolygonCheck(world.x, world.y, grounds[gi])) {
-                groundHit = gi;
-                break;
-            }
-        }
-
-        // 4. Check object hit
+        // 2. Check object hit (includes ground objects)
         const hit = [...site.objects].reverse().find(o => Canvas.pointInObj(world.x, world.y, o));
         if (hit) {
-            Canvas.selectedGroundIndex = -1;
             if (ctrlKey) {
                 Canvas.toggleSelection(hit.id);
                 if (Canvas.selectionCount === 1) {
@@ -287,13 +239,7 @@ const Tools = (() => {
                 origPositions: getSelectedPositions(site),
                 moved: false,
             };
-        } else if (groundHit >= 0) {
-            // Click on ground polygon: select it
-            Canvas.clearSelection();
-            Canvas.selectedGroundIndex = groundHit;
-            UI.showGroundProperties(groundHit);
         } else {
-            Canvas.selectedGroundIndex = -1;
             if (ctrlKey) {
                 drag = { type: 'rectSelect', x1: world.x, y1: world.y, additive: true };
             } else {
@@ -328,10 +274,18 @@ const Tools = (() => {
     }
 
     function finishGround(site) {
-        if (Canvas.groundPreview.length >= 3) {
-            if (!site.grounds) site.grounds = [];
-            site.grounds.push([...Canvas.groundPreview]);
-            State.notifyChange();
+        const pts = Canvas.groundPreview;
+        if (pts.length >= 3) {
+            let cx = 0, cy = 0;
+            pts.forEach(p => { cx += p.x; cy += p.y; });
+            cx /= pts.length; cy /= pts.length;
+            const obj = State.addObject({
+                type: 'ground', name: I18n.t('tool.ground'),
+                width: 0, height: 0, guyRopeDistance: 0,
+                color: '#22c55e', shape: 'rect',
+                points: [...pts],
+            }, cx, cy);
+            if (obj) obj.points = [...pts];
         }
         Canvas.groundPreview = [];
         setTool('select');
@@ -558,14 +512,7 @@ const Tools = (() => {
                     Canvas.render();
                     break;
                 }
-                case 'groundVertex': {
-                    const pt = site.snapToGrid ? snapped : world;
-                    if (site.grounds && site.grounds[drag.gi]) {
-                        site.grounds[drag.gi][drag.vi] = { x: pt.x, y: pt.y };
-                    }
-                    Canvas.render();
-                    break;
-                }
+                // groundVertex case removed - handled by areaVertex
                 case 'areaVertex': {
                     const obj = site.objects.find(o => o.id === drag.objId);
                     if (obj && obj.points && obj.points[drag.vertexIndex]) {
@@ -622,8 +569,8 @@ const Tools = (() => {
                 // Check area/fence vertex hover
                 if (Canvas.selectionCount === 1) {
                     const sel = site.objects.find(o => o.id === Canvas.selectedId);
-                    if (sel && (sel.type === 'area' || sel.type === 'fence' || sel.type === 'guideline') && sel.points) {
-                        const avi = (sel.type === 'area' || sel.type === 'guideline') ? findAreaVertex(world, sel) : findFenceVertex(world, sel);
+                    if (sel && (sel.type === 'area' || sel.type === 'fence' || sel.type === 'guideline' || sel.type === 'ground') && sel.points) {
+                        const avi = (sel.type === 'area' || sel.type === 'guideline' || sel.type === 'ground') ? findAreaVertex(world, sel) : findFenceVertex(world, sel);
                         if (avi >= 0) {
                             Canvas.canvas.style.cursor = 'grab';
                             Canvas.hoveredId = sel.id;
@@ -702,9 +649,7 @@ const Tools = (() => {
                 const obj = State.activeSite?.objects.find(o => o.id === drag.objId);
                 if (obj) UI.showProperties(obj);
             }
-            if (drag.type === 'groundVertex') {
-                State.notifyChange();
-            }
+            // groundVertex removed - handled by areaVertex
             if (drag.type === 'areaVertex') {
                 State.notifyChange();
                 const obj = State.activeSite?.objects.find(o => o.id === drag.objId);
@@ -750,7 +695,7 @@ const Tools = (() => {
                 Canvas.selectionRect = null;
             }
             Canvas.dragDistances = [];
-            groundEditVertex = null;
+            // groundEditVertex removed
             drag = null;
             Canvas.render();
         }
@@ -835,10 +780,6 @@ const Tools = (() => {
                     setTool('select');
                 } else if (activeTool === 'place' || activeTool === 'text') {
                     setTool('select');
-                } else if (Canvas.selectedGroundIndex >= 0) {
-                    Canvas.selectedGroundIndex = -1;
-                    UI.hideProperties();
-                    Canvas.render();
                 } else if (Canvas.selectionCount > 0) {
                     Canvas.clearSelection();
                     UI.hideProperties();
@@ -854,16 +795,7 @@ const Tools = (() => {
             case 'Backspace':
             case 'x': case 'X':
                 if ((e.key === 'x' || e.key === 'X') && (e.ctrlKey || e.metaKey)) break;
-                if (Canvas.selectedGroundIndex >= 0) {
-                    const site = State.activeSite;
-                    if (site && site.grounds && site.grounds[Canvas.selectedGroundIndex]) {
-                        site.grounds.splice(Canvas.selectedGroundIndex, 1);
-                        Canvas.selectedGroundIndex = -1;
-                        UI.hideProperties();
-                        State.notifyChange();
-                        Canvas.render();
-                    }
-                } else if (Canvas.selectionCount > 0) {
+                if (Canvas.selectionCount > 0) {
                     [...Canvas.selectedIds].forEach(id => State.removeObject(id));
                     Canvas.clearSelection();
                     UI.hideProperties();
@@ -937,10 +869,10 @@ const Tools = (() => {
         const site = State.activeSite;
         if (!site) return;
 
-        // Check area/fence vertex right-click (for selected object)
+        // Check area/fence/ground vertex right-click (for selected object)
         if (Canvas.selectionCount === 1) {
             const sel = site.objects.find(o => o.id === Canvas.selectedId);
-            if (sel && sel.type === 'area' && sel.points) {
+            if (sel && (sel.type === 'area' || sel.type === 'ground') && sel.points) {
                 const avi = findAreaVertex(world, sel);
                 if (avi >= 0) {
                     UI.showAreaVertexMenu(e.clientX, e.clientY, sel, avi);
@@ -961,18 +893,6 @@ const Tools = (() => {
             }
         }
 
-        // Check ground vertex/edge right-click
-        const gv = findGroundVertex(world, site);
-        if (gv) {
-            UI.showGroundVertexMenu(e.clientX, e.clientY, gv.gi, gv.vi);
-            return;
-        }
-        const ge = findGroundEdge(world, site);
-        if (ge) {
-            UI.showGroundEdgeMenu(e.clientX, e.clientY, ge.gi, ge.ei, snapWorld(world));
-            return;
-        }
-
         const hit = [...site.objects].reverse().find(o => Canvas.pointInObj(world.x, world.y, o));
         if (hit) {
             Canvas.selectedId = hit.id;
@@ -980,7 +900,7 @@ const Tools = (() => {
             UI.showContextMenu(e.clientX, e.clientY, hit);
         } else {
             // Right-click on empty space: show canvas context menu
-            UI.showCanvasContextMenu(e.clientX, e.clientY);
+            UI.showCanvasContextMenu(e.clientX, e.clientY, world);
         }
     }
 
