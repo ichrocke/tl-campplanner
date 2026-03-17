@@ -453,11 +453,28 @@ const Tools = (() => {
                     break;
                 }
                 case 'move': {
-                    let dx = world.x - drag.offsetX;
-                    let dy = world.y - drag.offsetY;
+                    const rawDx = world.x - drag.offsetX;
+                    const rawDy = world.y - drag.offsetY;
+                    // For single object with snap: snap target position to grid edges
+                    if (site.snapToGrid && Canvas.selectionCount === 1) {
+                        const obj = site.objects.find(o => Canvas.isSelected(o.id));
+                        const orig = obj ? drag.origPositions[obj.id] : null;
+                        if (obj && orig) {
+                            const target = Canvas.snapObjToGrid(obj, orig.x + rawDx, orig.y + rawDy, site.gridSize);
+                            const dx = target.x - orig.x;
+                            const dy = target.y - orig.y;
+                            if (obj.points && orig.points) {
+                                obj.points.forEach((p, i) => { p.x = orig.points[i].x + dx; p.y = orig.points[i].y + dy; });
+                            }
+                            obj.x = target.x;
+                            obj.y = target.y;
+                        }
+                    } else {
+                    // Multi-selection or no snap: use delta
+                    let dx = rawDx, dy = rawDy;
                     if (site.snapToGrid) {
-                        dx = Canvas.snapToGrid(dx, site.gridSize);
-                        dy = Canvas.snapToGrid(dy, site.gridSize);
+                        dx = Canvas.snapToGrid(rawDx, site.gridSize);
+                        dy = Canvas.snapToGrid(rawDy, site.gridSize);
                     }
                     site.objects.forEach(obj => {
                         if (!Canvas.isSelected(obj.id)) return;
@@ -471,6 +488,7 @@ const Tools = (() => {
                         obj.x = nx;
                         obj.y = ny;
                     });
+                    } // end else (multi/no-snap)
                     drag.moved = true;
                     Canvas.dragDistances = [];
                     if (Canvas.selectionCount === 1) {
