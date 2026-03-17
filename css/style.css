@@ -1284,6 +1284,7 @@ body {
 
 #statusbar span { white-space: nowrap; }
 #status-tool { font-weight: 600; color: var(--primary); }
+#status-grid { color: var(--text-secondary); font-size: 10px; padding: 1px 6px; background: var(--bg); border-radius: 3px; }
 
 .donate-link {
     display: inline-flex;

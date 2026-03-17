@@ -1042,25 +1042,18 @@ const UI = (() => {
 
         // Print only this ground area
         document.getElementById('prop-ground-print').addEventListener('click', () => {
-            // Temporarily replace grounds with just this one
-            const origGrounds = site.grounds;
-            const origObjects = site.objects;
-            // Find objects inside this ground
+            // Store print filter so IO.print uses only this ground + its objects
             const pts = ground;
-            const insideObjs = site.objects.filter(o => {
-                if (o.type === 'bgimage') return true;
-                return Canvas.pointInPolygonCheck(o.x, o.y, pts);
-            });
-            site.grounds = [ground];
-            site.objects = insideObjs;
+            State._printFilter = {
+                grounds: [ground],
+                objects: site.objects.filter(o => {
+                    if (o.type === 'bgimage') return true;
+                    return Canvas.pointInPolygonCheck(o.x, o.y, pts);
+                }),
+            };
             // Open print dialog
-            const printBtn = document.getElementById('btn-print');
-            if (printBtn) printBtn.click();
-            // Restore after a tick (modal is open)
-            setTimeout(() => {
-                site.grounds = origGrounds;
-                site.objects = origObjects;
-            }, 100);
+            if (site) document.getElementById('print-title').value = site.name;
+            openModal('modal-print');
         });
 
         // Export ground as JSON
@@ -1377,6 +1370,38 @@ const UI = (() => {
     }
 
     // --- Context Menu ---
+    function showCanvasContextMenu(x, y) {
+        createContextMenuAt(x, y, [
+            { label: I18n.t('ground.import'), action: () => {
+                const input = document.createElement('input');
+                input.type = 'file'; input.accept = '.json';
+                input.onchange = () => {
+                    const file = input.files[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                        try {
+                            const data = JSON.parse(ev.target.result);
+                            const site = State.activeSite;
+                            if (data.type === 'ground_area' && data.ground && site) {
+                                site.grounds.push(data.ground);
+                                if (data.objects && Array.isArray(data.objects)) {
+                                    data.objects.forEach(o => { o.id = State.generateId(); site.objects.push(o); });
+                                }
+                                State.notifyChange();
+                                Canvas.render();
+                            } else {
+                                alert(I18n.t('msg.importError') + 'Not a ground area file');
+                            }
+                        } catch (err) { alert(I18n.t('msg.importError') + err.message); }
+                    };
+                    reader.readAsText(file);
+                };
+                input.click();
+            }},
+        ]);
+    }
+
     function showContextMenu(x, y, obj) {
         createContextMenuAt(x, y, [
             { label: I18n.t('ctx.properties'), action: () => showProperties(obj) },
@@ -1542,6 +1567,8 @@ const UI = (() => {
     // --- Status Bar ---
     function updateCoords(x, y) {
         document.getElementById('status-coords').textContent = `X: ${x.toFixed(1)} m   Y: ${y.toFixed(1)} m`;
+        const site = State.activeSite;
+        if (site) document.getElementById('status-grid').textContent = site.gridSize + ' m';
     }
 
     function updateZoom(z) {
@@ -1567,7 +1594,7 @@ const UI = (() => {
         init, buildTabs, buildPalette, buildPlacedList, syncSettings, translateUI,
         showProperties, showGroundProperties, hideProperties, getActiveColor,
         updateToolButtons, updateCoords, updateZoom, showHint,
-        showContextMenu, showGroundVertexMenu, showGroundEdgeMenu,
+        showContextMenu, showCanvasContextMenu, showGroundVertexMenu, showGroundEdgeMenu,
         showAreaVertexMenu, showAreaEdgeMenu, showFenceVertexMenu,
         removeContextMenu, openTextModal, showMultiProperties,
     };

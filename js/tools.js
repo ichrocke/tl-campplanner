@@ -978,6 +978,9 @@ const Tools = (() => {
             Canvas.selectedId = hit.id;
             Canvas.render();
             UI.showContextMenu(e.clientX, e.clientY, hit);
+        } else {
+            // Right-click on empty space: show canvas context menu
+            UI.showCanvasContextMenu(e.clientX, e.clientY);
         }
     }
 
