@@ -71,13 +71,12 @@ const IO = (() => {
         const canvasW = Math.round(paper.w * basePxPerMm);
         const canvasH = Math.round(paper.h * basePxPerMm);
         const marginPx = Math.round(15 * basePxPerMm);
-        const titleH = title ? Math.round(8 * basePxPerMm) : 0;
 
         // Use Canvas.renderOffscreen - same rendering as on screen, scaled up for DPI
         const mapCanvas = Canvas.renderOffscreen(canvasW, canvasH, bounds, {
             showGrid: showGrid,
             showDistances: showDistances,
-            margin: marginPx + titleH,
+            margin: marginPx,
             dpiScale: dpiScale,
         });
 
@@ -87,17 +86,16 @@ const IO = (() => {
         // Re-apply scale for post-processing (title, treasure map)
         pctx.scale(dpiScale, dpiScale);
 
-        // Title
+        // Title (small, top-left)
         if (title) {
-            const ds = State.displaySettings;
             const fontFamily = treasureMap ? "'Georgia','Times New Roman',serif" : "sans-serif";
             pctx.font = treasureMap
-                ? `italic bold ${20 * ds.fontScale}px ${fontFamily}`
-                : `bold ${16 * ds.fontScale}px sans-serif`;
-            pctx.fillStyle = treasureMap ? '#3d2b1f' : '#1a1a2e';
+                ? `italic 8px ${fontFamily}`
+                : `600 8px sans-serif`;
+            pctx.fillStyle = treasureMap ? '#3d2b1f' : '#64748b';
             pctx.textAlign = 'left';
             pctx.textBaseline = 'top';
-            pctx.fillText(title, marginPx, Math.round(marginPx * 0.5));
+            pctx.fillText(title, 8, 6);
         }
 
         // Treasure map effect (post-processing on full physical canvas)
