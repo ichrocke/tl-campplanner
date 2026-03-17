@@ -1468,30 +1468,22 @@ const Canvas = (() => {
 
     // Snap object position so that its EDGE aligns with the grid (not center)
     function snapObjToGrid(obj, worldX, worldY, gridSize) {
-        // Try snapping center, left edge, and right edge - pick whichever
-        // produces the smallest total offset from the cursor position
+        // Snap nearest edge to grid (left/top edge vs right/bottom edge)
         const hw = obj.width / 2;
         const hh = obj.height / 2;
 
-        function bestSnap(pos, half, gs) {
-            // Candidate 1: snap center
-            const c = Math.round(pos / gs) * gs;
-            // Candidate 2: snap left/top edge
+        function edgeSnap(pos, half, gs) {
+            // Snap left/top edge
             const e1 = Math.round((pos - half) / gs) * gs + half;
-            // Candidate 3: snap right/bottom edge
+            // Snap right/bottom edge
             const e2 = Math.round((pos + half) / gs) * gs - half;
-            // Pick the one closest to the cursor
-            const dc = Math.abs(c - pos);
-            const d1 = Math.abs(e1 - pos);
-            const d2 = Math.abs(e2 - pos);
-            if (dc <= d1 && dc <= d2) return c;
-            if (d1 <= d2) return e1;
-            return e2;
+            // Pick whichever edge is closer to the cursor
+            return Math.abs(e1 - pos) <= Math.abs(e2 - pos) ? e1 : e2;
         }
 
         return {
-            x: bestSnap(worldX, hw, gridSize),
-            y: bestSnap(worldY, hh, gridSize),
+            x: edgeSnap(worldX, hw, gridSize),
+            y: edgeSnap(worldY, hh, gridSize),
         };
     }
 
