@@ -1,19 +1,47 @@
 # Changelog
 
+## [2.4.0] - 2026-03-17
+
+### Added
+- **Tablet/touch support**: Full touch interaction - tap, drag, pinch-to-zoom, long-press for context menu, double-tap. Floating panels draggable with touch. Larger touch targets on tablet devices
+- **Group rotation**: Rotation handle above group center when multiple objects selected. Group rotation via properties panel (slider, number input, presets). Rotates all objects around group center
+- **Group names**: Name groups in multi-selection properties. Named groups shown with header in placed objects list, members indented below
+- **Multi-page print**: Large maps at fixed scale auto-split across pages with page indicators
+- **Create-only button**: New object dialog has "Create" to add to palette without placing
+- **Auto-save toggle**: Enable/disable auto-save in settings (default: on)
+- **Sidebar resize divider**: Draggable divider between palette and placed objects to allocate space
+- **Right-click cancels tools**: Right-click aborts placement, drawing, and paint tools
+
+### Changed
+- **Print uses real canvas renderer**: Print/export now runs the exact same rendering pipeline as on-screen display. Removed ~500 lines of duplicate rendering code
+- **300 DPI export**: PNG/JPEG export at 300 DPI with ctx.scale for correct line weights and font sizes
+- **Paint tool**: Only recolors tent objects (not other types). Color palette draggable with handle
+- **Color swatches**: Edit button (pencil icon on hover) replaces right-click for changing colors
+- **Grid snapping**: Snaps nearest outer edge to grid (not center). Re-snaps correctly after toggling snap off/on
+- **Entrance markers**: Larger triangle (40% of tent side) with white gap line showing opening
+- **Site label**: Small gray text top-left corner (was large centered pill)
+- **Print title**: Small 8px top-left (was 16px centered)
+
+### Fixed
+- Color picker: no more duplicate colors on add, edit button works reliably
+- Grid snapping for non-integer object sizes (2.5m etc.)
+- Objects re-snap to grid after disabling and re-enabling snap
+- Print quality: lines and text no longer appear thin at high DPI
+
 ## [2.3.0] - 2026-03-17
 
 ### Added
-- **Color palette**: Floating color swatch panel (6 default colors, up to 10). Right-click swatches to change color, + to add, x to remove
-- **Paint tool** (P): Select a color from the palette and click objects to recolor them
-- **Object grouping**: Select multiple objects and group via Ctrl+G or "Group" button. Click one grouped object to select all. Ungroup with Ctrl+Shift+G
-- **Tent entrance markers**: Green triangle marker on tent objects, configurable side (top/right/bottom/left) in properties
-- **Multiline descriptions**: Object descriptions now support multiple lines with configurable color and text size
-- **Multiline text fields**: Text tool and text properties now use textarea for multiline text
-- **Export reminder**: Browser shows a reminder to export data when closing/refreshing the page
-- **Donate hint in print dialog**: Small PayPal link shown in print settings
+- **Color palette**: Floating color swatch panel (6 default colors, up to 10)
+- **Paint tool** (P): Select a color and click tent objects to recolor them
+- **Object grouping**: Ctrl+G to group, Ctrl+Shift+G to ungroup. Click one grouped object to select all
+- **Tent entrance markers**: Green triangle marker, configurable side in properties
+- **Multiline descriptions**: Multiple lines with configurable color and text size
+- **Multiline text fields**: Text tool uses textarea for multiline input
+- **Export reminder**: Warning when closing/refreshing with unsaved content
+- **Donate hint in print dialog**
 
 ### Fixed
-- Sidebar scrolling: Both palette and placed objects list now properly scroll with many items
+- Sidebar scrolling with many objects
 
 ## [2.2.0] - 2026-03-16
 
