@@ -308,13 +308,28 @@ body {
     width: var(--sidebar-width);
     background: var(--surface);
     border-right: 1px solid var(--border);
-    overflow-y: auto;
+    overflow-y: hidden;
     flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .sidebar-section {
     padding: 12px;
     border-bottom: 1px solid var(--border);
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-section:first-child {
+    flex: 1;
+    overflow: hidden;
+}
+
+.sidebar-section:last-child {
+    flex: 1;
+    overflow: hidden;
 }
 
 .sidebar-section h3 {
@@ -329,6 +344,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
 }
 
 .palette-item {
@@ -543,8 +561,9 @@ body {
     display: flex;
     flex-direction: column;
     gap: 2px;
-    max-height: 200px;
     overflow-y: auto;
+    flex: 1;
+    min-height: 0;
 }
 
 #placed-objects-list:empty::after {
