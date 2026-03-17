@@ -1487,6 +1487,93 @@ const Canvas = (() => {
         };
     }
 
+    // Render the current site onto an offscreen canvas at given resolution
+    // bounds: {minX, minY, width, height}, pxW/pxH: pixel dimensions
+    // options: { showGrid, showDistances, margin }
+    function renderOffscreen(pxW, pxH, worldBounds, options) {
+        const site = State.activeSite;
+        if (!site) return null;
+
+        // Save state
+        const origCanvas = canvas;
+        const origCtx = ctx;
+        const origView = { ...site.view };
+        const origSel = new Set(selectedIds);
+        const origHov = hoveredId;
+
+        // Create offscreen canvas
+        const oc = document.createElement('canvas');
+        oc.width = pxW;
+        oc.height = pxH;
+        canvas = oc;
+        ctx = oc.getContext('2d');
+
+        // Clear selection visuals for print
+        selectedIds.clear();
+        hoveredId = null;
+        selectionRect = null;
+
+        // Calculate view to fit bounds into the canvas
+        const marginPx = (options && options.margin) || 40;
+        const availW = pxW - 2 * marginPx;
+        const availH = pxH - 2 * marginPx;
+        const scaleX = availW / worldBounds.width;
+        const scaleY = availH / worldBounds.height;
+        const ppm = Math.min(scaleX, scaleY);
+        const viewZoom = ppm / PPM;
+
+        const centerX = worldBounds.minX + worldBounds.width / 2;
+        const centerY = worldBounds.minY + worldBounds.height / 2;
+        site.view.zoom = viewZoom;
+        site.view.panX = -centerX;
+        site.view.panY = -centerY;
+
+        // White background
+        ctx.fillStyle = '#fff';
+        ctx.fillRect(0, 0, pxW, pxH);
+
+        // Render
+        drawBgImages(site);
+        if (!options || options.showGrid !== false) drawGrid(site);
+        drawGround(site);
+        drawObjects(site);
+
+        // Distances
+        if (options && options.showDistances) {
+            site.objects.forEach(obj => {
+                const dists = computeDistancesForObj(obj.id);
+                dists.forEach(d => {
+                    const p1 = w2s(d.x1, d.y1);
+                    const p2 = w2s(d.x2, d.y2);
+                    ctx.strokeStyle = d.color;
+                    ctx.lineWidth = 1;
+                    ctx.setLineDash([4, 3]);
+                    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.font = 'bold 11px sans-serif';
+                    ctx.fillStyle = d.color;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(d.dist.toFixed(1) + ' m', (p1.x + p2.x) / 2, (p1.y + p2.y) / 2 - 4);
+                });
+            });
+        }
+
+        drawScaleBar(site);
+        drawCompass();
+
+        // Restore state
+        canvas = origCanvas;
+        ctx = origCtx;
+        site.view.panX = origView.panX;
+        site.view.panY = origView.panY;
+        site.view.zoom = origView.zoom;
+        selectedIds.clear();
+        origSel.forEach(id => selectedIds.add(id));
+        hoveredId = origHov;
+
+        return oc;
+    }
+
     return {
         init, render, resize, w2s, s2w, zoom, snapToGrid, snapObjToGrid,
         pointInObj, pointOnRotHandle, pointOnResizeHandle, computeDistancesForObj,
@@ -1522,6 +1609,7 @@ const Canvas = (() => {
         set placementPreview(p) { placementPreview = p; },
         get pathPreview() { return pathPreview; },
         set pathPreview(p) { pathPreview = p; },
+        renderOffscreen,
         polygonArea,
         pointInPolygonCheck: pointInPolygon,
         AREA_TEXTURES,

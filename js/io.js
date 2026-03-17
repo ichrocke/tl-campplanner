@@ -54,483 +54,100 @@ const IO = (() => {
         const title = document.getElementById('print-title').value;
         const format = document.getElementById('print-format').value;
 
-        const papers = {
-            a4: { w: 297, h: 210 },
-            a3: { w: 420, h: 297 },
-            a2: { w: 594, h: 420 },
-        };
+        printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, title, format);
+    }
+
+    function printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, title, format) {
+        const papers = { a4: { w: 297, h: 210 }, a3: { w: 420, h: 297 }, a2: { w: 594, h: 420 } };
         let paper = papers[paperSel] || papers.a4;
         if (orientation === 'portrait') paper = { w: paper.h, h: paper.w };
 
         const bounds = getContentBounds(site);
         if (!bounds) { alert(I18n.t('msg.noPrintContent')); return; }
 
-        const margin = 15;
-        const printableW = paper.w - 2 * margin;
-        const printableH = paper.h - 2 * margin - (title ? 10 : 0);
-
-        let mmPerMeter;
-        if (scaleOption === 'auto') {
-            mmPerMeter = Math.min(printableW / bounds.width, printableH / bounds.height);
-        } else {
-            mmPerMeter = 1000 / parseFloat(scaleOption);
-        }
-
-        // Higher resolution for image export (300 DPI), screen res for print
-        const pxPerMm = (format === 'png' || format === 'jpeg') ? 11.81 : 3.78; // 300 DPI vs 96 DPI
+        const pxPerMm = (format === 'png' || format === 'jpeg') ? 11.81 : 3.78;
         const canvasW = Math.round(paper.w * pxPerMm);
         const canvasH = Math.round(paper.h * pxPerMm);
-        const ppm = mmPerMeter * pxPerMm;
+        const marginPx = Math.round(15 * pxPerMm);
+        const titleH = title ? Math.round(8 * pxPerMm) : 0;
 
-        // Calculate how many pages we need for fixed scale
-        const contentPxW = bounds.width * ppm;
-        const contentPxH = bounds.height * ppm;
-        const usableW = canvasW - 2 * margin * pxPerMm;
-        const usableH = canvasH - 2 * margin * pxPerMm - (title ? 20 : 0);
-        const pagesX = scaleOption === 'auto' ? 1 : Math.max(1, Math.ceil(contentPxW / usableW));
-        const pagesY = scaleOption === 'auto' ? 1 : Math.max(1, Math.ceil(contentPxH / usableH));
+        // Use Canvas.renderOffscreen for the map - exact same look as on screen
+        const mapCanvas = Canvas.renderOffscreen(canvasW, canvasH, bounds, {
+            showGrid: showGrid,
+            showDistances: showDistances,
+            margin: marginPx + titleH,
+        });
 
-        const mapPages = [];
+        if (!mapCanvas) return;
+        const pctx = mapCanvas.getContext('2d');
 
-        for (let py = 0; py < pagesY; py++) {
-        for (let px = 0; px < pagesX; px++) {
-
-        // Create offscreen canvas for this page
-        const pc = document.createElement('canvas');
-        pc.width = canvasW;
-        pc.height = canvasH;
-        const pctx = pc.getContext('2d');
-        const ds = State.displaySettings;
-
-        // Background
-        pctx.fillStyle = '#fff';
-        pctx.fillRect(0, 0, canvasW, canvasH);
-
-        const ox = margin * pxPerMm;
-        const oy = margin * pxPerMm + (title ? 20 : 0);
-
+        // Title
         if (title) {
-            const titleFont = treasureMap
-                ? `italic bold ${20 * ds.fontScale}px 'Georgia', 'Times New Roman', serif`
+            const ds = State.displaySettings;
+            const fontFamily = treasureMap ? "'Georgia','Times New Roman',serif" : "sans-serif";
+            pctx.font = treasureMap
+                ? `italic bold ${20 * ds.fontScale}px ${fontFamily}`
                 : `bold ${16 * ds.fontScale}px sans-serif`;
-            pctx.font = titleFont;
             pctx.fillStyle = treasureMap ? '#3d2b1f' : '#1a1a2e';
             pctx.textAlign = 'left';
-            pctx.fillText(title, ox, margin * pxPerMm + 14);
-        }
-
-        const pageOffX = px * usableW;
-        const pageOffY = py * usableH;
-        function wp(wx, wy) {
-            return { x: ox + (wx - bounds.minX) * ppm - pageOffX, y: oy + (wy - bounds.minY) * ppm - pageOffY };
-        }
-
-        // Page label for multi-page
-        if (pagesX > 1 || pagesY > 1) {
-            pctx.font = `${8 * ds.fontScale}px sans-serif`;
-            pctx.fillStyle = '#999';
-            pctx.textAlign = 'right';
             pctx.textBaseline = 'top';
-            pctx.fillText(`${px + 1}/${pagesX} \u00d7 ${py + 1}/${pagesY}`, canvasW - margin * pxPerMm, canvasH - margin * pxPerMm + 2);
+            pctx.fillText(title, marginPx, Math.round(marginPx * 0.5));
         }
 
-        // Grid
-        if (showGrid) {
-            pctx.strokeStyle = '#ddd';
-            pctx.lineWidth = 0.5 * ds.lineScale;
-            const gridStep = site.gridSize;
-            let gridCount = 0;
-            for (let x = Math.floor(bounds.minX / gridStep) * gridStep; x <= bounds.maxX; x += gridStep) {
-                const p = wp(x, bounds.minY), p2 = wp(x, bounds.maxY);
-                pctx.beginPath(); pctx.moveTo(p.x, p.y); pctx.lineTo(p2.x, p2.y); pctx.stroke();
-                // Label every 5th line
-                if (gridCount % 5 === 0) {
-                    pctx.font = `${7 * ds.fontScale}px sans-serif`;
-                    pctx.fillStyle = '#bbb';
-                    pctx.textAlign = 'center';
-                    pctx.textBaseline = 'top';
-                    pctx.fillText(x.toFixed(1), p2.x, p2.y + 2);
-                }
-                gridCount++;
-            }
-            gridCount = 0;
-            for (let y = Math.floor(bounds.minY / gridStep) * gridStep; y <= bounds.maxY; y += gridStep) {
-                const p = wp(bounds.minX, y), p2 = wp(bounds.maxX, y);
-                pctx.beginPath(); pctx.moveTo(p.x, p.y); pctx.lineTo(p2.x, p2.y); pctx.stroke();
-                if (gridCount % 5 === 0) {
-                    pctx.font = `${7 * ds.fontScale}px sans-serif`;
-                    pctx.fillStyle = '#bbb';
-                    pctx.textAlign = 'right';
-                    pctx.textBaseline = 'middle';
-                    pctx.fillText(y.toFixed(1), p.x - 3, p.y);
-                }
-                gridCount++;
-            }
-            // Grid size indicator
-            pctx.font = `${8 * ds.fontScale}px sans-serif`;
-            pctx.fillStyle = '#999';
-            pctx.textAlign = 'left';
-            pctx.textBaseline = 'top';
-            pctx.fillText(I18n.t('canvas.grid') + ': ' + gridStep + ' m', ox, oy + bounds.height * ppm + 4);
-        }
-
-        // Grounds (multiple)
-        (site.grounds || []).forEach(ground => {
-            if (ground.length >= 3) {
-                const gPts = ground.map(pt => wp(pt.x, pt.y));
-                if (treasureMap) {
-                    wobblyPolygon(pctx, gPts, 1.2);
-                } else {
-                    pctx.beginPath();
-                    pctx.moveTo(gPts[0].x, gPts[0].y);
-                    gPts.forEach((p, i) => { if (i > 0) pctx.lineTo(p.x, p.y); });
-                    pctx.closePath();
-                }
-                pctx.fillStyle = treasureMap ? 'rgba(34,197,94,0.04)' : 'rgba(34,197,94,0.06)';
-                pctx.fill();
-                pctx.strokeStyle = treasureMap ? '#5a7a3a' : '#22c55e';
-                pctx.lineWidth = (treasureMap ? 2.5 : 1.5) * ds.lineScale;
-                pctx.stroke();
-
-                // Edge lengths (not in treasure map mode)
-                if (!treasureMap) {
-                    pctx.font = `${8 * ds.fontScale}px sans-serif`;
-                    pctx.fillStyle = '#16a34a';
-                    pctx.textAlign = 'center';
-                    pctx.textBaseline = 'bottom';
-                    for (let i = 0; i < ground.length; i++) {
-                        const a = ground[i], b = ground[(i + 1) % ground.length];
-                        const dist = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
-                        const pa = wp(a.x, a.y), pb = wp(b.x, b.y);
-                        pctx.fillText(dist.toFixed(1) + ' m', (pa.x + pb.x) / 2, (pa.y + pb.y) / 2 - 3);
-                    }
-                }
-            }
-        });
-
-        // Objects
-        site.objects.forEach(obj => {
-            if (obj.type === 'bgimage') return;
-            if (obj.type === 'guideline' && obj.points && obj.points.length === 2) {
-                const p1 = wp(obj.points[0].x, obj.points[0].y);
-                const p2 = wp(obj.points[1].x, obj.points[1].y);
-                const color = obj.color || '#6366f1';
-                const dx = obj.points[1].x - obj.points[0].x;
-                const dy = obj.points[1].y - obj.points[0].y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
-                pctx.strokeStyle = color;
-                pctx.lineWidth = 1;
-                pctx.setLineDash([6, 3]);
-                pctx.beginPath(); pctx.moveTo(p1.x, p1.y); pctx.lineTo(p2.x, p2.y); pctx.stroke();
-                pctx.setLineDash([]);
-                // Ticks
-                const len = Math.sqrt((p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2);
-                if (len > 0) {
-                    const nx = -(p2.y - p1.y) / len * 4, ny = (p2.x - p1.x) / len * 4;
-                    pctx.beginPath(); pctx.moveTo(p1.x + nx, p1.y + ny); pctx.lineTo(p1.x - nx, p1.y - ny); pctx.stroke();
-                    pctx.beginPath(); pctx.moveTo(p2.x + nx, p2.y + ny); pctx.lineTo(p2.x - nx, p2.y - ny); pctx.stroke();
-                }
-                // Label
-                const mx = (p1.x + p2.x) / 2, my = (p1.y + p2.y) / 2;
-                pctx.font = `${8 * ds.fontScale}px sans-serif`;
-                pctx.fillStyle = color;
-                pctx.textAlign = 'center';
-                pctx.fillText(dist.toFixed(2) + ' m', mx, my - 4);
-                return;
-            }
-            if (obj.type === 'text') {
-                const pos = wp(obj.x, obj.y);
-                pctx.save();
-                pctx.translate(pos.x, pos.y);
-                pctx.rotate((obj.rotation || 0) * Math.PI / 180);
-                const tfs = (obj.fontSize || 1) * ppm * ds.fontScale;
-                pctx.font = `bold ${Math.max(6, tfs)}px sans-serif`;
-                pctx.fillStyle = obj.color || '#333';
-                pctx.textAlign = 'center';
-                pctx.textBaseline = 'middle';
-                pctx.fillText(obj.text || obj.name, 0, 0);
-                pctx.restore();
-                return;
-            }
-            if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
-                const aPts = obj.points.map(pt => wp(pt.x, pt.y));
-                if (treasureMap) {
-                    wobblyPolygon(pctx, aPts, 1);
-                } else {
-                    pctx.beginPath();
-                    pctx.moveTo(aPts[0].x, aPts[0].y);
-                    aPts.forEach((p, i) => { if (i > 0) pctx.lineTo(p.x, p.y); });
-                    pctx.closePath();
-                }
-                pctx.fillStyle = (obj.color || '#d4a574') + '25';
-                pctx.fill();
-                pctx.setLineDash([4, 3]);
-                pctx.strokeStyle = obj.color || '#d4a574';
-                pctx.lineWidth = (treasureMap ? 1.8 : 1) * ds.lineScale;
-                pctx.stroke();
-                pctx.setLineDash([]);
-                return;
-            }
-
-            const pos = wp(obj.x, obj.y);
-            pctx.save();
-            pctx.translate(pos.x, pos.y);
-            pctx.rotate(obj.rotation * Math.PI / 180);
-            const w = obj.width * ppm;
-            const h = obj.height * ppm;
-
-            // Guy ropes (skip in treasure map mode)
-            if (obj.guyRopeDistance > 0 && !treasureMap) {
-                const gd = obj.guyRopeDistance * ppm;
-                const hw = w / 2, hh = h / 2;
-                const pSides = Canvas.getShapeSides(obj.shape);
-                pctx.setLineDash([3, 3]);
-                pctx.strokeStyle = '#aaa';
-                pctx.lineWidth = 0.5 * ds.ropeScale;
-                if (obj.shape === 'circle') {
-                    pctx.beginPath(); pctx.arc(0, 0, hw + gd, 0, Math.PI * 2); pctx.stroke();
-                } else if (pSides >= 3) {
-                    // Polygon outline for guy ropes
-                    pctx.beginPath();
-                    for (let i = 0; i < pSides; i++) {
-                        const a = (i / pSides) * Math.PI * 2 - Math.PI / 2;
-                        const px = Math.cos(a) * (hw + gd), py = Math.sin(a) * (hh + gd);
-                        if (i === 0) pctx.moveTo(px, py); else pctx.lineTo(px, py);
-                    }
-                    pctx.closePath(); pctx.stroke();
-                } else {
-                    pctx.strokeRect(-hw - gd, -hh - gd, w + 2 * gd, h + 2 * gd);
-                }
-                pctx.setLineDash([]);
-                // Rope lines from body to outer
-                pctx.strokeStyle = '#ccc';
-                pctx.lineWidth = 0.3 * ds.ropeScale;
-                if (obj.shape === 'circle') {
-                    // Skip rope lines for circle
-                } else if (pSides >= 3) {
-                    for (let i = 0; i < pSides; i++) {
-                        const a = (i / pSides) * Math.PI * 2 - Math.PI / 2;
-                        pctx.beginPath();
-                        pctx.moveTo(Math.cos(a) * hw, Math.sin(a) * hh);
-                        pctx.lineTo(Math.cos(a) * (hw + gd), Math.sin(a) * (hh + gd));
-                        pctx.stroke();
-                    }
-                } else {
-                    [[-1,-1],[1,-1],[1,1],[-1,1],[0,-1],[1,0],[0,1],[-1,0]].forEach(([cx, cy]) => {
-                        pctx.beginPath();
-                        pctx.moveTo(cx * hw, cy * hh);
-                        pctx.lineTo(cx * (hw + gd * (Math.abs(cx) || 0.001)), cy * (hh + gd * (Math.abs(cy) || 0.001)));
-                        pctx.stroke();
-                    });
-                }
-            }
-
-            // Body - use Canvas shape helpers for all shapes
-            const sides = Canvas.getShapeSides(obj.shape);
-            const tmLine = treasureMap ? 2 : 1; // thicker lines in treasure map mode
-            if (treasureMap) {
-                const baseAmp = Math.max(0.5, Math.min(w, h) * 0.012);
-                // Less wobble for special polygon shapes, more for rects
-                const amp = sides >= 3 ? baseAmp * 0.5 : baseAmp;
-                if (obj.shape === 'circle') {
-                    pctx.beginPath();
-                    const segs = 24;
-                    for (let i = 0; i <= segs; i++) {
-                        const a = (i / segs) * Math.PI * 2;
-                        const r = w / 2 + Math.sin(a * 5 + obj.x) * amp;
-                        const px = Math.cos(a) * r, py = Math.sin(a) * r;
-                        if (i === 0) pctx.moveTo(px, py); else pctx.lineTo(px, py);
-                    }
-                    pctx.closePath();
-                } else if (sides >= 3) {
-                    const pts = [];
-                    for (let i = 0; i < sides; i++) {
-                        const a = (i / sides) * Math.PI * 2 - Math.PI / 2;
-                        pts.push({ x: Math.cos(a) * w / 2, y: Math.sin(a) * h / 2 });
-                    }
-                    wobblyPolygon(pctx, pts, amp);
-                } else {
-                    wobblyRect(pctx, -w / 2, -h / 2, w, h, amp);
-                }
-                pctx.fillStyle = obj.color + '66'; pctx.fill();
-                pctx.strokeStyle = obj.color; pctx.lineWidth = tmLine * ds.lineScale; pctx.stroke();
-            } else if (obj.shape === 'circle') {
-                pctx.beginPath(); pctx.arc(0, 0, w / 2, 0, Math.PI * 2);
-                pctx.fillStyle = obj.color + '66'; pctx.fill();
-                pctx.strokeStyle = obj.color; pctx.lineWidth = 1 * ds.lineScale; pctx.stroke();
-            } else if (sides >= 3) {
-                pctx.beginPath();
-                for (let i = 0; i < sides; i++) {
-                    const a = (i / sides) * Math.PI * 2 - Math.PI / 2;
-                    const px = Math.cos(a) * w / 2, py = Math.sin(a) * h / 2;
-                    if (i === 0) pctx.moveTo(px, py); else pctx.lineTo(px, py);
-                }
-                pctx.closePath();
-                pctx.fillStyle = obj.color + '66'; pctx.fill();
-                pctx.strokeStyle = obj.color; pctx.lineWidth = 1 * ds.lineScale; pctx.stroke();
-            } else {
-                pctx.fillStyle = obj.color + '66';
-                pctx.fillRect(-w / 2, -h / 2, w, h);
-                pctx.strokeStyle = obj.color; pctx.lineWidth = 1 * ds.lineScale;
-                pctx.strokeRect(-w / 2, -h / 2, w, h);
-            }
-
-            // Name
-            const fs = Math.max(7, Math.min(11, ppm * 0.4)) * ds.fontScale;
-            const fontFamily = treasureMap ? "'Georgia','Times New Roman',serif" : "sans-serif";
-            pctx.font = treasureMap ? `italic ${fs}px ${fontFamily}` : `600 ${fs}px ${fontFamily}`;
-            pctx.textAlign = 'center'; pctx.textBaseline = 'middle';
-            pctx.fillStyle = treasureMap ? '#3d2b1f' : '#333';
-            pctx.fillText(obj.name, 0, -fs * 0.3);
-            pctx.font = `${fs - 1}px ${fontFamily}`;
-            pctx.fillStyle = treasureMap ? '#5a4a3a' : '#666';
-            pctx.fillText(`${obj.width}\u00d7${obj.height}m`, 0, fs * 0.6);
-
-            pctx.restore();
-        });
-
-        // Distances
-        if (showDistances) {
-            site.objects.forEach(obj => {
-                Canvas.computeDistancesForObj(obj.id).forEach(d => {
-                    const p1 = wp(d.x1, d.y1), p2 = wp(d.x2, d.y2);
-                    pctx.strokeStyle = d.color;
-                    pctx.lineWidth = 0.8 * ds.lineScale;
-                    pctx.setLineDash([3, 2]);
-                    pctx.beginPath(); pctx.moveTo(p1.x, p1.y); pctx.lineTo(p2.x, p2.y); pctx.stroke();
-                    pctx.setLineDash([]);
-                    pctx.font = `${8 * ds.fontScale}px sans-serif`;
-                    pctx.fillStyle = d.color;
-                    pctx.textAlign = 'center';
-                    pctx.fillText(d.dist.toFixed(1) + 'm', (p1.x + p2.x) / 2, (p1.y + p2.y) / 2 - 3);
-                });
-            });
-        }
-
-        // Scale bar
-        const scaleBarMeters = mmPerMeter > 15 ? 1 : mmPerMeter > 5 ? 5 : 10;
-        const sbPx = scaleBarMeters * ppm;
-        const sbx = canvasW - margin * pxPerMm - sbPx;
-        const sby = canvasH - margin * pxPerMm;
-        if (treasureMap) {
-            // Treasure map scale bar
-            pctx.strokeStyle = '#3d2b1f';
-            pctx.lineWidth = 2;
-            pctx.beginPath();
-            wobblyLine(pctx, sbx, sby, sbx + sbPx, sby, 1);
-            pctx.stroke();
-            pctx.beginPath();
-            wobblyLine(pctx, sbx, sby - 5, sbx, sby + 1, 0.5);
-            pctx.stroke();
-            pctx.beginPath();
-            wobblyLine(pctx, sbx + sbPx, sby - 5, sbx + sbPx, sby + 1, 0.5);
-            pctx.stroke();
-            pctx.font = `italic ${10 * ds.fontScale}px 'Georgia','Times New Roman',serif`;
-            pctx.fillStyle = '#3d2b1f';
-            pctx.textAlign = 'center';
-            pctx.textBaseline = 'bottom';
-            pctx.fillText(scaleBarMeters + ' m', sbx + sbPx / 2, sby - 8);
-        } else {
-            pctx.strokeStyle = '#333'; pctx.lineWidth = 1.5;
-            pctx.beginPath();
-            pctx.moveTo(sbx, sby - 4); pctx.lineTo(sbx, sby);
-            pctx.lineTo(sbx + sbPx, sby); pctx.lineTo(sbx + sbPx, sby - 4);
-            pctx.stroke();
-            pctx.font = `${9 * ds.fontScale}px sans-serif`;
-            pctx.fillStyle = '#333';
-            pctx.textAlign = 'center';
-            pctx.textBaseline = 'bottom';
-            pctx.fillText(scaleBarMeters + ' m', sbx + sbPx / 2, sby - 6);
-        }
-        if (scaleOption !== 'auto') {
-            pctx.font = treasureMap
-                ? `italic ${9 * ds.fontScale}px 'Georgia','Times New Roman',serif`
-                : `${9 * ds.fontScale}px sans-serif`;
-            pctx.fillStyle = treasureMap ? '#3d2b1f' : '#333';
-            pctx.textAlign = 'right';
-            pctx.textBaseline = 'top';
-            pctx.fillText(I18n.t('print.scale') + ' 1:' + scaleOption, canvasW - margin * pxPerMm, margin * pxPerMm + 14);
-        }
-
-        // Compass image
-        if (_compassImg.complete && _compassImg.naturalWidth > 0) {
-            const compSize = 90;
-            pctx.globalAlpha = 0.7;
-            pctx.drawImage(_compassImg, ox, canvasH - margin * pxPerMm - compSize, compSize, compSize);
-            pctx.globalAlpha = 1;
-        }
-
-        // --- Treasure map effect ---
+        // Treasure map effect (post-processing)
         if (treasureMap) {
             applyTreasureMapEffect(pctx, canvasW, canvasH);
         }
 
-        mapPages.push(pc);
-        } // end px loop
-        } // end py loop
-
-        // --- Page 2: Object list table ---
+        // Object list (page 2)
         let page2 = null;
         if (showObjList && site.objects.length > 0) {
             page2 = document.createElement('canvas');
             page2.width = canvasW; page2.height = canvasH;
             const p2 = page2.getContext('2d');
+            const ds = State.displaySettings;
             p2.fillStyle = '#fff';
             p2.fillRect(0, 0, canvasW, canvasH);
-
-            const tx = ox, ty = margin * pxPerMm;
-            // Title
+            const tx = marginPx, ty = marginPx;
             p2.font = `bold ${14 * ds.fontScale}px sans-serif`;
             p2.fillStyle = '#1a1a2e';
             p2.textAlign = 'left';
             p2.fillText((title || site.name) + ' \u2013 ' + I18n.t('print.objectList'), tx, ty + 12);
-
-            const rowH = 18;
-            const colW = [30, 130, 120, 55, 55, 55, 55];
+            const rowH = Math.round(18 * (pxPerMm / 3.78));
+            const fs = Math.round(9 * ds.fontScale * (pxPerMm / 3.78));
+            const colW = [30, 130, 120, 55, 55, 55, 55].map(c => Math.round(c * (pxPerMm / 3.78)));
             const headers = [I18n.t('print.nr'), I18n.t('print.name'), I18n.t('print.description'), I18n.t('print.width'), I18n.t('print.depth'), I18n.t('print.rotation'), I18n.t('print.type')];
             const totalW = colW.reduce((a, b) => a + b, 0);
-            const headerY = ty + 28;
-
-            // Header
+            const headerY = ty + Math.round(28 * (pxPerMm / 3.78));
             p2.fillStyle = '#f0f0f0';
             p2.fillRect(tx, headerY, totalW, rowH);
             p2.strokeStyle = '#999'; p2.lineWidth = 0.5;
             p2.strokeRect(tx, headerY, totalW, rowH);
-            p2.font = `bold ${9 * ds.fontScale}px sans-serif`;
+            p2.font = `bold ${fs}px sans-serif`;
             p2.fillStyle = '#333'; p2.textAlign = 'left'; p2.textBaseline = 'middle';
             let cx = tx;
             headers.forEach((h, i) => { p2.fillText(h, cx + 4, headerY + rowH / 2); cx += colW[i]; });
-
-            // Rows
             site.objects.forEach((obj, idx) => {
+                if (obj.type === 'bgimage' || obj.type === 'guideline') return;
                 const rowY = headerY + rowH + idx * rowH;
-                if (rowY + rowH > canvasH - margin * pxPerMm) return;
-                // Zebra
+                if (rowY + rowH > canvasH - marginPx) return;
                 if (idx % 2 === 1) { p2.fillStyle = '#fafafa'; p2.fillRect(tx, rowY, totalW, rowH); }
                 p2.strokeStyle = '#e5e5e5'; p2.lineWidth = 0.3;
                 p2.strokeRect(tx, rowY, totalW, rowH);
-                // Color swatch
                 p2.fillStyle = obj.color;
-                p2.fillRect(tx + 3, rowY + 4, 10, 10);
-                p2.font = `${9 * ds.fontScale}px sans-serif`;
+                p2.fillRect(tx + 3, rowY + 4, Math.round(10 * (pxPerMm / 3.78)), Math.round(10 * (pxPerMm / 3.78)));
+                p2.font = `${fs}px sans-serif`;
                 p2.fillStyle = '#333'; p2.textBaseline = 'middle';
-                const vals = [
-                    (idx + 1).toString(), obj.name, obj.description || '',
-                    obj.width ? obj.width + ' m' : '-',
-                    obj.height ? obj.height + ' m' : '-',
-                    obj.rotation ? Math.round(obj.rotation) + '\u00b0' : '-',
-                    obj.type,
-                ];
+                const vals = [(idx + 1).toString(), obj.name, (obj.description || '').split('\n')[0],
+                    obj.width ? obj.width + ' m' : '-', obj.height ? obj.height + ' m' : '-',
+                    obj.rotation ? Math.round(obj.rotation) + '\u00b0' : '-', obj.type];
                 cx = tx;
-                vals.forEach((v, i) => {
-                    p2.fillText(v, cx + (i === 0 ? 16 : 4), rowY + rowH / 2, colW[i] - 8);
-                    cx += colW[i];
-                });
+                vals.forEach((v, i) => { p2.fillText(v, cx + (i === 0 ? Math.round(16 * (pxPerMm / 3.78)) : 4), rowY + rowH / 2, colW[i] - 8); cx += colW[i]; });
             });
         }
 
-        // Output based on format
-        const allPages = [...mapPages];
+        // Output
+        const allPages = [mapCanvas];
         if (page2) allPages.push(page2);
 
         if (format === 'png' || format === 'jpeg') {
@@ -550,12 +167,11 @@ const IO = (() => {
                 a.click();
             } else {
                 const a = document.createElement('a');
-                a.href = allPages[0].toDataURL(mimeType, 0.95);
+                a.href = mapCanvas.toDataURL(mimeType, 0.95);
                 a.download = `${site.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.${ext}`;
                 a.click();
             }
         } else {
-            // Print via popup window
             const win = window.open('', '_blank');
             if (!win) { alert(I18n.t('msg.popupBlocked')); return; }
             let imgsHtml = allPages.map(p => '<img src="' + p.toDataURL('image/png') + '">').join('\n');
@@ -572,6 +188,7 @@ const IO = (() => {
             win.document.close();
         }
     }
+
 
     function getContentBounds(site) {
         let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
