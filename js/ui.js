@@ -107,6 +107,11 @@ const UI = (() => {
             btn.addEventListener('click', () => Tools.setTool(btn.dataset.tool));
         });
 
+        // Prevent canvas contextmenu handler from blocking color palette right-clicks
+        document.getElementById('color-palette').addEventListener('contextmenu', (e) => {
+            e.stopPropagation();
+        });
+
         // Color palette drag
         const cpanel = document.getElementById('color-palette');
         const chandle = document.getElementById('color-palette-handle');
