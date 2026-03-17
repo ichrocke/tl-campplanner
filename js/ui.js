@@ -48,9 +48,9 @@ const UI = (() => {
             const el = document.createElement('div');
             el.className = 'color-swatch' + (i === _activeColorIdx ? ' active' : '');
             el.style.background = color;
-            el.innerHTML = '<button class="color-swatch-del">&times;</button>';
+            el.innerHTML = '<button class="color-swatch-edit">&#9998;</button><button class="color-swatch-del">&times;</button>';
             el.addEventListener('click', (e) => {
-                if (e.target.classList.contains('color-swatch-del')) {
+                if (e.target.closest('.color-swatch-del')) {
                     if (_savedColors.length > 1) {
                         _savedColors.splice(i, 1);
                         if (_activeColorIdx >= _savedColors.length) _activeColorIdx = _savedColors.length - 1;
@@ -58,17 +58,15 @@ const UI = (() => {
                     }
                     return;
                 }
+                if (e.target.closest('.color-swatch-edit')) {
+                    openColorPicker(color, (newColor) => {
+                        _savedColors[i] = newColor;
+                        buildColorSwatches();
+                    });
+                    return;
+                }
                 _activeColorIdx = i;
                 buildColorSwatches();
-            });
-            // Right-click to change color
-            el.addEventListener('contextmenu', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                openColorPicker(color, (newColor) => {
-                    _savedColors[i] = newColor;
-                    buildColorSwatches();
-                });
             });
             container.appendChild(el);
         });

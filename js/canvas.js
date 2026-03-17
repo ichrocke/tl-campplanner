@@ -602,20 +602,33 @@ const Canvas = (() => {
         // Entrance marker
         if (obj.entranceSide && obj.entranceSide !== 'none') {
             const es = obj.entranceSide;
-            const ew = Math.min(w, h) * 0.3;
-            const eh = 4;
+            const ew = Math.min(w, h) * 0.4;
+            const eh = Math.max(8, Math.min(w, h) * 0.12);
             ctx.fillStyle = '#16a34a';
             ctx.strokeStyle = '#fff';
-            ctx.lineWidth = 1;
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
             if (es === 'top') {
-                ctx.beginPath(); ctx.moveTo(-ew/2, -h/2); ctx.lineTo(0, -h/2 - eh); ctx.lineTo(ew/2, -h/2); ctx.fill(); ctx.stroke();
+                ctx.moveTo(-ew/2, -h/2); ctx.lineTo(0, -h/2 - eh); ctx.lineTo(ew/2, -h/2);
             } else if (es === 'bottom') {
-                ctx.beginPath(); ctx.moveTo(-ew/2, h/2); ctx.lineTo(0, h/2 + eh); ctx.lineTo(ew/2, h/2); ctx.fill(); ctx.stroke();
+                ctx.moveTo(-ew/2, h/2); ctx.lineTo(0, h/2 + eh); ctx.lineTo(ew/2, h/2);
             } else if (es === 'left') {
-                ctx.beginPath(); ctx.moveTo(-w/2, -ew/2); ctx.lineTo(-w/2 - eh, 0); ctx.lineTo(-w/2, ew/2); ctx.fill(); ctx.stroke();
+                ctx.moveTo(-w/2, -ew/2); ctx.lineTo(-w/2 - eh, 0); ctx.lineTo(-w/2, ew/2);
             } else if (es === 'right') {
-                ctx.beginPath(); ctx.moveTo(w/2, -ew/2); ctx.lineTo(w/2 + eh, 0); ctx.lineTo(w/2, ew/2); ctx.fill(); ctx.stroke();
+                ctx.moveTo(w/2, -ew/2); ctx.lineTo(w/2 + eh, 0); ctx.lineTo(w/2, ew/2);
             }
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            // Opening gap (white line on the tent wall)
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            if (es === 'top') { ctx.moveTo(-ew/2 + 1, -h/2); ctx.lineTo(ew/2 - 1, -h/2); }
+            else if (es === 'bottom') { ctx.moveTo(-ew/2 + 1, h/2); ctx.lineTo(ew/2 - 1, h/2); }
+            else if (es === 'left') { ctx.moveTo(-w/2, -ew/2 + 1); ctx.lineTo(-w/2, ew/2 - 1); }
+            else if (es === 'right') { ctx.moveTo(w/2, -ew/2 + 1); ctx.lineTo(w/2, ew/2 - 1); }
+            ctx.stroke();
         }
 
         // Name label – if object too small, render above instead of inside
