@@ -25,30 +25,19 @@ const UI = (() => {
     function getActiveColor() { return _savedColors[_activeColorIdx] || _savedColors[0]; }
 
     function openColorPicker(initialColor, callback) {
-        // Remove any existing picker
         const existing = document.getElementById('_colorPickerTemp');
         if (existing) existing.remove();
         const input = document.createElement('input');
         input.type = 'color';
         input.id = '_colorPickerTemp';
         input.value = initialColor;
-        // Position off-screen but focusable
         input.style.cssText = 'position:fixed;top:50%;left:50%;width:1px;height:1px;opacity:0.01;pointer-events:none;';
         document.body.appendChild(input);
-        let picked = false;
-        input.addEventListener('input', () => {
-            picked = true;
-            callback(input.value);
-        });
+        let done = false;
         input.addEventListener('change', () => {
-            if (picked) callback(input.value);
+            if (!done) { done = true; callback(input.value); }
             input.remove();
         });
-        // Fallback: remove if blurred without picking
-        input.addEventListener('blur', () => {
-            setTimeout(() => { if (document.getElementById('_colorPickerTemp')) input.remove(); }, 300);
-        });
-        // Trigger click after a microtask to ensure it's in the DOM
         setTimeout(() => input.click(), 10);
     }
 
@@ -75,6 +64,7 @@ const UI = (() => {
             // Right-click to change color
             el.addEventListener('contextmenu', (e) => {
                 e.preventDefault();
+                e.stopPropagation();
                 openColorPicker(color, (newColor) => {
                     _savedColors[i] = newColor;
                     buildColorSwatches();
