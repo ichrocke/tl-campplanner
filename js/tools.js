@@ -864,6 +864,9 @@ const Tools = (() => {
             case 'y':
                 if (e.ctrlKey || e.metaKey) { e.preventDefault(); State.redo(); Canvas.render(); }
                 break;
+            case 's': case 'S':
+                if (e.ctrlKey || e.metaKey) { e.preventDefault(); IO.exportFile(); }
+                break;
             case 'c': case 'C':
                 if ((e.ctrlKey || e.metaKey) && Canvas.selectionCount > 0) {
                     e.preventDefault();
