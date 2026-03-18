@@ -23,8 +23,6 @@ const State = (() => {
             { type: 'firepit', name: I18n.t('template.firepit'), width: 2, height: 2, guyRopeDistance: 0, color: '#ea580c', shape: 'circle' },
             { type: 'bar', name: I18n.t('template.bar'), width: 3, height: 1, guyRopeDistance: 0, color: '#9333ea', shape: 'rect' },
             { type: 'entrance', name: I18n.t('template.entrance'), width: 2, height: 0.25, guyRopeDistance: 0, color: '#16a34a', shape: 'rect' },
-            { type: 'custom', name: I18n.t('template.electricBox'), width: 0.6, height: 0.6, guyRopeDistance: 0, color: '#eab308', shape: 'rect' },
-            { type: 'custom', name: I18n.t('template.waterPoint'), width: 0.5, height: 0.5, guyRopeDistance: 0, color: '#0ea5e9', shape: 'circle' },
         ];
     }
 
@@ -190,6 +188,8 @@ const State = (() => {
             if (template.type === 'fence') {
                 obj.points = template.points ? [...template.points] : [];
                 obj.fenceHeight = template.fenceHeight || 1.5;
+                obj.lineThickness = template.lineThickness || 4;
+                obj.vertexSize = template.vertexSize || 0;
             }
             if (template.type === 'bgimage') {
                 obj.dataUrl = template.dataUrl || '';

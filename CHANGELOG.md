@@ -1,5 +1,17 @@
 # Changelog
 
+## [3.0.1] - 2026-03-18
+
+### Changed
+- **Fence tool renamed to "Pipes"**: Icon changed to water drop, renamed in all languages. Tool now for laying pipes, cables and lines
+- **Pipe rendering redesign**: Thick rounded line (default 4px) instead of fence posts/rails. Configurable line thickness and junction point size
+- **Color presets for pipes**: Quick-select buttons for Water (blue), Electric (yellow), Fence (brown), Gas (gray) in properties
+- **Layer lock icon**: Changed from ambiguous padlock to clear prohibition sign when locked
+- Electric box and water point removed from default templates (replaced by pipe tool)
+
+### Fixed
+- Layer panel no longer disappears when placed objects are dragged up (fixed flex-shrink)
+
 ## [3.0.0] - 2026-03-18
 
 ### Added

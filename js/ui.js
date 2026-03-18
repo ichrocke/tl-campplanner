@@ -49,8 +49,8 @@ const UI = (() => {
             const objCount = site.objects.filter(o => o.layerId === layer.id).length;
 
             el.innerHTML = `
-                <button class="layer-vis-btn ${layer.visible ? '' : 'off'}" title="Visibility">${layer.visible ? '&#128065;' : '&#128065;'}</button>
-                <button class="layer-lock-btn ${layer.locked ? 'on' : ''}" title="Lock">${layer.locked ? '&#128274;' : '&#128275;'}</button>
+                <button class="layer-vis-btn ${layer.visible ? '' : 'off'}" title="Visibility">${layer.visible ? '\u{1F441}' : '\u{1F441}'}</button>
+                <button class="layer-lock-btn ${layer.locked ? 'on' : ''}" title="Lock">${layer.locked ? '\u{1F6AB}' : '\u{1F513}'}</button>
                 <span class="layer-name" title="${layer.name}">${layer.name}</span>
                 <span style="font-size:9px;color:var(--text-secondary)">${objCount}</span>
                 <div class="layer-order-btns">
@@ -905,11 +905,19 @@ const UI = (() => {
             </div>`;
         }
 
-        // --- Fence height ---
+        // --- Pipe/Line settings ---
         if (obj.type === 'fence') {
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('tool.fence')}</div>
-                <label>${I18n.t('props.fenceHeight')} <input type="number" id="prop-fenceheight" value="${obj.fenceHeight || 1.5}" min="0.1" step="0.1"></label>
+                <label>${I18n.t('props.lineThickness')} <input type="number" id="prop-linethickness" value="${obj.lineThickness || 4}" min="1" max="20" step="1"></label>
+                <label>${I18n.t('props.vertexSize')} <input type="number" id="prop-vertexsize" value="${obj.vertexSize || 0}" min="0" max="10" step="1" placeholder="auto"></label>
+                <div class="prop-section-subtitle">${I18n.t('props.colorPresets')}</div>
+                <div style="display:flex;gap:4px">
+                    <button class="pipe-color-btn" data-color="#0ea5e9" style="background:#0ea5e9" title="Water">&#128167;</button>
+                    <button class="pipe-color-btn" data-color="#eab308" style="background:#eab308" title="Electric">&#9889;</button>
+                    <button class="pipe-color-btn" data-color="#8B4513" style="background:#8B4513" title="Fence">&#9608;</button>
+                    <button class="pipe-color-btn" data-color="#6b7280" style="background:#6b7280" title="Gas">&#9679;</button>
+                </div>
             </div>`;
         }
 
@@ -1081,6 +1089,17 @@ const UI = (() => {
         }
         bind('prop-fontsize', 'fontSize', parseFloat);
         bind('prop-fenceheight', 'fenceHeight', parseFloat);
+        bind('prop-linethickness', 'lineThickness', parseFloat);
+        bind('prop-vertexsize', 'vertexSize', parseFloat);
+        // Pipe color presets
+        document.querySelectorAll('.pipe-color-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                State.updateObject(obj.id, { color: btn.dataset.color });
+                Canvas.render();
+                showProperties(State.activeSite.objects.find(o => o.id === obj.id));
+            });
+        });
         bind('prop-texture', 'texture');
         bind('prop-desc-color', 'descColor');
         bind('prop-desc-size', 'descSize', parseFloat);

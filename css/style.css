@@ -1541,12 +1541,28 @@ kbd {
 ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #aaa; }
 
+.pipe-color-btn {
+    width: 28px;
+    height: 24px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s;
+}
+
+.pipe-color-btn:hover { transform: scale(1.15); border-color: #333; }
+
 /* ---- Layers ---- */
 .sidebar-layers {
     flex: none !important;
-    overflow: visible !important;
-    max-height: none;
+    overflow-y: auto !important;
+    max-height: 180px;
     border-top: 1px solid var(--border);
+    flex-shrink: 0 !important;
 }
 
 .layers-header {
@@ -1614,7 +1630,7 @@ kbd {
 
 .layer-vis-btn:hover, .layer-lock-btn:hover { background: var(--bg); }
 .layer-vis-btn.off { opacity: 0.3; }
-.layer-lock-btn.on { color: var(--warning); }
+.layer-lock-btn.on { color: var(--danger); font-weight: bold; }
 
 .layer-name {
     flex: 1;

@@ -979,9 +979,10 @@ const Canvas = (() => {
     function drawFence(obj, z, isSel, isHov) {
         if (!obj.points || obj.points.length < 2) return;
         const color = obj.color || '#8B4513';
-        const fh = (obj.fenceHeight || 1.5) * z * 0.3;
+        const thickness = (obj.lineThickness || 4);
+        const vtxSize = obj.vertexSize || 0;
 
-        // Draw fence line
+        // Draw thick line
         ctx.beginPath();
         const p0 = w2s(obj.points[0].x, obj.points[0].y);
         ctx.moveTo(p0.x, p0.y);
@@ -990,42 +991,25 @@ const Canvas = (() => {
             ctx.lineTo(p.x, p.y);
         }
         ctx.strokeStyle = color;
-        ctx.lineWidth = 2.5;
+        ctx.lineWidth = thickness;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
         ctx.stroke();
 
-        // Draw posts at each vertex
+        // Vertex dots (junction points)
         obj.points.forEach(pt => {
             const p = w2s(pt.x, pt.y);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 2;
+            const r = vtxSize > 0 ? vtxSize + thickness / 2 : thickness / 2 + 1;
             ctx.beginPath();
-            ctx.moveTo(p.x, p.y - fh);
-            ctx.lineTo(p.x, p.y + fh);
-            ctx.stroke();
-            // Post cap
-            ctx.beginPath();
-            ctx.arc(p.x, p.y - fh, 2, 0, Math.PI * 2);
+            ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
             ctx.fillStyle = color;
             ctx.fill();
+            if (vtxSize > 0) {
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
         });
-
-        // Draw horizontal rails
-        for (let i = 0; i < obj.points.length - 1; i++) {
-            const a = w2s(obj.points[i].x, obj.points[i].y);
-            const b = w2s(obj.points[i + 1].x, obj.points[i + 1].y);
-            ctx.strokeStyle = color;
-            ctx.lineWidth = 1;
-            // Top rail
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y - fh * 0.8);
-            ctx.lineTo(b.x, b.y - fh * 0.8);
-            ctx.stroke();
-            // Bottom rail
-            ctx.beginPath();
-            ctx.moveTo(a.x, a.y + fh * 0.8);
-            ctx.lineTo(b.x, b.y + fh * 0.8);
-            ctx.stroke();
-        }
 
         // Selection/hover
         if (isSel || isHov) {
@@ -1036,17 +1020,16 @@ const Canvas = (() => {
                 ctx.lineTo(p.x, p.y);
             }
             ctx.strokeStyle = isSel ? '#2563eb' : '#2563eb55';
-            ctx.lineWidth = 3;
+            ctx.lineWidth = thickness + 4;
             ctx.setLineDash([5, 3]);
             ctx.stroke();
             ctx.setLineDash([]);
 
-            // Vertex handles when selected
             if (isSel) {
                 obj.points.forEach(pt => {
                     const p = w2s(pt.x, pt.y);
                     ctx.beginPath();
-                    ctx.arc(p.x, p.y, 5, 0, Math.PI * 2);
+                    ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
                     ctx.fillStyle = '#2563eb';
                     ctx.fill();
                     ctx.strokeStyle = '#fff';
@@ -1064,7 +1047,7 @@ const Canvas = (() => {
             ctx.fillStyle = color;
             ctx.textAlign = 'center';
             ctx.textBaseline = 'bottom';
-            ctx.fillText(obj.name || I18n.t('msg.defaultFence'), mp.x, mp.y - fh - 4);
+            ctx.fillText(obj.name || I18n.t('msg.defaultFence'), mp.x, mp.y - thickness - 4);
         }
     }
 
