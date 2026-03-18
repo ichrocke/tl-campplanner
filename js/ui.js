@@ -138,51 +138,40 @@ const UI = (() => {
 
     // --- Sidebar resize divider ---
     function bindSidebarDivider() {
-        const divider = document.getElementById('sidebar-divider');
         const sidebar = document.getElementById('sidebar');
         const sections = sidebar.querySelectorAll('.sidebar-section');
-        const topSection = sections[0];
-        const bottomSection = sections[1];
-        let dragging = false;
+        // sections[0]=palette, sections[1]=placed, sections[2]=layers
 
-        divider.addEventListener('mousedown', (e) => {
-            dragging = true;
-            e.preventDefault();
-        });
+        function setupDivider(dividerId, aboveSection, belowSection, otherSections) {
+            const divider = document.getElementById(dividerId);
+            if (!divider || !aboveSection || !belowSection) return;
+            let dragging = false;
 
-        document.addEventListener('mousemove', (e) => {
-            if (!dragging) return;
-            const sidebarRect = sidebar.getBoundingClientRect();
-            const layersSection = sidebar.querySelector('.sidebar-layers');
-            const layersH = layersSection ? layersSection.offsetHeight : 0;
-            const dividerH = 6;
-            const y = e.clientY - sidebarRect.top;
-            const total = sidebarRect.height - dividerH - layersH;
-            const topH = Math.max(60, Math.min(total - 60, y));
-            topSection.style.flex = 'none';
-            topSection.style.height = topH + 'px';
-            bottomSection.style.flex = 'none';
-            bottomSection.style.height = (total - topH) + 'px';
-        });
+            function onMove(clientY) {
+                const sidebarRect = sidebar.getBoundingClientRect();
+                let otherH = 12; // dividers
+                otherSections.forEach(s => { otherH += s.offsetHeight; });
+                const y = clientY - sidebarRect.top;
+                const aboveTop = aboveSection.getBoundingClientRect().top - sidebarRect.top;
+                const belowBottom = belowSection.getBoundingClientRect().bottom - sidebarRect.top;
+                const total = belowBottom - aboveTop - 6;
+                const aboveH = Math.max(40, Math.min(total - 40, y - aboveTop));
+                aboveSection.style.flex = 'none';
+                aboveSection.style.height = aboveH + 'px';
+                belowSection.style.flex = 'none';
+                belowSection.style.height = (total - aboveH) + 'px';
+            }
 
-        document.addEventListener('mouseup', () => { dragging = false; });
+            divider.addEventListener('mousedown', (e) => { dragging = true; e.preventDefault(); });
+            document.addEventListener('mousemove', (e) => { if (dragging) onMove(e.clientY); });
+            document.addEventListener('mouseup', () => { dragging = false; });
+            divider.addEventListener('touchstart', (e) => { dragging = true; e.preventDefault(); }, { passive: false });
+            document.addEventListener('touchmove', (e) => { if (dragging && e.touches.length) onMove(e.touches[0].clientY); }, { passive: true });
+            document.addEventListener('touchend', () => { dragging = false; });
+        }
 
-        // Touch support for divider
-        divider.addEventListener('touchstart', (e) => { dragging = true; e.preventDefault(); }, { passive: false });
-        document.addEventListener('touchmove', (e) => {
-            if (!dragging || !e.touches.length) return;
-            const sidebarRect = sidebar.getBoundingClientRect();
-            const layersSection = sidebar.querySelector('.sidebar-layers');
-            const layersH = layersSection ? layersSection.offsetHeight : 0;
-            const y = e.touches[0].clientY - sidebarRect.top;
-            const total = sidebarRect.height - 6 - layersH;
-            const topH = Math.max(60, Math.min(total - 60, y));
-            topSection.style.flex = 'none';
-            topSection.style.height = topH + 'px';
-            bottomSection.style.flex = 'none';
-            bottomSection.style.height = (total - topH) + 'px';
-        }, { passive: true });
-        document.addEventListener('touchend', () => { dragging = false; });
+        setupDivider('sidebar-divider', sections[0], sections[1], [sections[2]]);
+        setupDivider('sidebar-divider2', sections[1], sections[2], [sections[0]]);
     }
 
     function getActiveColor() { return _savedColors[_activeColorIdx] || _savedColors[0]; }

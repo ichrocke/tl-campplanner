@@ -1558,11 +1558,16 @@ kbd {
 
 /* ---- Layers ---- */
 .sidebar-layers {
-    flex: none !important;
+    flex: 1 !important;
     overflow-y: auto !important;
-    max-height: 180px;
-    border-top: 1px solid var(--border);
-    flex-shrink: 0 !important;
+    overflow: hidden;
+    min-height: 60px;
+}
+
+#layers-list {
+    overflow-y: auto;
+    flex: 1;
+    min-height: 0;
 }
 
 .layers-header {
