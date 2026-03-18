@@ -253,7 +253,7 @@
   "layer.add": "Add layer",
   "layer.rename": "Rename layer",
   "layer.delete": "Delete layer",
-  "layer.deleteConfirm": "Delete layer \"{name}\"? Objects will be moved to Default layer.",
+  "layer.deleteConfirm": "Delete layer \"{name}\"? All objects on this layer will be deleted.",
   "layer.moveToLayer": "Move to layer",
   "layer.active": "Active layer",
   "props.lineThickness": "Line thickness",

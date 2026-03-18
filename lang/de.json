@@ -253,7 +253,7 @@
   "layer.add": "Ebene hinzufügen",
   "layer.rename": "Ebene umbenennen",
   "layer.delete": "Ebene löschen",
-  "layer.deleteConfirm": "Ebene \"{name}\" löschen? Objekte werden in Standard-Ebene verschoben.",
+  "layer.deleteConfirm": "Ebene \"{name}\" löschen? Alle Objekte auf dieser Ebene werden gelöscht.",
   "layer.moveToLayer": "In Ebene verschieben",
   "layer.active": "Aktive Ebene",
   "props.lineThickness": "Linienstärke",

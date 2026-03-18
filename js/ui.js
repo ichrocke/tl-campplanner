@@ -120,9 +120,9 @@ const UI = (() => {
                 delBtn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     if (!confirm(I18n.t('layer.deleteConfirm', { name: layer.name }))) return;
-                    // Move objects to first layer
-                    const targetId = site.layers.find(l => l.id !== layer.id).id;
-                    site.objects.forEach(o => { if (o.layerId === layer.id) o.layerId = targetId; });
+                    // Delete objects on this layer
+                    site.objects = site.objects.filter(o => o.layerId !== layer.id);
+                    Canvas.clearSelection();
                     site.layers.splice(i, 1);
                     if (site.activeLayerId === layer.id) site.activeLayerId = targetId;
                     State.notifyChange();
@@ -293,6 +293,43 @@ const UI = (() => {
                 _activeColorIdx = _savedColors.length - 1;
                 buildColorSwatches();
             });
+        });
+
+        // Symbol picker
+        document.getElementById('btn-symbols').addEventListener('click', () => {
+            const picker = document.getElementById('symbol-picker');
+            picker.classList.toggle('hidden');
+            if (!picker.classList.contains('hidden')) {
+                const grid = document.getElementById('symbol-grid');
+                grid.innerHTML = '';
+                Object.entries(Canvas.SYMBOLS).forEach(([id, sym]) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'symbol-btn';
+                    // Mini preview
+                    const cvs = document.createElement('canvas');
+                    cvs.width = 32; cvs.height = 32;
+                    const c = cvs.getContext('2d');
+                    c.translate(16, 16);
+                    c.fillStyle = sym.bg; c.strokeStyle = '#333'; c.lineWidth = 1;
+                    c.beginPath(); c.roundRect(-14, -14, 28, 28, 3); c.fill(); c.stroke();
+                    c.fillStyle = sym.fg; c.strokeStyle = sym.fg; c.lineWidth = 1.5;
+                    sym.draw(c, 24);
+                    btn.appendChild(cvs);
+                    const label = document.createElement('span');
+                    label.className = 'symbol-btn-label';
+                    label.textContent = sym.name;
+                    btn.appendChild(label);
+                    btn.addEventListener('click', () => {
+                        picker.classList.add('hidden');
+                        Tools.setPendingTemplate({
+                            type: 'symbol', name: sym.name,
+                            width: 1.5, height: 1.5, guyRopeDistance: 0,
+                            color: sym.bg, shape: 'rect', symbolId: id,
+                        });
+                    });
+                    grid.appendChild(btn);
+                });
+            }
         });
 
         // Paint tool button
@@ -943,7 +980,7 @@ const UI = (() => {
         html += `</div>`;
 
         // --- Section: Position & Size ---
-        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'guideline' && obj.type !== 'ground') {
+        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'guideline' && obj.type !== 'ground' && obj.type !== 'symbol') {
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.posSize')}</div>
                 <div class="prop-grid">
@@ -961,6 +998,14 @@ const UI = (() => {
                         <option value="circle" ${obj.shape === 'circle' ? 'selected' : ''}>${I18n.t('props.shape.circle')}</option>
                     </select>
                 </label>`}
+            </div>`;
+        }
+
+        // --- Symbol size ---
+        if (obj.type === 'symbol') {
+            html += `<div class="prop-section">
+                <div class="prop-section-title">${I18n.t('props.posSize')}</div>
+                <label>${I18n.t('props.width')} (m) <input type="number" id="prop-width" value="${obj.width}" min="0.5" max="5" step="0.1"></label>
             </div>`;
         }
 

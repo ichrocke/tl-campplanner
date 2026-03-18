@@ -1541,6 +1541,69 @@ kbd {
 ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #aaa; }
 
+/* ---- Symbol Picker ---- */
+.symbol-picker {
+    position: absolute;
+    top: 50px;
+    left: 60px;
+    background: rgba(26, 26, 30, 0.95);
+    border-radius: 10px;
+    padding: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    z-index: 9;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    max-width: 260px;
+}
+
+.symbol-picker.hidden { display: none; }
+
+.symbol-picker-title {
+    color: #999;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+    padding: 0 4px;
+}
+
+.symbol-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+}
+
+.symbol-btn {
+    width: 52px;
+    height: 48px;
+    border: 1px solid #444;
+    border-radius: 6px;
+    background: #2a2a30;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    transition: all 0.15s;
+    padding: 3px;
+}
+
+.symbol-btn:hover { border-color: var(--primary); background: #3a3a42; }
+
+.symbol-btn svg { width: 24px; height: 24px; }
+
+.symbol-btn-label {
+    font-size: 7px;
+    color: #999;
+    text-align: center;
+    line-height: 1.1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
 .pipe-color-btn {
     width: 28px;
     height: 24px;

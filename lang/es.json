@@ -253,7 +253,7 @@
   "layer.add": "Añadir capa",
   "layer.rename": "Renombrar capa",
   "layer.delete": "Eliminar capa",
-  "layer.deleteConfirm": "¿Eliminar capa \"{name}\"? Los objetos se moverán a la capa predeterminada.",
+  "layer.deleteConfirm": "¿Eliminar capa \"{name}\"? Todos los objetos en esta capa serán eliminados.",
   "layer.moveToLayer": "Mover a capa",
   "layer.active": "Capa activa",
   "props.lineThickness": "Grosor de linea",

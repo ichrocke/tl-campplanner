@@ -76,7 +76,7 @@ const Tools = (() => {
     // Find area vertex near world point (for selected area objects)
     function findAreaVertex(world, obj) {
         if (!obj || !obj.points) return -1;
-        if (obj.type !== 'area' && obj.type !== 'guideline' && obj.type !== 'ground') return -1;
+        if (obj.type !== 'area' && obj.type !== 'guideline' && obj.type !== 'ground' && obj.type !== 'fence') return -1;
         const threshold = 8 / Canvas.zoom();
         for (let i = 0; i < obj.points.length; i++) {
             const pt = obj.points[i];
@@ -88,7 +88,7 @@ const Tools = (() => {
 
     function findAreaEdge(world, obj) {
         if (!obj || !obj.points || obj.points.length < 2) return -1;
-        if (obj.type !== 'area' && obj.type !== 'ground') return -1;
+        if (obj.type !== 'area' && obj.type !== 'ground' && obj.type !== 'fence') return -1;
         const threshold = 5 / Canvas.zoom();
         for (let i = 0; i < obj.points.length; i++) {
             const a = obj.points[i];

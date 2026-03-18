@@ -253,7 +253,7 @@
   "layer.add": "Aggiungi livello",
   "layer.rename": "Rinomina livello",
   "layer.delete": "Elimina livello",
-  "layer.deleteConfirm": "Eliminare livello \"{name}\"? Gli oggetti verranno spostati al livello predefinito.",
+  "layer.deleteConfirm": "Eliminare livello \"{name}\"? Tutti gli oggetti su questo livello verranno eliminati.",
   "layer.moveToLayer": "Sposta a livello",
   "layer.active": "Livello attivo",
   "props.lineThickness": "Spessore linea",

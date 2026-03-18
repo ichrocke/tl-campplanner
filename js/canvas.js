@@ -494,6 +494,13 @@ const Canvas = (() => {
         // --- Background image and ground (rendered separately) ---
         if (obj.type === 'bgimage' || obj.type === 'ground') return;
 
+        // --- Symbol ---
+        if (obj.type === 'symbol') {
+            drawSymbol(obj, z, isSel, isHov);
+            ctx.globalAlpha = 1;
+            return;
+        }
+
         // Skip objects on hidden layers
         if (obj.layerId) {
             const site = State.activeSite;
@@ -1051,6 +1058,72 @@ const Canvas = (() => {
         }
     }
 
+    // --- Safety/Info Symbols ---
+    const SYMBOLS = {
+        firstaid:    { name: 'First Aid',    bg: '#fff', fg: '#16a34a', draw: (c,s) => { c.fillRect(-s*0.35,-s*0.1,s*0.7,s*0.2); c.fillRect(-s*0.1,-s*0.35,s*0.2,s*0.7); }},
+        fire_ext:    { name: 'Fire Ext.',     bg: '#ef4444', fg: '#fff', draw: (c,s) => { c.fillRect(-s*0.12,-s*0.35,s*0.24,s*0.55); c.beginPath(); c.arc(0,s*0.25,s*0.18,0,Math.PI); c.fill(); c.fillRect(-s*0.06,-s*0.4,s*0.12,s*0.08); }},
+        gas:         { name: 'Gas Bottle',    bg: '#f59e0b', fg: '#000', draw: (c,s) => { c.beginPath(); c.moveTo(-s*0.2,-s*0.1); c.lineTo(-s*0.2,s*0.35); c.arc(0,s*0.35,s*0.2,Math.PI,0); c.lineTo(s*0.2,-s*0.1); c.arc(0,-s*0.1,s*0.2,0,Math.PI); c.fill(); c.fillRect(-s*0.06,-s*0.35,s*0.12,s*0.15); }},
+        electric:    { name: 'Electric',      bg: '#eab308', fg: '#000', draw: (c,s) => { c.beginPath(); c.moveTo(s*0.05,-s*0.35); c.lineTo(-s*0.2,s*0.05); c.lineTo(s*0.0,s*0.05); c.lineTo(-s*0.05,s*0.35); c.lineTo(s*0.2,-s*0.05); c.lineTo(s*0.0,-s*0.05); c.closePath(); c.fill(); }},
+        water:       { name: 'Water',         bg: '#0ea5e9', fg: '#fff', draw: (c,s) => { c.beginPath(); c.moveTo(0,-s*0.35); c.bezierCurveTo(-s*0.3,s*0.05,-s*0.25,s*0.35,0,s*0.35); c.bezierCurveTo(s*0.25,s*0.35,s*0.3,s*0.05,0,-s*0.35); c.fill(); }},
+        wc:          { name: 'WC',            bg: '#2563eb', fg: '#fff', draw: (c,s) => { c.font=`bold ${s*0.5}px sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillText('WC',0,0); }},
+        parking:     { name: 'Parking',       bg: '#2563eb', fg: '#fff', draw: (c,s) => { c.font=`bold ${s*0.55}px sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillText('P',0,0); }},
+        info:        { name: 'Info',          bg: '#2563eb', fg: '#fff', draw: (c,s) => { c.font=`bold ${s*0.55}px serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillText('i',0,0); }},
+        exit:        { name: 'Exit',          bg: '#16a34a', fg: '#fff', draw: (c,s) => { c.fillRect(-s*0.3,-s*0.2,s*0.15,s*0.4); c.fillRect(-s*0.15,-s*0.05,s*0.35,s*0.1); c.beginPath(); c.moveTo(s*0.2,-s*0.2); c.lineTo(s*0.35,0); c.lineTo(s*0.2,s*0.2); c.fill(); }},
+        no_fire:     { name: 'No Fire',       bg: '#fff', fg: '#ef4444', draw: (c,s) => { c.beginPath(); c.arc(0,0,s*0.35,0,Math.PI*2); c.stroke(); c.beginPath(); c.moveTo(-s*0.25,-s*0.25); c.lineTo(s*0.25,s*0.25); c.stroke(); }},
+        assembly:    { name: 'Assembly',      bg: '#16a34a', fg: '#fff', draw: (c,s) => { c.font=`bold ${s*0.3}px sans-serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillText('S',0,-s*0.05); c.beginPath(); for(let i=0;i<4;i++){const a=i*Math.PI/2; c.moveTo(Math.cos(a)*s*0.15,Math.sin(a)*s*0.15+s*0.05); c.lineTo(Math.cos(a)*s*0.3,Math.sin(a)*s*0.3+s*0.05);} c.stroke(); }},
+        trash:       { name: 'Waste',         bg: '#6b7280', fg: '#fff', draw: (c,s) => { c.fillRect(-s*0.2,-s*0.15,s*0.4,s*0.4); c.fillRect(-s*0.25,-s*0.2,s*0.5,s*0.08); c.fillRect(-s*0.06,-s*0.28,s*0.12,s*0.1); }},
+    };
+
+    function drawSymbol(obj, z, isSel, isHov) {
+        const pos = w2s(obj.x, obj.y);
+        const sym = SYMBOLS[obj.symbolId];
+        if (!sym) return;
+        const s = Math.max(obj.width, obj.height) * z;
+
+        ctx.save();
+        ctx.translate(pos.x, pos.y);
+        ctx.rotate((obj.rotation || 0) * Math.PI / 180);
+
+        // Background square
+        ctx.fillStyle = sym.bg;
+        ctx.strokeStyle = '#333';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.roundRect(-s/2, -s/2, s, s, s * 0.12);
+        ctx.fill();
+        ctx.stroke();
+
+        // Symbol
+        ctx.fillStyle = sym.fg;
+        ctx.strokeStyle = sym.fg;
+        ctx.lineWidth = s * 0.06;
+        sym.draw(ctx, s);
+
+        // Selection
+        if (isSel) {
+            ctx.strokeStyle = '#2563eb';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 3]);
+            ctx.strokeRect(-s/2 - 3, -s/2 - 3, s + 6, s + 6);
+            ctx.setLineDash([]);
+        } else if (isHov) {
+            ctx.strokeStyle = '#2563eb55';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 3]);
+            ctx.strokeRect(-s/2 - 2, -s/2 - 2, s + 4, s + 4);
+            ctx.setLineDash([]);
+        }
+
+        // Name below
+        ctx.font = '9px sans-serif';
+        ctx.fillStyle = '#333';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillText(obj.name, 0, s/2 + 3);
+
+        ctx.restore();
+    }
+
     function drawPlacementPreview() {
         if (!placementPreview) return;
         const z = zoom();
@@ -1282,6 +1355,15 @@ const Canvas = (() => {
     }
 
     function pointInObj(px, py, obj) {
+        // Symbol: square hit test
+        if (obj.type === 'symbol') {
+            const s = Math.max(obj.width, obj.height) / 2;
+            const dx = px - obj.x, dy = py - obj.y;
+            const rad = -(obj.rotation || 0) * Math.PI / 180;
+            const lx = dx * Math.cos(rad) - dy * Math.sin(rad);
+            const ly = dx * Math.sin(rad) + dy * Math.cos(rad);
+            return Math.abs(lx) <= s && Math.abs(ly) <= s;
+        }
         // Background image: rotated rect
         if (obj.type === 'bgimage') {
             const dx = px - obj.x, dy = py - obj.y;
@@ -1620,6 +1702,7 @@ const Canvas = (() => {
         set pathPreview(p) { pathPreview = p; },
         renderOffscreen,
         polygonArea,
+        SYMBOLS,
         pointInPolygonCheck: pointInPolygon,
         AREA_TEXTURES,
     };

@@ -191,6 +191,11 @@ const State = (() => {
                 obj.lineThickness = template.lineThickness || 4;
                 obj.vertexSize = template.vertexSize || 0;
             }
+            if (template.type === 'symbol') {
+                obj.symbolId = template.symbolId || '';
+                obj.width = template.width || 1;
+                obj.height = template.height || 1;
+            }
             if (template.type === 'bgimage') {
                 obj.dataUrl = template.dataUrl || '';
                 obj.opacity = template.opacity || 0.3;
