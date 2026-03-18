@@ -154,15 +154,6 @@ const Canvas = (() => {
             ctx.font = '13px sans-serif';
             ctx.fillStyle = '#94a3b8';
             ctx.fillText('Press  G  or use the ground tool', cp.x, cp.y + 16);
-            // Ground icon hint
-            ctx.strokeStyle = '#94a3b8';
-            ctx.lineWidth = 1.2;
-            ctx.beginPath();
-            const iconX = cp.x - 60, iconY = cp.y + 14;
-            ctx.moveTo(iconX, iconY - 5); ctx.lineTo(iconX + 4, iconY - 8);
-            ctx.lineTo(iconX + 8, iconY - 5); ctx.lineTo(iconX + 8, iconY + 2);
-            ctx.lineTo(iconX + 4, iconY + 5); ctx.lineTo(iconX, iconY + 2);
-            ctx.closePath(); ctx.stroke();
         }
 
         // Small site name top-left
