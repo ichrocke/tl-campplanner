@@ -1732,6 +1732,20 @@ const UI = (() => {
         ]);
     }
 
+    function showFenceEdgeMenu(x, y, obj, edgeIndex, worldPos) {
+        createContextMenuAt(x, y, [
+            { label: I18n.t('ctx.addAreaVertex'), action: () => {
+                obj.points.splice(edgeIndex + 1, 0, { x: worldPos.x, y: worldPos.y });
+                let cx = 0, cy = 0;
+                obj.points.forEach(p => { cx += p.x; cy += p.y; });
+                obj.x = cx / obj.points.length;
+                obj.y = cy / obj.points.length;
+                State.notifyChange();
+                Canvas.render();
+            }},
+        ]);
+    }
+
     function removeContextMenu() {
         if (contextMenuEl) { contextMenuEl.remove(); contextMenuEl = null; }
     }
@@ -1773,7 +1787,7 @@ const UI = (() => {
         showProperties, hideProperties, getActiveColor,
         updateToolButtons, updateCoords, updateZoom, showHint,
         showContextMenu, showCanvasContextMenu, showGroundVertexMenu, showGroundEdgeMenu,
-        showAreaVertexMenu, showAreaEdgeMenu, showFenceVertexMenu,
+        showAreaVertexMenu, showAreaEdgeMenu, showFenceVertexMenu, showFenceEdgeMenu,
         removeContextMenu, openTextModal, showMultiProperties,
     };
 })();

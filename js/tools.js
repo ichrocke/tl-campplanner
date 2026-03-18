@@ -111,6 +111,16 @@ const Tools = (() => {
         return -1;
     }
 
+    function findFenceEdge(world, obj) {
+        if (!obj || obj.type !== 'fence' || !obj.points || obj.points.length < 2) return -1;
+        const threshold = 5 / Canvas.zoom();
+        for (let i = 0; i < obj.points.length - 1; i++) {
+            const d = pointToSegmentDist(world, obj.points[i], obj.points[i + 1]);
+            if (d < threshold) return i;
+        }
+        return -1;
+    }
+
     function pointToSegmentDist(p, a, b) {
         const dx = b.x - a.x, dy = b.y - a.y;
         const len2 = dx * dx + dy * dy;
@@ -381,7 +391,7 @@ const Tools = (() => {
             cx /= pts.length; cy /= pts.length;
             const obj = State.addObject({
                 type: 'fence', name: name, width: 0, height: 0,
-                guyRopeDistance: 0, color: '#8B4513', shape: 'rect',
+                guyRopeDistance: 0, color: '#0ea5e9', shape: 'rect',
                 points: [...pts], fenceHeight: 1.5,
             }, cx, cy);
             if (obj) obj.points = [...pts];
@@ -916,6 +926,11 @@ const Tools = (() => {
                 const fvi = findFenceVertex(world, sel);
                 if (fvi >= 0) {
                     UI.showFenceVertexMenu(e.clientX, e.clientY, sel, fvi);
+                    return;
+                }
+                const fei = findFenceEdge(world, sel);
+                if (fei >= 0) {
+                    UI.showFenceEdgeMenu(e.clientX, e.clientY, sel, fei, snapWorld(world));
                     return;
                 }
             }
