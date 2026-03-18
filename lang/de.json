@@ -247,5 +247,13 @@
   "template.electricBox": "Stromkasten",
   "template.waterPoint": "Wasseranschluss",
   "template.powerLine": "Stromleitung",
-  "template.waterLine": "Wasserleitung"
+  "template.waterLine": "Wasserleitung",
+  "layer.title": "Ebenen",
+  "layer.default": "Standard",
+  "layer.add": "Ebene hinzufügen",
+  "layer.rename": "Ebene umbenennen",
+  "layer.delete": "Ebene löschen",
+  "layer.deleteConfirm": "Ebene \"{name}\" löschen? Objekte werden in Standard-Ebene verschoben.",
+  "layer.moveToLayer": "In Ebene verschieben",
+  "layer.active": "Aktive Ebene"
 }

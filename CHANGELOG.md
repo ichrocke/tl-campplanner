@@ -1,5 +1,19 @@
 # Changelog
 
+## [3.0.0] - 2026-03-18
+
+### Added
+- **Layer system**: Full layer management below placed objects in sidebar
+  - Add, rename (double-click), delete layers
+  - Toggle layer visibility (eye icon) - hidden layers not rendered or selectable
+  - Lock entire layers (padlock icon) - locked layer objects can't be selected
+  - Reorder layers (up/down arrows) - affects rendering order
+  - Active layer indicator - new objects placed on active layer
+  - Move objects between layers via right-click context menu
+  - Object count per layer shown
+  - Delete layer moves objects to Default layer
+  - Layers saved/restored with auto-save and export/import
+
 ## [2.5.0] - 2026-03-18
 
 ### Added

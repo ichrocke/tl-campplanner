@@ -211,8 +211,15 @@ const Tools = (() => {
             }
         }
 
-        // 2. Check object hit (includes ground objects)
-        const hit = [...site.objects].reverse().find(o => Canvas.pointInObj(world.x, world.y, o));
+        // 2. Check object hit (skip hidden/locked layers)
+        const hit = [...site.objects].reverse().find(o => {
+            if (!Canvas.pointInObj(world.x, world.y, o)) return false;
+            if (o.layerId && site.layers) {
+                const layer = site.layers.find(l => l.id === o.layerId);
+                if (layer && (!layer.visible || layer.locked)) return false;
+            }
+            return true;
+        });
         if (hit) {
             if (ctrlKey) {
                 Canvas.toggleSelection(hit.id);
@@ -380,7 +387,14 @@ const Tools = (() => {
 
     // --- Paint tool ---
     function onPaintClick(world, site) {
-        const hit = [...site.objects].reverse().find(o => Canvas.pointInObj(world.x, world.y, o));
+        const hit = [...site.objects].reverse().find(o => {
+            if (!Canvas.pointInObj(world.x, world.y, o)) return false;
+            if (o.layerId && site.layers) {
+                const layer = site.layers.find(l => l.id === o.layerId);
+                if (layer && !layer.visible) return false;
+            }
+            return true;
+        });
         if (hit && (hit.type === 'tent' || hit.type === 'ground')) {
             const color = UI.getActiveColor();
             if (color) {

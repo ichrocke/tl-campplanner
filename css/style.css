@@ -1541,6 +1541,128 @@ kbd {
 ::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: #aaa; }
 
+/* ---- Layers ---- */
+.sidebar-layers {
+    flex: none !important;
+    overflow: visible !important;
+    max-height: none;
+    border-top: 1px solid var(--border);
+}
+
+.layers-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.layers-header h3 { margin-bottom: 0; }
+
+.layers-add-btn {
+    width: 20px;
+    height: 20px;
+    border: 1px dashed var(--border);
+    border-radius: 3px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+}
+
+.layers-add-btn:hover { border-color: var(--primary); color: var(--primary); }
+
+#layers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.layer-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.1s;
+    position: relative;
+}
+
+.layer-item:hover { background: var(--bg); }
+.layer-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+
+.layer-vis-btn, .layer-lock-btn {
+    width: 18px;
+    height: 18px;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.layer-vis-btn:hover, .layer-lock-btn:hover { background: var(--bg); }
+.layer-vis-btn.off { opacity: 0.3; }
+.layer-lock-btn.on { color: var(--warning); }
+
+.layer-name {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.layer-order-btns {
+    display: none;
+    gap: 1px;
+}
+
+.layer-item:hover .layer-order-btns { display: flex; }
+
+.layer-order-btn {
+    width: 14px;
+    height: 14px;
+    border: none;
+    border-radius: 2px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 9px;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.layer-order-btn:hover { background: var(--primary-light); color: var(--primary); }
+
+.layer-del-btn {
+    display: none;
+    width: 14px;
+    height: 14px;
+    border: none;
+    border-radius: 2px;
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 11px;
+    cursor: pointer;
+    padding: 0;
+}
+
+.layer-item:hover .layer-del-btn { display: block; }
+.layer-del-btn:hover { color: var(--danger); }
+
 /* ---- Touch ---- */
 @media (pointer: coarse) {
     .tool-btn, .icon-btn, .lang-flag { min-height: 36px; min-width: 36px; }

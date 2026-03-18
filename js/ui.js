@@ -21,6 +21,117 @@ const UI = (() => {
         bindLangFlags();
         buildColorSwatches();
         bindSidebarDivider();
+        bindLayers();
+    }
+
+    // --- Layers ---
+    function bindLayers() {
+        document.getElementById('btn-add-layer').addEventListener('click', () => {
+            const site = State.activeSite;
+            if (!site) return;
+            const name = prompt(I18n.t('layer.rename'), I18n.t('layer.title') + ' ' + (site.layers.length + 1));
+            if (!name || !name.trim()) return;
+            site.layers.push({ id: State.generateId(), name: name.trim(), visible: true, locked: false });
+            State.notifyChange(true);
+            buildLayers();
+        });
+    }
+
+    function buildLayers() {
+        const container = document.getElementById('layers-list');
+        container.innerHTML = '';
+        const site = State.activeSite;
+        if (!site || !site.layers) return;
+
+        site.layers.forEach((layer, i) => {
+            const el = document.createElement('div');
+            el.className = 'layer-item' + (layer.id === site.activeLayerId ? ' active' : '');
+            const objCount = site.objects.filter(o => o.layerId === layer.id).length;
+
+            el.innerHTML = `
+                <button class="layer-vis-btn ${layer.visible ? '' : 'off'}" title="Visibility">${layer.visible ? '&#128065;' : '&#128065;'}</button>
+                <button class="layer-lock-btn ${layer.locked ? 'on' : ''}" title="Lock">${layer.locked ? '&#128274;' : '&#128275;'}</button>
+                <span class="layer-name" title="${layer.name}">${layer.name}</span>
+                <span style="font-size:9px;color:var(--text-secondary)">${objCount}</span>
+                <div class="layer-order-btns">
+                    <button class="layer-order-btn" data-dir="up" title="Up">&#9650;</button>
+                    <button class="layer-order-btn" data-dir="down" title="Down">&#9660;</button>
+                </div>
+                ${site.layers.length > 1 ? '<button class="layer-del-btn" title="Delete">&times;</button>' : ''}`;
+
+            // Click to set active layer
+            el.addEventListener('click', (e) => {
+                if (e.target.closest('.layer-vis-btn') || e.target.closest('.layer-lock-btn') ||
+                    e.target.closest('.layer-order-btn') || e.target.closest('.layer-del-btn')) return;
+                site.activeLayerId = layer.id;
+                State.notifyChange(true);
+                buildLayers();
+            });
+
+            // Double-click to rename
+            el.querySelector('.layer-name').addEventListener('dblclick', (e) => {
+                e.stopPropagation();
+                const newName = prompt(I18n.t('layer.rename'), layer.name);
+                if (newName && newName.trim()) {
+                    layer.name = newName.trim();
+                    State.notifyChange(true);
+                    buildLayers();
+                }
+            });
+
+            // Visibility toggle
+            el.querySelector('.layer-vis-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                layer.visible = !layer.visible;
+                State.notifyChange(true);
+                buildLayers();
+                Canvas.render();
+            });
+
+            // Lock toggle
+            el.querySelector('.layer-lock-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                layer.locked = !layer.locked;
+                State.notifyChange(true);
+                buildLayers();
+            });
+
+            // Reorder
+            el.querySelectorAll('.layer-order-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const dir = btn.dataset.dir;
+                    if (dir === 'up' && i > 0) {
+                        [site.layers[i], site.layers[i - 1]] = [site.layers[i - 1], site.layers[i]];
+                    } else if (dir === 'down' && i < site.layers.length - 1) {
+                        [site.layers[i], site.layers[i + 1]] = [site.layers[i + 1], site.layers[i]];
+                    }
+                    State.notifyChange(true);
+                    buildLayers();
+                    Canvas.render();
+                });
+            });
+
+            // Delete
+            const delBtn = el.querySelector('.layer-del-btn');
+            if (delBtn) {
+                delBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!confirm(I18n.t('layer.deleteConfirm', { name: layer.name }))) return;
+                    // Move objects to first layer
+                    const targetId = site.layers.find(l => l.id !== layer.id).id;
+                    site.objects.forEach(o => { if (o.layerId === layer.id) o.layerId = targetId; });
+                    site.layers.splice(i, 1);
+                    if (site.activeLayerId === layer.id) site.activeLayerId = targetId;
+                    State.notifyChange();
+                    buildLayers();
+                    buildPlacedList();
+                    Canvas.render();
+                });
+            }
+
+            container.appendChild(el);
+        });
     }
 
     // --- Sidebar resize divider ---
@@ -484,7 +595,7 @@ const UI = (() => {
     function buildPlacedItem(obj, indented) {
         const el = document.createElement('div');
         el.className = 'placed-item' + (Canvas.isSelected(obj.id) ? ' active' : '') + (indented ? ' placed-item-indented' : '');
-        const dims = (obj.type === 'area' || obj.type === 'text' || obj.type === 'fence' || obj.type === 'ground') ? obj.type : `${obj.width}\u00d7${obj.height}`;
+        const dims = (obj.type === 'area' || obj.type === 'text' || obj.type === 'fence' || obj.type === 'ground' || obj.type === 'bgimage' || obj.type === 'guideline') ? obj.type : `${obj.width}\u00d7${obj.height}`;
         const desc = obj.description ? ` - ${obj.description.split('\n')[0]}` : '';
         const lockStr = obj.locked ? ' &#128274;' : '';
         el.innerHTML = `
@@ -1405,6 +1516,20 @@ const UI = (() => {
                 }
             }},
             { sep: true },
+            ...(() => {
+                const site = State.activeSite;
+                if (!site || !site.layers || site.layers.length <= 1) return [];
+                return site.layers.filter(l => l.id !== obj.layerId).map(l => ({
+                    label: I18n.t('layer.moveToLayer') + ': ' + l.name,
+                    action: () => {
+                        State.updateObject(obj.id, { layerId: l.id });
+                        Canvas.render();
+                        buildPlacedList();
+                        buildLayers();
+                    }
+                }));
+            })(),
+            { sep: true },
             { label: I18n.t('ctx.delete'), className: 'danger', action: () => {
                 State.removeObject(obj.id);
                 Canvas.clearSelection();
@@ -1566,7 +1691,7 @@ const UI = (() => {
     }
 
     return {
-        init, buildTabs, buildPalette, buildPlacedList, syncSettings, translateUI,
+        init, buildTabs, buildPalette, buildPlacedList, buildLayers, syncSettings, translateUI,
         showProperties, hideProperties, getActiveColor,
         updateToolButtons, updateCoords, updateZoom, showHint,
         showContextMenu, showCanvasContextMenu, showGroundVertexMenu, showGroundEdgeMenu,

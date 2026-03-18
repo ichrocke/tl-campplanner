@@ -247,5 +247,13 @@
   "template.electricBox": "Quadro elettrico",
   "template.waterPoint": "Punto acqua",
   "template.powerLine": "Linea elettrica",
-  "template.waterLine": "Conduttura acqua"
+  "template.waterLine": "Conduttura acqua",
+  "layer.title": "Livelli",
+  "layer.default": "Predefinito",
+  "layer.add": "Aggiungi livello",
+  "layer.rename": "Rinomina livello",
+  "layer.delete": "Elimina livello",
+  "layer.deleteConfirm": "Eliminare livello \"{name}\"? Gli oggetti verranno spostati al livello predefinito.",
+  "layer.moveToLayer": "Sposta a livello",
+  "layer.active": "Livello attivo"
 }

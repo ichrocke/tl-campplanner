@@ -247,5 +247,13 @@
   "template.electricBox": "Caja eléctrica",
   "template.waterPoint": "Punto de agua",
   "template.powerLine": "Línea eléctrica",
-  "template.waterLine": "Tubería de agua"
+  "template.waterLine": "Tubería de agua",
+  "layer.title": "Capas",
+  "layer.default": "Predeterminado",
+  "layer.add": "Añadir capa",
+  "layer.rename": "Renombrar capa",
+  "layer.delete": "Eliminar capa",
+  "layer.deleteConfirm": "¿Eliminar capa \"{name}\"? Los objetos se moverán a la capa predeterminada.",
+  "layer.moveToLayer": "Mover a capa",
+  "layer.active": "Capa activa"
 }

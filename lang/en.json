@@ -247,5 +247,13 @@
   "template.electricBox": "Electric box",
   "template.waterPoint": "Water point",
   "template.powerLine": "Power line",
-  "template.waterLine": "Water line"
+  "template.waterLine": "Water line",
+  "layer.title": "Layers",
+  "layer.default": "Default",
+  "layer.add": "Add layer",
+  "layer.rename": "Rename layer",
+  "layer.delete": "Delete layer",
+  "layer.deleteConfirm": "Delete layer \"{name}\"? Objects will be moved to Default layer.",
+  "layer.moveToLayer": "Move to layer",
+  "layer.active": "Active layer"
 }

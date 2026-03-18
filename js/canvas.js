@@ -180,10 +180,16 @@ const Canvas = (() => {
         return null;
     }
 
+    function isLayerVisible(site, layerId) {
+        if (!layerId || !site.layers) return true;
+        const layer = site.layers.find(l => l.id === layerId);
+        return !layer || layer.visible;
+    }
+
     function drawBgImages(site) {
-        // Render bgimage objects behind everything
         site.objects.forEach(obj => {
             if (obj.type !== 'bgimage' || !obj.dataUrl) return;
+            if (!isLayerVisible(site, obj.layerId)) return;
             drawBgImageObj(obj);
         });
     }
@@ -341,6 +347,7 @@ const Canvas = (() => {
         // Draw ground-type objects (rendered before other objects)
         site.objects.forEach(obj => {
             if (obj.type !== 'ground' || !obj.points || obj.points.length < 2) return;
+            if (!isLayerVisible(site, obj.layerId)) return;
             const pts = obj.points;
             const isSel = selectedIds.has(obj.id);
             const isHov = obj.id === hoveredId;
@@ -486,6 +493,15 @@ const Canvas = (() => {
 
         // --- Background image and ground (rendered separately) ---
         if (obj.type === 'bgimage' || obj.type === 'ground') return;
+
+        // Skip objects on hidden layers
+        if (obj.layerId) {
+            const site = State.activeSite;
+            if (site && site.layers) {
+                const layer = site.layers.find(l => l.id === obj.layerId);
+                if (layer && !layer.visible) return;
+            }
+        }
 
         // Apply object opacity
         const objOp = obj.objectOpacity !== undefined ? obj.objectOpacity : 1;

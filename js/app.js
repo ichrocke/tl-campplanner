@@ -65,6 +65,7 @@
         UI.buildTabs();
         UI.buildPalette();
         UI.buildPlacedList();
+        UI.buildLayers();
         UI.syncSettings();
         Canvas.render();
         autoSave();

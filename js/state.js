@@ -72,8 +72,11 @@ const State = (() => {
             objects: [],
             templates: defaultTemplates(),
             bgImage: null,
-            view: { panX: 0, panY: 0, zoom: 1 }
+            view: { panX: 0, panY: 0, zoom: 1 },
+            layers: [{ id: generateId(), name: 'Default', visible: true, locked: false }],
+            activeLayerId: null,
         };
+        site.activeLayerId = site.layers[0].id;
         _sites.push(site);
         _activeSiteIndex = _sites.length - 1;
         notify();
@@ -108,8 +111,10 @@ const State = (() => {
                 templates: JSON.parse(JSON.stringify(srcSite.templates || [])),
                 templateFolders: srcSite.templateFolders ? [...srcSite.templateFolders] : undefined,
                 bgImage: null,
-                view: { panX: 0, panY: 0, zoom: 1 }
+                view: { panX: 0, panY: 0, zoom: 1 },
+                layers: JSON.parse(JSON.stringify(srcSite.layers || [{ id: generateId(), name: 'Default', visible: true, locked: false }])),
             };
+            site.activeLayerId = site.layers[0].id;
             _sites.push(site);
             _activeSiteIndex = _sites.length - 1;
             notify();
@@ -166,6 +171,7 @@ const State = (() => {
                 descSize: template.descSize || 0,
                 groupId: template.groupId || '',
                 locked: template.locked || false,
+                layerId: template.layerId || (this.activeSite ? this.activeSite.activeLayerId : ''),
             };
             if (template.type === 'area') {
                 obj.texture = template.texture || 'solid';
@@ -311,9 +317,17 @@ const State = (() => {
                     });
                     delete s.grounds;
                 }
+                // Migrate: ensure layers exist
+                if (!s.layers || !s.layers.length) {
+                    const lid = generateId();
+                    s.layers = [{ id: lid, name: 'Default', visible: true, locked: false }];
+                    s.activeLayerId = lid;
+                }
+                if (!s.activeLayerId) s.activeLayerId = s.layers[0].id;
                 // Migrate: ensure guyRopeSides exists on all objects
                 s.objects.forEach(o => {
                     if (!o.guyRopeSides) o.guyRopeSides = { top: true, right: true, bottom: true, left: true };
+                    if (!o.layerId) o.layerId = s.layers[0].id;
                 });
             });
             _minDistance = data.minDistance || 2;
