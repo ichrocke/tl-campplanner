@@ -31,7 +31,9 @@ const UI = (() => {
             if (!site) return;
             const name = prompt(I18n.t('layer.rename'), I18n.t('layer.title') + ' ' + (site.layers.length + 1));
             if (!name || !name.trim()) return;
-            site.layers.push({ id: State.generateId(), name: name.trim(), visible: true, locked: false });
+            const newLayer = { id: State.generateId(), name: name.trim(), visible: true, locked: false };
+            site.layers.unshift(newLayer);
+            site.activeLayerId = newLayer.id;
             State.notifyChange(true);
             buildLayers();
         });
@@ -151,9 +153,11 @@ const UI = (() => {
         document.addEventListener('mousemove', (e) => {
             if (!dragging) return;
             const sidebarRect = sidebar.getBoundingClientRect();
+            const layersSection = sidebar.querySelector('.sidebar-layers');
+            const layersH = layersSection ? layersSection.offsetHeight : 0;
             const dividerH = 6;
             const y = e.clientY - sidebarRect.top;
-            const total = sidebarRect.height - dividerH;
+            const total = sidebarRect.height - dividerH - layersH;
             const topH = Math.max(60, Math.min(total - 60, y));
             topSection.style.flex = 'none';
             topSection.style.height = topH + 'px';
@@ -168,8 +172,10 @@ const UI = (() => {
         document.addEventListener('touchmove', (e) => {
             if (!dragging || !e.touches.length) return;
             const sidebarRect = sidebar.getBoundingClientRect();
+            const layersSection = sidebar.querySelector('.sidebar-layers');
+            const layersH = layersSection ? layersSection.offsetHeight : 0;
             const y = e.touches[0].clientY - sidebarRect.top;
-            const total = sidebarRect.height - 6;
+            const total = sidebarRect.height - 6 - layersH;
             const topH = Math.max(60, Math.min(total - 60, y));
             topSection.style.flex = 'none';
             topSection.style.height = topH + 'px';

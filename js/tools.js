@@ -232,6 +232,11 @@ const Tools = (() => {
                 // Clicking on already-selected object in multi-selection: start move
             } else {
                 Canvas.selectedId = hit.id;
+                // Switch active layer to object's layer
+                if (hit.layerId && site.activeLayerId !== hit.layerId) {
+                    site.activeLayerId = hit.layerId;
+                    UI.buildLayers();
+                }
                 // Auto-select group members
                 if (hit.groupId) {
                     site.objects.forEach(o => { if (o.groupId === hit.groupId) Canvas.addToSelection(o.id); });
