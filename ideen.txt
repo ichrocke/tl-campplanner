@@ -1,85 +1,150 @@
 Feature Ideas for Camp Planner
 ==============================
 
-## Layer System (planned)
-- Multiple layers per camp site (e.g. "Ground", "Tents", "Infrastructure")
-- Show/hide layers independently
-- Lock entire layers
-- Move objects between layers
-- Reorder layers (affects rendering order)
-- Active layer indicator
-- Layer opacity
+STATUS: [x] = implemented, [ ] = open, [~] = partially done
 
-## Infrastructure
-- Electrical connection points with capacity labels (16A, 32A)
-- Water tap symbols with flow direction
-- Cable/pipe routing as line objects with different dash patterns
-- Drainage/sewage line markers
-- Light pole positions
-- WiFi access point range circles
+
+## Layers & Organization
+[x] Multiple layers per camp site
+[x] Show/hide layers, lock layers, reorder
+[x] Move objects between layers
+[x] Active layer indicator
+[ ] Layer opacity (transparency per layer)
+[ ] Layer colors (visual tint for identification)
+[ ] Merge layers
+[ ] Flatten all layers into one
+
+
+## Infrastructure & Utilities
+[x] Pipe/cable tool with configurable thickness and color presets
+[x] Safety symbols (First Aid, Fire Ext, Gas, Electric, etc.)
+[ ] Electrical connection points with capacity labels (16A, 32A, CEE)
+[ ] Water tap symbols with flow rate/direction
+[ ] Drainage/sewage line markers (dashed pipe style)
+[ ] Light pole positions with illumination radius circles
+[ ] WiFi access point range circles
+[ ] Power distribution diagram (which box feeds which tent)
+[ ] Cable length calculator along pipe routes
+
 
 ## Measurements & Planning
-- Automatic distance labels between nearest objects
-- Area utilization percentage (tents vs. total ground)
-- Person capacity calculator (based on tent sizes)
-- Minimum distance violation highlighting
-- Path routing (walkways between tents)
-- Vehicle access width checker
+[x] Persistent guide lines with distance labels
+[x] Edge lengths on ground areas
+[x] Area in m² on ground areas
+[ ] Automatic distance labels between nearest objects
+[ ] Area utilization percentage (tents vs. total ground area)
+[ ] Person capacity calculator (sum tent capacities)
+[ ] Minimum distance violation highlighting (permanent, not just while dragging)
+[ ] Path routing / walkway planning between tents
+[ ] Vehicle access width checker (minimum 3.5m)
+[ ] Slope/grade indicators for drainage planning
+[ ] Sun position overlay (shadow casting at specific time/date)
 
-## Collaboration
-- Share plan via link (store in cloud)
-- Real-time collaboration (WebSocket)
-- Comment/note pins on the map
-- Version history / revision comparison
-- QR code generation for sharing
+
+## Collaboration & Sharing
+[ ] Share plan via link (cloud storage backend)
+[ ] Real-time collaboration (WebSocket/WebRTC)
+[ ] Comment/note pins on the map
+[ ] Version history / revision comparison
+[ ] QR code generation for sharing plan URL
+[ ] Export as link with embedded data (URL-encoded)
+[ ] Team roles (view-only, edit, admin)
+
 
 ## Templates & Presets
-- Saveable camp layouts as templates
-- Template library with common setups
-- Copy objects between camp sites (clipboard)
-- Mirror/flip objects and groups
-- Alignment tools (distribute evenly, align edges)
-- Snap to other objects (not just grid)
+[x] Object folders in palette
+[x] Palette reordering
+[x] Right-click edit templates
+[x] Tab duplication
+[ ] Saveable camp layouts as reusable templates
+[ ] Template library / marketplace with common setups
+[ ] Copy objects between camp sites (Ctrl+C/V clipboard)
+[ ] Mirror/flip objects and groups (horizontal/vertical)
+[ ] Alignment tools (distribute evenly, align edges/centers)
+[ ] Snap to other object edges (not just grid)
+[ ] Import templates from other users (share template files)
 
-## Visual Improvements
-- Dark mode
-- Custom ground textures (grass, gravel, sand)
-- Topography/elevation contour lines
-- Shadow casting based on time of day
-- 3D preview mode
-- Weather overlay (wind direction indicator)
-- Photo overlay matching (GPS-based image placement)
+
+## Visual & UX Improvements
+[x] Object transparency
+[x] Treasure map print style
+[x] SVG safety symbols
+[ ] Dark mode (entire UI)
+[ ] Custom ground textures (photo-realistic grass, gravel, sand, mud)
+[ ] Topography/elevation contour lines
+[ ] 3D isometric preview mode
+[ ] Weather overlay (wind direction, rain zones)
+[ ] Animated water flow on pipe lines
+[ ] Heatmap overlay (density of tents)
+[ ] Night mode view (show illuminated areas)
+[ ] Custom color themes / branding
+
 
 ## Import/Export
-- Import from GPS coordinates (GPX files)
-- SVG export for vector graphics
-- DXF/DWG export for CAD software
-- PDF export with form fields
-- Spreadsheet export (object inventory)
-- Google Earth KML export
+[x] JSON export/import
+[x] PNG/JPEG at 300 DPI
+[x] Print as PDF
+[x] Offline HTML download
+[x] Ground area export/import
+[ ] SVG export for vector graphics editing
+[ ] DXF/DWG export for CAD software (AutoCAD)
+[ ] PDF export with selectable text and form fields
+[ ] Spreadsheet export (CSV/Excel object inventory)
+[ ] Google Earth KML/KMZ export
+[ ] GPX import (GPS track to ground area)
+[ ] Import floor plans (PDF/DWG)
 
-## Mobile
-- Responsive layout for phones
-- GPS-based positioning ("I am here" marker)
-- Camera integration (take photo, trace outline)
-- Offline PWA with service worker
-- AR mode (overlay plan on camera view)
 
-## Administration
-- Check-in/check-out tracking per tent spot
-- Booking integration
-- Seasonal layout presets (summer/winter)
-- Emergency exits and fire safety zones
-- Capacity limits per ground area
-- Price zones visualization
+## Mobile & Tablet
+[x] Touch support (tap, drag, pinch-to-zoom, long-press)
+[x] Larger touch targets
+[ ] Responsive layout for phones (collapsible sidebar)
+[ ] GPS-based positioning ("I am here" marker on map)
+[ ] Camera integration (take photo, trace outline as ground)
+[ ] Full PWA with service worker (installable app)
+[ ] AR mode (overlay plan on camera live view)
+[ ] Offline-first with sync when back online
+
+
+## Administration & Management
+[ ] Check-in/check-out tracking per tent spot
+[ ] Booking system integration (API)
+[ ] Seasonal layout presets (summer/winter configurations)
+[ ] Emergency exit routes and fire safety zones
+[ ] Capacity limits per ground area (max persons)
+[ ] Price zones visualization (color-coded areas)
+[ ] Event timeline (setup → event → teardown phases)
+[ ] Inventory management (what equipment is where)
+[ ] PDF report generation (site plan + inventory + checklist)
+
 
 ## Quality of Life
-- Search/filter objects by name or type
-- Bulk property editing (change color of all selected)
-- Snap to object edges (not just grid)
-- Ruler/tape measure that stays on screen
-- Clipboard (Ctrl+C/V between sites)
-- Object templates from existing objects ("save as template")
-- Auto-numbering (Tent 1, Tent 2, ...)
-- Bird's-eye minimap in corner
-- Keyboard-only navigation (arrow keys to move selected)
+[x] Auto-save with toggle
+[x] Undo (50 steps)
+[x] Grid size hotkeys (+/-)
+[x] Paint tool for quick recoloring
+[x] Sidebar resize dividers
+[ ] Search/filter objects by name, type or layer
+[ ] Bulk property editing (change color/size of all selected)
+[ ] Ruler/tape measure that stays on screen permanently
+[ ] Clipboard (Ctrl+C/V between sites and tabs)
+[ ] "Save as template" from existing placed object
+[ ] Auto-numbering (Tent 1, Tent 2, ... on duplicate)
+[ ] Bird's-eye minimap in corner for navigation
+[ ] Arrow keys to nudge selected objects (1 grid step)
+[ ] Ctrl+A to select all on active layer
+[ ] Object snapping (snap to edges of other objects)
+[ ] Redo (Ctrl+Y / Ctrl+Shift+Z)
+[ ] History panel showing recent changes
+[ ] Ruler along edges (persistent cm/m marks)
+[ ] Status bar: show selected object info (type, size, position)
+
+
+## Performance & Technical
+[ ] Web Worker for heavy operations (export, treasure map)
+[ ] Canvas rendering optimization (dirty rect, only redraw changed)
+[ ] Lazy loading for large sites (virtualized object list)
+[ ] IndexedDB for larger storage (beyond localStorage 5MB)
+[ ] Service Worker for true offline mode
+[ ] Automated testing suite
+[ ] Plugin/extension system for custom tools

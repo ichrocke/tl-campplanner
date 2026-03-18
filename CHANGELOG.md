@@ -1,221 +1,82 @@
 # Changelog
 
-## [3.0.1] - 2026-03-18
+## [3.1.0] - 2026-03-18
+
+### Added
+- **Symbol library**: 12 safety/info symbols (First Aid, Fire Extinguisher, Gas Bottle, Electric, Water, WC, Parking, Info, Exit, No Fire, Assembly Point, Waste). Official SVG files for 6 symbols, programmatic for 6. Picker popup in toolbar
+- **Pipe vertex editing**: Right-click to add/remove pipe vertices. Pipe vertices now draggable
+- **Right-click edit for palette**: Right-click templates to rename, resize, recolor, change shape, adjust guy ropes. Right-click folders to rename or delete
+- **Resizable layers panel**: Second sidebar divider between placed objects and layers. All three sections independently resizable
+- **New layers on top**: New layers inserted above existing ones and auto-activated
+- **Auto-switch active layer**: Clicking an object switches the active layer to that object's layer
 
 ### Changed
-- **Fence tool renamed to "Pipes"**: Icon changed to water drop, renamed in all languages. Tool now for laying pipes, cables and lines
-- **Pipe rendering redesign**: Thick rounded line (default 4px) instead of fence posts/rails. Configurable line thickness and junction point size
-- **Color presets for pipes**: Quick-select buttons for Water (blue), Electric (yellow), Fence (brown), Gas (gray) in properties
-- **Layer lock icon**: Changed from ambiguous padlock to clear prohibition sign when locked
-- Electric box and water point removed from default templates (replaced by pipe tool)
+- **Layer delete**: Now deletes all objects on the layer (previously moved them)
+- **Paint tool**: Now also works on ground areas (not just tents)
+- **Default pipe color**: Blue (#0ea5e9) instead of brown
 
 ### Fixed
-- Layer panel no longer disappears when placed objects are dragged up (fixed flex-shrink)
+- Layers visible immediately on page load
+- Sidebar divider no longer causes layout jump on first drag
+- Layer panel stays visible when sidebar sections are resized
 
 ## [3.0.0] - 2026-03-18
 
 ### Added
-- **Layer system**: Full layer management below placed objects in sidebar
-  - Add, rename (double-click), delete layers
-  - Toggle layer visibility (eye icon) - hidden layers not rendered or selectable
-  - Lock entire layers (padlock icon) - locked layer objects can't be selected
-  - Reorder layers (up/down arrows) - affects rendering order
-  - Active layer indicator - new objects placed on active layer
-  - Move objects between layers via right-click context menu
-  - Object count per layer shown
-  - Delete layer moves objects to Default layer
-  - Layers saved/restored with auto-save and export/import
-
-## [2.5.0] - 2026-03-18
-
-### Added
-- **Lock/freeze objects**: Ground areas and background images can be locked via padlock checkbox in properties. Locked objects cannot be moved, rotated or vertex-edited. Lock icon shown on canvas (next to m²) and in placed objects list
-- **Ground area rotation**: Ground areas now support rotation via rotation handle and properties panel (slider + presets)
-- **Infrastructure templates**: Electric box (yellow, 0.6x0.6m) and water point (blue circle, 0.5m) added to default palette. Power/water lines can be drawn with the fence tool
-- **Complete shortcuts table**: Added P (paint), +/- (grid size), Ctrl+G (group), Ctrl+Shift+G (ungroup) to settings keyboard shortcuts list
-
-### Added files
-- **ideen.txt**: Collection of future feature ideas (layers, collaboration, mobile, infrastructure, etc.)
+- **Layer system**: Full layer management in sidebar with visibility toggle, layer locking, reorder, move objects between layers via context menu
+- **Lock/freeze objects**: Ground areas and background images lockable via properties. Locked objects can't be moved or edited
+- **Ground area rotation**: Full rotation support for ground polygons
+- **Pipe tool** (F): Renamed from "Fence". Thick rounded lines with configurable thickness (1-20px) and junction point sizes. Color presets for Water/Electric/Fence/Gas
+- **Ground areas as objects**: Full object capabilities - movable, groupable, colorable, rotatable, vertex-editable, shown in placed objects list. Export/import individual grounds with contained objects
+- **Complete shortcuts table**: P (paint), +/- (grid size), Ctrl+G (group), Ctrl+Shift+G (ungroup)
 
 ## [2.4.0] - 2026-03-17
 
 ### Added
-- **Tablet/touch support**: Full touch interaction - tap, drag, pinch-to-zoom, long-press for context menu, double-tap. Floating panels draggable with touch. Larger touch targets on tablet devices
-- **Group rotation**: Rotation handle above group center when multiple objects selected. Group rotation via properties panel (slider, number input, presets). Rotates all objects around group center
-- **Group names**: Name groups in multi-selection properties. Named groups shown with header in placed objects list, members indented below
-- **Multi-page print**: Large maps at fixed scale auto-split across pages with page indicators
-- **Create-only button**: New object dialog has "Create" to add to palette without placing
-- **Auto-save toggle**: Enable/disable auto-save in settings (default: on)
-- **Sidebar resize divider**: Draggable divider between palette and placed objects to allocate space
-- **Right-click cancels tools**: Right-click aborts placement, drawing, and paint tools
+- **Tablet/touch support**: Tap, drag, pinch-to-zoom, long-press context menu, double-tap
+- **Object grouping**: Ctrl+G to group, Ctrl+Shift+G to ungroup. Group names, rotation, placed list with indented members
+- **Color palette**: 6-10 saveable colors + paint tool (P) for tent/ground recoloring
+- **Tent entrance markers**: Green triangle marker with configurable side
+- **Multiline text**: Descriptions and text fields support multiple lines with color/size options
+- **Persistent guide lines**: Measure tool (M) creates permanent measurement annotations
 
 ### Changed
-- **Print uses real canvas renderer**: Print/export now runs the exact same rendering pipeline as on-screen display. Removed ~500 lines of duplicate rendering code
-- **300 DPI export**: PNG/JPEG export at 300 DPI with ctx.scale for correct line weights and font sizes
-- **Paint tool**: Only recolors tent objects (not other types). Color palette draggable with handle
-- **Color swatches**: Edit button (pencil icon on hover) replaces right-click for changing colors
-- **Grid snapping**: Snaps nearest outer edge to grid (not center). Re-snaps correctly after toggling snap off/on
-- **Entrance markers**: Larger triangle (40% of tent side) with white gap line showing opening
-- **Site label**: Small gray text top-left corner (was large centered pill)
-- **Print title**: Small 8px top-left (was 16px centered)
-
-### Fixed
-- Color picker: no more duplicate colors on add, edit button works reliably
-- Grid snapping for non-integer object sizes (2.5m etc.)
-- Objects re-snap to grid after disabling and re-enabling snap
-- Print quality: lines and text no longer appear thin at high DPI
-
-## [2.3.0] - 2026-03-17
-
-### Added
-- **Color palette**: Floating color swatch panel (6 default colors, up to 10)
-- **Paint tool** (P): Select a color and click tent objects to recolor them
-- **Object grouping**: Ctrl+G to group, Ctrl+Shift+G to ungroup. Click one grouped object to select all
-- **Tent entrance markers**: Green triangle marker, configurable side in properties
-- **Multiline descriptions**: Multiple lines with configurable color and text size
-- **Multiline text fields**: Text tool uses textarea for multiline input
-- **Export reminder**: Warning when closing/refreshing with unsaved content
-- **Donate hint in print dialog**
-
-### Fixed
-- Sidebar scrolling with many objects
-
-## [2.2.0] - 2026-03-16
-
-### Added
-- **Treasure map print style** (experimental): Sepia tones, parchment texture, vignette, coffee stains, torn edges, corner flourishes, hand-drawn wobbly lines on all shapes, serif fonts. Guy ropes hidden, only object body shown
-- **Persistent guide lines**: Measure tool (M) creates permanent measurement annotations with distance labels and draggable endpoints
-- **Object folders**: Organize palette templates into collapsible folders, drag items between folders
-- **Object transparency**: Opacity slider (5%-100%) for all objects
-- **Triangle shape**: Available in shape selector for objects
-- **Tab duplication**: Duplicate entire camp sites with all objects and grounds
-- **Offline download**: Settings dialog has a button to download the entire app as a single self-contained HTML file
-- **Zoom +/- buttons** in floating tool palette
-- **Print options**: Optional object list (page 2), ground edge lengths shown in print
-
-### Fixed
-- Print now correctly renders triangle, hexagon, octagon shapes (were shown as rectangles)
-- Guy ropes in print correctly follow polygon outlines for non-rectangular shapes
-- Scale bar text positioned above the bar (was overlapping)
-- Area labels always rendered inside polygon (weighted centroid with fallback)
-
-## [2.1.0] - 2026-03-16
-
-### Added
-- **Auto-save**: State automatically saved to localStorage and restored on page load
-- **Palette reordering**: Drag-and-drop to reorder palette objects, keyboard shortcuts 1-0 adapt to new order
-- Language preference persisted in browser
-
-### Changed
-- English set as default language
-- Translated empty object list placeholder text
+- **Print engine rewrite**: Uses real canvas renderer for pixel-perfect output at 300 DPI
+- **Grid snapping**: Edge-based snapping, re-snaps after toggle
 
 ## [2.0.0] - 2026-03-16
 
 ### Added
-- **Internationalization**: German, English, Spanish, Italian. Language switchable via flag buttons in toolbar. Translations stored in JSON files (lang/*.json), easily extensible
-- **Floating tool palette**: Tools moved from toolbar to a draggable floating palette on the canvas (icon-only, compact)
-- **Fence tool** (F): Draw fences by clicking points. Rendered as posts with horizontal rails
-- **Background images as objects**: Load multiple images, move, rotate, scale, adjust opacity. Corner resize handles with aspect ratio lock
-- **Multiple ground areas**: Draw any number of ground polygons per camp site
-- **Selectable/deletable grounds**: Click to select (blue highlight), delete via Del/X or properties panel
-- **Area/fence vertex editing**: Drag vertices, right-click to add/remove points on selected areas and fences
-- **Per-side guy ropes**: Enable/disable guy ropes per side (top, right, bottom, left) for rectangular objects
-- **Keyboard shortcuts**: 1-0 for quick template placement, F2 to rename, X to delete, F for fence tool
-- **SVG language flags** in toolbar (cross-platform, works on Windows)
+- **Internationalization**: DE, EN, ES, IT with SVG flag buttons. JSON translation files
+- **Floating tool palette**: Draggable icon-only toolbar on canvas
+- **Background images as objects**: Multiple images, movable, rotatable, scalable with resize handles
+- **Multiple ground areas**: Any number per site, selectable, deletable
+- **Area/fence vertex editing**: Drag, add, remove points
+- **Per-side guy ropes**: Enable/disable per side for rectangles
+- **Keyboard shortcuts**: 1-0 quick placement, F2 rename, X delete
 
 ### Changed
-- **Single object placement**: Returns to select tool after placing one object
-- **Toolbar simplified**: Only logo, language flags, undo, print, settings icons
-- **Import/Export/Clear all** moved to settings dialog
-- Background image controls removed from settings (now via floating toolbar image button)
+- Single object placement mode, simplified toolbar, import/export in settings
 
 ## [1.8.0] - 2026-03-16
 
 ### Added
-- **Background image**: Load image (e.g. Google Maps screenshot), adjustable width and opacity
-- **Export formats**: Print as PDF, PNG or JPEG
-- **Display settings**: Global text size, line width, rope width, hatch width as factors
-- **Per-object display settings**: Override text size, line width, rope width individually
-- **North compass**: Compass rose image on canvas and in print output
-
-### Changed
-- Object properties panel redesigned with sections (General, Position & Size, Rotation, Guy Ropes, Display)
-- Object list printed on separate page 2
-- Grid labels in print every 5th line
-
-## [1.7.0] - 2026-03-16
-
-### Added
-- **Multi-selection**: Ctrl+Click to add/remove objects, rectangle selection by dragging on empty area
-- Properties panel shows count + "Duplicate all" / "Delete all" for multi-selection
-- Del key and Ctrl+D work on all selected objects
-
-## [1.6.0] - 2026-03-16
-
-### Added
-- **Area textures**: Solid, hatching, cross-hatching, dots, grass, forest, water patterns for area objects
-- **Settings dialog**: Grid size, snap, minimum distance, display settings in modal
-
-### Removed
-- Path tool removed
-
-## [1.5.0] - 2026-03-16
-
-### Added
-- "Clear all" button with confirmation dialog
-- Unsaved changes warning on page leave
-
-## [1.4.0] - 2026-03-16
-
-### Added
-- **Tab system**: Multiple camp sites as tabs, inline rename via double-click or edit button
-- Rotation slider (0-360) and preset buttons (0/90/180/270) in properties panel
-
-### Fixed
-- Various tab switching and object state bugs resolved
-
-## [1.3.0] - 2026-03-16
-
-### Added
-- **Area tool** (A): Mark areas as colored polygons with textures
-- **Text tool** (T): Place text labels on the canvas
-- **Description field** for all objects (shown on canvas and in print)
-- Area display in m² on ground polygons
-
-### Fixed
-- Areas and paths now movable (all points move together)
-- Small object names displayed above instead of clipped inside
-
-## [1.2.0] - 2026-03-16
-
-### Added
-- Donate button (PayPal)
-- Keyboard shortcut legend in settings
-
-## [1.1.0] - 2026-03-16
-
-### Added
-- App logo and branding ("Tyra Lorena Camp Planner")
-- Deletable/addable palette templates
-- Placed objects list in sidebar
-- Object list printed as table
-- Ground replacement confirmation
+- Background image support, export formats (PDF/PNG/JPEG), display settings, north compass
+- Properties panel redesign with sections
 
 ## [1.0.0] - 2026-03-16
 
 ### Initial Release
-- **Ground areas**: Draw polygons with edge length display
-- **Grid**: Adjustable grid size (0.25m - 5m) with optional snapping
-- **Tents**: Predefined types (2P, 4P, Family, Group, Yurt) with guy ropes
-- **Objects**: Fire pit, bar, entrance as predefined types + custom objects
-- **Shapes**: Rectangle, triangle, hexagon, octagon, circle
-- **Guy ropes**: Visual display with rope lines, edge-to-edge distance calculation
-- **Distance indicators**: Automatic color-coded distances while dragging (red/yellow/green)
-- **Rotation**: Via rotation handle or properties panel (Shift: 15 degree snap)
-- **Properties panel**: Edit all object properties (name, position, size, color, shape)
-- **Context menu**: Right-click for quick actions
-- **JSON Export/Import**: Save/load complete planning state
-- **Print**: Paper size, orientation, scale, grid and distance options
-- **Undo**: Up to 50 steps (Ctrl+Z)
-- **Keyboard shortcuts**: V (Select), H (Pan), G (Ground), M (Measure), Del (Delete), Ctrl+D (Duplicate)
+- Ground areas with edge lengths and m² display
+- Grid with adjustable size and snapping
+- Predefined tents (2P, 4P, Family, Group, Yurt) with guy ropes
+- Objects: fire pit, bar, entrance + custom objects
+- Shapes: rectangle, triangle, hexagon, octagon, circle
+- Distance indicators (red/yellow/green), rotation, multi-selection
+- Tab system for multiple camp sites
+- JSON export/import, print dialog, undo (50 steps)
+- Area tool, text tool, area textures
+- Treasure map print style (experimental)
+- Auto-save to localStorage, offline download (experimental)
+- Object folders, palette reordering, object transparency
+- Tab duplication, guide lines, zoom buttons
