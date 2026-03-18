@@ -323,7 +323,7 @@ body {
 }
 
 .sidebar-section:first-child {
-    flex: 1;
+    flex: 1 1 40%;
     overflow: hidden;
 }
 
@@ -355,8 +355,8 @@ body {
     background: var(--primary);
 }
 
-.sidebar-section:last-child {
-    flex: 1;
+.sidebar-section:nth-child(3) {
+    flex: 1 1 40%;
     overflow: hidden;
 }
 
@@ -1558,8 +1558,7 @@ kbd {
 
 /* ---- Layers ---- */
 .sidebar-layers {
-    flex: 1 !important;
-    overflow-y: auto !important;
+    flex: 0 0 auto !important;
     overflow: hidden;
     min-height: 60px;
 }

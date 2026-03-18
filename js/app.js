@@ -32,6 +32,7 @@
 
     // Initialize UI
     UI.init();
+    UI.buildLayers();
     UI.syncSettings();
     I18n.updateDOM();
 
