@@ -1,150 +1,151 @@
-Feature Ideas for Camp Planner
-==============================
+Feature-Ideen fuer den Zeltplatzplaner
+=======================================
 
-STATUS: [x] = implemented, [ ] = open, [~] = partially done
-
-
-## Layers & Organization
-[x] Multiple layers per camp site
-[x] Show/hide layers, lock layers, reorder
-[x] Move objects between layers
-[x] Active layer indicator
-[ ] Layer opacity (transparency per layer)
-[ ] Layer colors (visual tint for identification)
-[ ] Merge layers
-[ ] Flatten all layers into one
+STATUS: [x] = umgesetzt, [ ] = offen, [~] = teilweise
 
 
-## Infrastructure & Utilities
-[x] Pipe/cable tool with configurable thickness and color presets
-[x] Safety symbols (First Aid, Fire Ext, Gas, Electric, etc.)
-[ ] Electrical connection points with capacity labels (16A, 32A, CEE)
-[ ] Water tap symbols with flow rate/direction
-[ ] Drainage/sewage line markers (dashed pipe style)
-[ ] Light pole positions with illumination radius circles
-[ ] WiFi access point range circles
-[ ] Power distribution diagram (which box feeds which tent)
-[ ] Cable length calculator along pipe routes
+## Ebenen & Organisation
+[x] Mehrere Ebenen pro Zeltplatz
+[x] Ebenen ein-/ausblenden, sperren, umsortieren
+[x] Objekte zwischen Ebenen verschieben
+[x] Aktive Ebene anzeigen
+[ ] Ebenen-Transparenz (Deckkraft pro Ebene)
+[ ] Ebenen-Farben (farbliche Kennzeichnung)
+[ ] Ebenen zusammenfuehren
+[ ] Alle Ebenen zu einer zusammenfassen
 
 
-## Measurements & Planning
-[x] Persistent guide lines with distance labels
-[x] Edge lengths on ground areas
-[x] Area in m² on ground areas
-[ ] Automatic distance labels between nearest objects
-[ ] Area utilization percentage (tents vs. total ground area)
-[ ] Person capacity calculator (sum tent capacities)
-[ ] Minimum distance violation highlighting (permanent, not just while dragging)
-[ ] Path routing / walkway planning between tents
-[ ] Vehicle access width checker (minimum 3.5m)
-[ ] Slope/grade indicators for drainage planning
-[ ] Sun position overlay (shadow casting at specific time/date)
+## Infrastruktur & Versorgung
+[x] Leitungs-/Rohrtool mit einstellbarer Dicke und Farbvorlagen
+[x] Sicherheitssymbole (Erste Hilfe, Feuerloescher, Gas, Elektrik usw.)
+[ ] Stromanschlusspunkte mit Kapazitaetsangabe (16A, 32A, CEE)
+[ ] Wasserhahn-Symbole mit Durchfluss/Richtung
+[ ] Abwasser-/Kanalmarkierungen (gestrichelte Leitungen)
+[ ] Lichtmasten mit Beleuchtungsradius
+[ ] WLAN-Zugangspunkte mit Reichweiten-Kreis
+[ ] Stromverteilungsplan (welcher Kasten versorgt welches Zelt)
+[ ] Kabellaengen-Rechner entlang der Leitungswege
 
 
-## Collaboration & Sharing
-[ ] Share plan via link (cloud storage backend)
-[ ] Real-time collaboration (WebSocket/WebRTC)
-[ ] Comment/note pins on the map
-[ ] Version history / revision comparison
-[ ] QR code generation for sharing plan URL
-[ ] Export as link with embedded data (URL-encoded)
-[ ] Team roles (view-only, edit, admin)
+## Vermessung & Planung
+[x] Dauerhafte Masslinien mit Abstandsangaben
+[x] Kantenlaengen an Grundflaechen
+[x] Flaecheninhalt in m2 auf Grundflaechen
+[ ] Automatische Abstandsbeschriftung zwischen naechsten Objekten
+[ ] Flaechennutzungsgrad (Zelte vs. Gesamtflaeche in Prozent)
+[ ] Personenkapazitaets-Rechner (Summe aller Zeltplaetze)
+[ ] Dauerhafte Mindestabstand-Verletzungsanzeige (nicht nur beim Ziehen)
+[ ] Wege-Planung / Gehwege zwischen Zelten
+[ ] Durchfahrtsbreiten-Pruefung (mindestens 3,5m fuer Fahrzeuge)
+[ ] Gefaelle-Anzeiger fuer Entwaesserungsplanung
+[ ] Sonnenstand-Overlay (Schattenwurf zu bestimmter Uhrzeit/Datum)
 
 
-## Templates & Presets
-[x] Object folders in palette
-[x] Palette reordering
-[x] Right-click edit templates
-[x] Tab duplication
-[ ] Saveable camp layouts as reusable templates
-[ ] Template library / marketplace with common setups
-[ ] Copy objects between camp sites (Ctrl+C/V clipboard)
-[ ] Mirror/flip objects and groups (horizontal/vertical)
-[ ] Alignment tools (distribute evenly, align edges/centers)
-[ ] Snap to other object edges (not just grid)
-[ ] Import templates from other users (share template files)
+## Zusammenarbeit & Teilen
+[ ] Plan per Link teilen (Cloud-Speicher)
+[ ] Echtzeit-Zusammenarbeit (WebSocket/WebRTC)
+[ ] Kommentar-/Notiz-Pins auf der Karte
+[ ] Versionshistorie / Aenderungsvergleich
+[ ] QR-Code-Erstellung zum Teilen der Plan-URL
+[ ] Export als Link mit eingebetteten Daten (URL-kodiert)
+[ ] Team-Rollen (nur ansehen, bearbeiten, verwalten)
 
 
-## Visual & UX Improvements
-[x] Object transparency
-[x] Treasure map print style
-[x] SVG safety symbols
-[ ] Dark mode (entire UI)
-[ ] Custom ground textures (photo-realistic grass, gravel, sand, mud)
-[ ] Topography/elevation contour lines
-[ ] 3D isometric preview mode
-[ ] Weather overlay (wind direction, rain zones)
-[ ] Animated water flow on pipe lines
-[ ] Heatmap overlay (density of tents)
-[ ] Night mode view (show illuminated areas)
-[ ] Custom color themes / branding
+## Vorlagen & Vorgaben
+[x] Objektordner in der Palette
+[x] Palette umsortierbar
+[x] Rechtsklick zum Bearbeiten von Vorlagen
+[x] Tab-Duplizierung
+[ ] Zeltplatz-Layouts als wiederverwendbare Vorlagen speichern
+[ ] Vorlagen-Bibliothek / Marktplatz mit gaengigen Aufbauten
+[ ] Objekte zwischen Zeltplaetzen kopieren (Strg+C/V Zwischenablage)
+[ ] Objekte und Gruppen spiegeln (horizontal/vertikal)
+[ ] Ausrichtungswerkzeuge (gleichmaessig verteilen, Kanten/Mitten ausrichten)
+[ ] An Objektkanten einrasten (nicht nur am Raster)
+[ ] Vorlagen von anderen Nutzern importieren (Vorlagendateien teilen)
+
+
+## Darstellung & Bedienung
+[x] Objekt-Transparenz
+[x] Schatzkarten-Druckstil
+[x] SVG-Sicherheitssymbole
+[ ] Dunkler Modus (gesamte Oberflaeche)
+[ ] Eigene Bodentexturen (fotorealistisch: Gras, Kies, Sand, Schlamm)
+[ ] Topografie-/Hoehenlinien
+[ ] 3D-Isometrie-Vorschau
+[ ] Wetter-Overlay (Windrichtung, Regenzonen)
+[ ] Animierter Wasserfluss auf Leitungen
+[ ] Heatmap-Overlay (Zeltdichte)
+[ ] Nachtmodus-Ansicht (beleuchtete Bereiche anzeigen)
+[ ] Eigene Farbthemen / Branding
 
 
 ## Import/Export
-[x] JSON export/import
-[x] PNG/JPEG at 300 DPI
-[x] Print as PDF
-[x] Offline HTML download
-[x] Ground area export/import
-[ ] SVG export for vector graphics editing
-[ ] DXF/DWG export for CAD software (AutoCAD)
-[ ] PDF export with selectable text and form fields
-[ ] Spreadsheet export (CSV/Excel object inventory)
-[ ] Google Earth KML/KMZ export
-[ ] GPX import (GPS track to ground area)
-[ ] Import floor plans (PDF/DWG)
+[x] JSON-Export/Import
+[x] PNG/JPEG mit 300 DPI
+[x] Drucken als PDF
+[x] Offline-HTML herunterladen
+[x] Grundflaechen-Export/Import
+[x] Objekt-Export/Import
+[ ] SVG-Export fuer Vektorgrafik-Bearbeitung
+[ ] DXF/DWG-Export fuer CAD-Software (AutoCAD)
+[ ] PDF-Export mit auswaehlbarem Text und Formularfeldern
+[ ] Tabellen-Export (CSV/Excel Objektinventar)
+[ ] Google Earth KML/KMZ-Export
+[ ] GPX-Import (GPS-Track als Grundflaeche)
+[ ] Grundriss-Import (PDF/DWG)
 
 
-## Mobile & Tablet
-[x] Touch support (tap, drag, pinch-to-zoom, long-press)
-[x] Larger touch targets
-[ ] Responsive layout for phones (collapsible sidebar)
-[ ] GPS-based positioning ("I am here" marker on map)
-[ ] Camera integration (take photo, trace outline as ground)
-[ ] Full PWA with service worker (installable app)
-[ ] AR mode (overlay plan on camera live view)
-[ ] Offline-first with sync when back online
+## Mobil & Tablet
+[x] Touch-Unterstuetzung (Tippen, Ziehen, Pinch-Zoom, Langdruck)
+[x] Groessere Touch-Ziele
+[ ] Responsive Layout fuer Handys (einklappbare Seitenleiste)
+[ ] GPS-basierte Positionierung ("Ich bin hier"-Markierung)
+[ ] Kamera-Integration (Foto aufnehmen, Umriss als Grundflaeche nachzeichnen)
+[ ] Vollstaendige PWA mit Service Worker (installierbare App)
+[ ] AR-Modus (Plan ueber Kamera-Livebild legen)
+[ ] Offline-First mit Synchronisierung bei Internetverbindung
 
 
-## Administration & Management
-[ ] Check-in/check-out tracking per tent spot
-[ ] Booking system integration (API)
-[ ] Seasonal layout presets (summer/winter configurations)
-[ ] Emergency exit routes and fire safety zones
-[ ] Capacity limits per ground area (max persons)
-[ ] Price zones visualization (color-coded areas)
-[ ] Event timeline (setup → event → teardown phases)
-[ ] Inventory management (what equipment is where)
-[ ] PDF report generation (site plan + inventory + checklist)
+## Verwaltung & Management
+[ ] Ein-/Auschecken pro Zeltplatz verfolgen
+[ ] Buchungssystem-Anbindung (API)
+[ ] Saisonale Layout-Voreinstellungen (Sommer-/Winterkonfigurationen)
+[ ] Fluchtweg-Planung und Brandschutzzonen
+[ ] Kapazitaetsgrenzen pro Grundflaeche (max. Personen)
+[ ] Preiszonen-Darstellung (farblich markierte Bereiche)
+[ ] Veranstaltungszeitplan (Aufbau -> Veranstaltung -> Abbau)
+[ ] Inventarverwaltung (welche Ausruestung steht wo)
+[ ] PDF-Bericht-Erstellung (Lageplan + Inventar + Checkliste)
 
 
-## Quality of Life
-[x] Auto-save with toggle
-[x] Undo (50 steps)
-[x] Grid size hotkeys (+/-)
-[x] Paint tool for quick recoloring
-[x] Sidebar resize dividers
-[ ] Search/filter objects by name, type or layer
-[ ] Bulk property editing (change color/size of all selected)
-[ ] Ruler/tape measure that stays on screen permanently
-[ ] Clipboard (Ctrl+C/V between sites and tabs)
-[ ] "Save as template" from existing placed object
-[ ] Auto-numbering (Tent 1, Tent 2, ... on duplicate)
-[ ] Bird's-eye minimap in corner for navigation
-[ ] Arrow keys to nudge selected objects (1 grid step)
-[ ] Ctrl+A to select all on active layer
-[ ] Object snapping (snap to edges of other objects)
-[ ] Redo (Ctrl+Y / Ctrl+Shift+Z)
-[ ] History panel showing recent changes
-[ ] Ruler along edges (persistent cm/m marks)
-[ ] Status bar: show selected object info (type, size, position)
+## Komfort-Funktionen
+[x] Auto-Speichern mit Umschalter
+[x] Rueckgaengig (50 Schritte)
+[x] Rastergroesse per Taste (+/-)
+[x] Einfaerbe-Werkzeug fuer schnelles Umfaerben
+[x] Seitenleisten-Trennbalken verschiebbar
+[ ] Objekte suchen/filtern nach Name, Typ oder Ebene
+[ ] Massen-Eigenschaftsaenderung (Farbe/Groesse aller Ausgewaehlten aendern)
+[ ] Dauerhaftes Lineal/Massband auf dem Bildschirm
+[ ] Zwischenablage (Strg+C/V zwischen Plaetzen und Tabs)
+[ ] "Als Vorlage speichern" aus platziertem Objekt
+[ ] Auto-Nummerierung (Zelt 1, Zelt 2, ... beim Duplizieren)
+[ ] Uebersichts-Minikarte in der Ecke zur Navigation
+[ ] Pfeiltasten zum Verschieben ausgewaehlter Objekte (1 Rasterschritt)
+[ ] Strg+A um alles auf der aktiven Ebene auszuwaehlen
+[ ] An Objektkanten einrasten (nicht nur am Raster)
+[ ] Wiederherstellen (Strg+Y / Strg+Umschalt+Z)
+[ ] Aenderungsverlauf-Panel mit letzten Aenderungen
+[ ] Lineal an Kanten (dauerhafte cm/m-Markierungen)
+[ ] Statusleiste: Info zum ausgewaehlten Objekt (Typ, Groesse, Position)
 
 
-## Performance & Technical
-[ ] Web Worker for heavy operations (export, treasure map)
-[ ] Canvas rendering optimization (dirty rect, only redraw changed)
-[ ] Lazy loading for large sites (virtualized object list)
-[ ] IndexedDB for larger storage (beyond localStorage 5MB)
-[ ] Service Worker for true offline mode
-[ ] Automated testing suite
-[ ] Plugin/extension system for custom tools
+## Leistung & Technik
+[ ] Web Worker fuer aufwaendige Operationen (Export, Schatzkarte)
+[ ] Canvas-Rendering-Optimierung (nur geaenderte Bereiche neu zeichnen)
+[ ] Lazy Loading fuer grosse Plaetze (virtualisierte Objektliste)
+[ ] IndexedDB fuer groesseren Speicher (ueber localStorage 5MB hinaus)
+[ ] Service Worker fuer echten Offline-Modus
+[ ] Automatisierte Test-Suite
+[ ] Plugin-/Erweiterungssystem fuer eigene Werkzeuge
