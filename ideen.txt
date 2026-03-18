@@ -1,57 +1,54 @@
 Zukuenftige Feature-Ideen
 =========================
 
-## Naechste Schritte
-- Dunkler Modus (gesamte Oberflaeche)
-- An Objektkanten einrasten (nicht nur am Raster)
-- Objekte spiegeln (horizontal/vertikal)
-- Auto-Nummerierung beim Duplizieren (Zelt 1, Zelt 2, ...)
-- Uebersichts-Minikarte in der Ecke
+## Darstellung
+- Dunkler Modus
+- Eigene Bodentexturen (Gras, Kies, Sand)
+- 3D-Isometrie-Vorschau
+- Heatmap-Overlay (Zeltdichte)
+- Nachtmodus (beleuchtete Bereiche)
 
-## Erweiterte Planung
-- Automatische Abstandsbeschriftung zwischen naechsten Objekten
-- Flaechennutzungsgrad (Zelte vs. Gesamtflaeche in Prozent)
-- Personenkapazitaets-Rechner (Summe aller Zeltplaetze)
-- Durchfahrtsbreiten-Pruefung (mind. 3,5m fuer Fahrzeuge)
-- Sonnenstand-Overlay (Schattenwurf zu bestimmter Uhrzeit)
-- Brandschutzzonen-Visualisierung
+## Planung
+- An Objektkanten einrasten
+- Objekte spiegeln (horizontal/vertikal)
+- Auto-Nummerierung beim Duplizieren
+- Uebersichts-Minikarte
+- Flaechennutzungsgrad anzeigen
+- Personenkapazitaet berechnen
+- Durchfahrtsbreiten pruefen
+- Sonnenstand-Overlay
 
 ## Infrastruktur
-- Stromanschlusspunkte mit Kapazitaetsangabe (16A, 32A, CEE)
-- Wasserhahn-Symbole mit Durchfluss
-- Stromverteilungsplan (welcher Kasten versorgt welches Zelt)
-- Beleuchtungsradius fuer Lichtmasten
-- WLAN-Reichweiten-Kreise
+- Stromanschluss-Kapazitaeten (16A/32A)
+- Stromverteilungsplan
+- Beleuchtungsradius
+- WLAN-Reichweiten
 
 ## Zusammenarbeit
-- Plan per Link teilen (Cloud-Speicher)
+- Plan per Link teilen
 - Echtzeit-Zusammenarbeit
 - QR-Code zum Teilen
-- Versionshistorie / Aenderungsvergleich
+- Versionshistorie
 
-## Export-Erweiterungen
-- DXF/DWG-Export fuer CAD-Software
-- PDF mit auswaehlbarem Text
-- CSV/Excel Objektinventar
+## Import/Export
 - Google Earth KML-Export
-- GPX-Import (GPS-Track als Grundflaeche)
+- GPX-Import
+- Grundriss-Import (PDF)
 
 ## Mobil
-- GPS-Positionierung ("Ich bin hier")
-- Kamera: Foto aufnehmen, Umriss nachzeichnen
-- Installierbare PWA mit Service Worker
-- AR-Modus (Plan ueber Kamera legen)
+- GPS-Positionierung
+- Kamera-Grundriss-Nachzeichnung
+- PWA mit Service Worker
+- AR-Modus
 
 ## Verwaltung
 - Buchungssystem-Anbindung
-- Saisonale Layout-Voreinstellungen
-- Kapazitaetsgrenzen pro Grundflaeche
-- Preiszonen-Darstellung
-- Veranstaltungszeitplan (Aufbau/Event/Abbau)
-- PDF-Bericht (Lageplan + Inventar + Checkliste)
+- Saisonale Layouts
+- Veranstaltungszeitplan
+- PDF-Bericht mit Checkliste
 
 ## Technik
-- Web Worker fuer aufwaendige Operationen
-- IndexedDB fuer groesseren Speicher
-- Plugin-/Erweiterungssystem
-- Canvas-Optimierung (nur geaenderte Bereiche neu zeichnen)
+- Web Worker fuer Export
+- IndexedDB-Speicher
+- Plugin-System
+- Canvas-Optimierung

@@ -22,10 +22,7 @@ const UI = (() => {
         buildColorSwatches();
         bindSidebarDivider();
         bindLayers();
-        // Mobile sidebar toggle
-        document.getElementById('sidebar-toggle').addEventListener('click', () => {
-            document.getElementById('sidebar').classList.toggle('open');
-        });
+        // (responsive sidebar removed)
     }
 
     // --- Layers ---
@@ -749,7 +746,8 @@ const UI = (() => {
     function buildPlacedItem(obj, indented) {
         const el = document.createElement('div');
         el.className = 'placed-item' + (Canvas.isSelected(obj.id) ? ' active' : '') + (indented ? ' placed-item-indented' : '');
-        const dims = (obj.type === 'area' || obj.type === 'text' || obj.type === 'fence' || obj.type === 'ground' || obj.type === 'bgimage' || obj.type === 'guideline') ? obj.type : `${obj.width}\u00d7${obj.height}`;
+        const typeLabel = obj.type === 'fence' ? 'pipe' : obj.type;
+        const dims = (obj.type === 'area' || obj.type === 'text' || obj.type === 'fence' || obj.type === 'ground' || obj.type === 'bgimage' || obj.type === 'guideline') ? typeLabel : `${obj.width}\u00d7${obj.height}`;
         const desc = obj.description ? ` - ${obj.description.split('\n')[0]}` : '';
         const lockStr = obj.locked ? ' &#128274;' : '';
         el.innerHTML = `
@@ -923,12 +921,8 @@ const UI = (() => {
         document.getElementById('btn-notebook').addEventListener('click', () => {
             const site = State.activeSite;
             if (!site) return;
-            const notes = site.notebook || '';
-            const result = prompt(I18n.t('msg.notebook') + ':', notes);
-            if (result !== null) {
-                site.notebook = result;
-                State.notifyChange(true);
-            }
+            document.getElementById('notebook-text').value = site.notebook || '';
+            openModal('modal-notebook');
         });
 
         document.getElementById('btn-clear-all').addEventListener('click', () => {
@@ -940,6 +934,8 @@ const UI = (() => {
         });
 
         document.getElementById('btn-export-svg').addEventListener('click', () => { IO.exportSVG(); });
+        document.getElementById('btn-export-dxf').addEventListener('click', () => { IO.exportDXF(); });
+        document.getElementById('btn-export-pdf').addEventListener('click', () => { IO.exportVectorPDF(); });
 
         document.getElementById('btn-offline').addEventListener('click', () => {
             IO.downloadOffline();
@@ -1693,6 +1689,12 @@ const UI = (() => {
             Tools.setTool('select');
         });
 
+        document.getElementById('notebook-ok').addEventListener('click', () => {
+            const site = State.activeSite;
+            if (site) { site.notebook = document.getElementById('notebook-text').value; State.notifyChange(true); }
+            closeModal();
+        });
+
         document.getElementById('modal-overlay').addEventListener('click', (e) => {
             if (e.target.id === 'modal-overlay') closeModal();
         });
@@ -1708,15 +1710,6 @@ const UI = (() => {
     // --- Context Menu ---
     function showCanvasContextMenu(x, y, worldPos) {
         createContextMenuAt(x, y, [
-            { label: I18n.t('ctx.escapeRoute'), action: () => {
-                Tools.setPendingTemplate({
-                    type: 'fence', name: I18n.t('ctx.escapeRoute'),
-                    width: 0, height: 0, guyRopeDistance: 0,
-                    color: '#16a34a', shape: 'rect', fenceHeight: 1.5,
-                    lineThickness: 3, vertexSize: 3,
-                });
-            }},
-            { sep: true },
             { label: I18n.t('btn.import'), action: () => {
                 const input = document.createElement('input');
                 input.type = 'file'; input.accept = '.json';

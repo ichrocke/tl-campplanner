@@ -1,5 +1,19 @@
 # Changelog
 
+## [4.1.0] - 2026-03-18
+
+### Added
+- **DXF export**: Export plan as DXF file for CAD software (AutoCAD etc.)
+- **PDF HD export**: High-resolution zoomable PDF-like export (4x DPI, opens in browser, printable)
+- **Notebook popup**: Full-size notepad modal with large textarea (was prompt dialog)
+
+### Changed
+- Pipes show as "pipe" in placed objects list (was "fence")
+
+### Removed
+- Escape route tool (use pipe tool with green color instead)
+- Responsive sidebar toggle (not needed)
+
 ## [4.0.0] - 2026-03-18
 
 ### Added

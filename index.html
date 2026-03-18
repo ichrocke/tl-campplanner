@@ -65,7 +65,6 @@
 
         <div id="main">
             <aside id="sidebar">
-                <button id="sidebar-toggle" class="sidebar-toggle">&#9776;</button>
                 <div class="sidebar-section">
                     <div class="sidebar-btn-row">
                         <button id="btn-custom-object" class="sidebar-btn-full" data-i18n="btn.newObject">+ New object...</button>
@@ -263,6 +262,8 @@
                         <button id="btn-import" class="btn-secondary" data-i18n="btn.import">Import</button>
                         <button id="btn-export" class="btn-secondary" data-i18n="btn.export">Export</button>
                         <button id="btn-export-svg" class="btn-secondary">SVG</button>
+                        <button id="btn-export-dxf" class="btn-secondary">DXF</button>
+                        <button id="btn-export-pdf" class="btn-secondary">PDF HD</button>
                     </div>
                     <div class="settings-divider"></div>
                     <button id="btn-clear-all" class="btn-secondary settings-danger-btn" data-i18n="btn.clearAll">Clear all</button>
@@ -382,6 +383,15 @@
             <div class="modal-actions">
                 <button id="text-cancel" class="btn-secondary" data-i18n="modal.text.cancel">Abbrechen</button>
                 <button id="text-ok" class="btn-primary" data-i18n="modal.text.place">Platzieren</button>
+            </div>
+        </div>
+    </div>
+
+        <div id="modal-notebook" class="modal modal-notebook hidden">
+            <h3 data-i18n="tool.notebook">Notebook</h3>
+            <textarea id="notebook-text" class="notebook-textarea" placeholder="Notes..."></textarea>
+            <div class="modal-actions">
+                <button id="notebook-ok" class="btn-primary">OK</button>
             </div>
         </div>
     </div>

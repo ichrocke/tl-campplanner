@@ -513,5 +513,66 @@ const IO = (() => {
         URL.revokeObjectURL(url);
     }
 
-    return { exportFile, importFile, print, downloadOffline, exportSVG };
+    function exportDXF() {
+        const site = State.activeSite;
+        if (!site) return;
+        const bounds = getContentBounds(site);
+        if (!bounds) return;
+        let dxf = '0\nSECTION\n2\nENTITIES\n';
+        site.objects.forEach(obj => {
+            if (obj.type === 'ground' && obj.points && obj.points.length >= 3) {
+                // Polyline for ground
+                dxf += '0\nLWPOLYLINE\n8\nGround\n70\n1\n';
+                obj.points.forEach(p => { dxf += `10\n${p.x.toFixed(3)}\n20\n${(-p.y).toFixed(3)}\n`; });
+            } else if (obj.type === 'fence' && obj.points && obj.points.length >= 2) {
+                dxf += '0\nLWPOLYLINE\n8\nPipes\n70\n0\n';
+                obj.points.forEach(p => { dxf += `10\n${p.x.toFixed(3)}\n20\n${(-p.y).toFixed(3)}\n`; });
+            } else if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
+                dxf += '0\nLWPOLYLINE\n8\nAreas\n70\n1\n';
+                obj.points.forEach(p => { dxf += `10\n${p.x.toFixed(3)}\n20\n${(-p.y).toFixed(3)}\n`; });
+            } else if (obj.width && obj.height && obj.type !== 'bgimage' && obj.type !== 'guideline' && obj.type !== 'symbol') {
+                // Rectangle as insert point + text
+                const hw = obj.width / 2, hh = obj.height / 2;
+                dxf += `0\nLWPOLYLINE\n8\nObjects\n70\n1\n`;
+                dxf += `10\n${(obj.x-hw).toFixed(3)}\n20\n${(-(obj.y-hh)).toFixed(3)}\n`;
+                dxf += `10\n${(obj.x+hw).toFixed(3)}\n20\n${(-(obj.y-hh)).toFixed(3)}\n`;
+                dxf += `10\n${(obj.x+hw).toFixed(3)}\n20\n${(-(obj.y+hh)).toFixed(3)}\n`;
+                dxf += `10\n${(obj.x-hw).toFixed(3)}\n20\n${(-(obj.y+hh)).toFixed(3)}\n`;
+                dxf += `0\nTEXT\n8\nLabels\n10\n${obj.x.toFixed(3)}\n20\n${(-obj.y).toFixed(3)}\n40\n0.3\n1\n${obj.name}\n`;
+            }
+        });
+        dxf += '0\nENDSEC\n0\nEOF\n';
+        const blob = new Blob([dxf], { type: 'application/dxf' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = (site.name || 'plan').replace(/[^a-zA-Z0-9_-]/g, '_') + '.dxf'; a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function exportVectorPDF() {
+        // High-res PDF-like export using SVG embedded in HTML for zoom
+        const site = State.activeSite;
+        if (!site) return;
+        const bounds = getContentBounds(site);
+        if (!bounds) return;
+        const ppm = 30;
+        const w = Math.round(bounds.width * ppm + 120);
+        const h = Math.round(bounds.height * ppm + 120);
+        const mapCanvas = Canvas.renderOffscreen(w, h, bounds, { showGrid: true, margin: 60, dpiScale: 4 });
+        if (!mapCanvas) return;
+        const dataUrl = mapCanvas.toDataURL('image/png');
+        const win = window.open('', '_blank');
+        if (!win) { alert(I18n.t('msg.popupBlocked')); return; }
+        win.document.write(`<!DOCTYPE html><html><head><title>${site.name || 'Plan'} - Vector PDF</title>
+            <style>
+                body { margin: 0; background: #eee; display: flex; justify-content: center; }
+                img { max-width: none; cursor: zoom-in; margin: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+                @media print { body { background: #fff; } img { margin: 0; width: 100%; box-shadow: none; } }
+            </style></head><body>
+            <img src="${dataUrl}" onclick="this.style.width=this.style.width?'':'100%'">
+            </body></html>`);
+        win.document.close();
+    }
+
+    return { exportFile, importFile, print, downloadOffline, exportSVG, exportDXF, exportVectorPDF };
 })();
