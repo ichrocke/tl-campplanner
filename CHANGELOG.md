@@ -1,5 +1,19 @@
 # Changelog
 
+## [5.0.0] - 2026-03-18
+
+### Added
+- **Unified Export/Print dialog**: Single icon in toolbar opens new two-column modal with JSON import/export, print settings, and 6 format buttons (PNG, JPEG, PDF, PDF HD, SVG, DXF) + donate link
+- **Prominent empty site placeholder**: Large text "Draw ground area here" with "Press G" hint and ground tool icon when site is empty
+
+### Changed
+- Import, Export, Print buttons removed from toolbar (replaced by single export icon)
+- Import/Export removed from settings dialog
+- Settings dialog cleaned up
+
+### Removed
+- Separate print button, import button, export button from toolbar
+
 ## [4.2.0] - 2026-03-18
 
 ### Added

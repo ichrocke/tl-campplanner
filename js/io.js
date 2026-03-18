@@ -40,7 +40,7 @@ const IO = (() => {
         input.click();
     }
 
-    function print() {
+    function print(overrideFormat) {
         const site = State.activeSite;
         if (!site) return;
 
@@ -52,7 +52,7 @@ const IO = (() => {
         const showObjList = document.getElementById('print-objlist').checked;
         const treasureMap = document.getElementById('print-treasure').checked;
         const title = document.getElementById('print-title').value;
-        const format = document.getElementById('print-format').value;
+        const format = overrideFormat || 'print';
 
         // Check for ground-only print filter
         const filter = State._printFilter;

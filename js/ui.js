@@ -942,10 +942,6 @@ const UI = (() => {
             }
         });
 
-        document.getElementById('btn-export-svg').addEventListener('click', () => { IO.exportSVG(); });
-        document.getElementById('btn-export-dxf').addEventListener('click', () => { IO.exportDXF(); });
-        document.getElementById('btn-export-pdf').addEventListener('click', () => { IO.exportVectorPDF(); });
-
         document.getElementById('btn-offline').addEventListener('click', () => {
             IO.downloadOffline();
         });
@@ -1668,15 +1664,28 @@ const UI = (() => {
             Tools.setPendingTemplate(template);
         });
 
-        document.getElementById('btn-print').addEventListener('click', () => {
+        // Export menu button
+        document.getElementById('btn-exportmenu').addEventListener('click', () => {
             const site = State.activeSite;
             if (site) document.getElementById('print-title').value = site.name;
             openModal('modal-print');
         });
         document.getElementById('print-cancel').addEventListener('click', closeModal);
-        document.getElementById('print-go').addEventListener('click', () => {
+
+        // Format buttons
+        function doExport(fmt) {
+            if (fmt === 'svg') { IO.exportSVG(); return; }
+            if (fmt === 'dxf') { IO.exportDXF(); return; }
+            if (fmt === 'pdfhd') { IO.exportVectorPDF(); return; }
+            // For png, jpeg, pdf: set format and call print
+            const fmtMap = { png: 'png', jpeg: 'jpeg', pdf: 'print' };
+            document.getElementById('print-format') && (document.getElementById('print-format').value = fmtMap[fmt] || 'print');
             closeModal();
-            IO.print();
+            IO.print(fmtMap[fmt] || 'print');
+        }
+        ['png','jpeg','pdf','pdfhd','svg','dxf'].forEach(fmt => {
+            const btn = document.getElementById('fmt-' + fmt);
+            if (btn) btn.addEventListener('click', () => doExport(fmt));
         });
 
         document.getElementById('rename-cancel').addEventListener('click', closeModal);

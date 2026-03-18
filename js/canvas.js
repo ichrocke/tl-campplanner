@@ -134,20 +134,35 @@ const Canvas = (() => {
     }
 
     function drawSiteLabel(site) {
-        // Empty site placeholder
+        // Empty site placeholder - prominent call to action
         const bounds = State.getSiteContentBounds(site);
         if (!bounds) {
             const cp = w2s(0, 0);
-            ctx.strokeStyle = '#d1d5db';
-            ctx.lineWidth = 1;
-            ctx.setLineDash([8, 5]);
-            ctx.strokeRect(cp.x - 60, cp.y - 40, 120, 80);
+            // Large dashed box
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([12, 6]);
+            ctx.strokeRect(cp.x - 120, cp.y - 60, 240, 120);
             ctx.setLineDash([]);
-            ctx.font = '12px sans-serif';
-            ctx.fillStyle = '#9ca3af';
+            // Main text
+            ctx.font = 'bold 20px sans-serif';
+            ctx.fillStyle = '#64748b';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(I18n.t('canvas.drawGround'), cp.x, cp.y);
+            ctx.fillText(I18n.t('canvas.drawGround'), cp.x, cp.y - 12);
+            // Hint text
+            ctx.font = '13px sans-serif';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('Press  G  or use the ground tool', cp.x, cp.y + 16);
+            // Ground icon hint
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 1.2;
+            ctx.beginPath();
+            const iconX = cp.x - 60, iconY = cp.y + 14;
+            ctx.moveTo(iconX, iconY - 5); ctx.lineTo(iconX + 4, iconY - 8);
+            ctx.lineTo(iconX + 8, iconY - 5); ctx.lineTo(iconX + 8, iconY + 2);
+            ctx.lineTo(iconX + 4, iconY + 5); ctx.lineTo(iconX, iconY + 2);
+            ctx.closePath(); ctx.stroke();
         }
 
         // Small site name top-left

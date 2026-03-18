@@ -1334,7 +1334,23 @@ body {
 
 .modal.hidden { display: none; }
 
-.modal-settings { min-width: 780px; max-width: 850px; }
+.modal-settings { min-width: 700px; max-width: 780px; }
+.modal-export { min-width: 700px; max-width: 800px; }
+
+.export-columns { display: flex; gap: 20px; }
+.export-left { flex: 1; min-width: 0; }
+.export-right { flex: 1; min-width: 0; display: flex; flex-direction: column; border-left: 1px solid var(--border); padding-left: 20px; }
+
+.export-format-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+.export-fmt-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 12px 8px; border: 1px solid var(--border); border-radius: var(--radius);
+    background: var(--surface); cursor: pointer; transition: all 0.15s;
+}
+.export-fmt-btn:hover { border-color: var(--primary); background: var(--primary-light); }
+.export-fmt-icon { font-size: 16px; font-weight: 700; color: var(--primary); }
+.export-fmt-label { font-size: 10px; color: var(--text-secondary); text-align: center; }
 
 .settings-columns {
     display: flex;

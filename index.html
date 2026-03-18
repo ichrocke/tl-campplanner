@@ -37,17 +37,11 @@
                     </button>
                 </div>
                 <div class="toolbar-sep"></div>
-                <button id="btn-undo" class="icon-btn" data-i18n-title="btn.undo.title" title="Rückgängig">
+                <button id="btn-undo" class="icon-btn" data-i18n-title="btn.undo.title" title="Undo">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h10a5 5 0 0 1 0 10H9"/><path d="M3 10l4-4M3 10l4 4"/></svg>
                 </button>
-                <button id="btn-import" class="icon-btn" data-i18n-title="btn.import.title" title="Import">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                </button>
-                <button id="btn-export" class="icon-btn" data-i18n-title="btn.export.title" title="Export">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                </button>
-                <button id="btn-print" class="icon-btn" data-i18n-title="btn.print" title="Drucken">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                <button id="btn-exportmenu" class="icon-btn" title="Export / Print">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/><line x1="4" y1="20" x2="20" y2="20" stroke-width="1.5"/></svg>
                 </button>
                 <button id="btn-notebook" class="icon-btn" title="Notebook" data-i18n-title="tool.notebook">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
@@ -260,15 +254,6 @@
                         <input type="file" id="bg-file-input" accept="image/*" style="display:none">
                     </div>
                     <div class="settings-divider"></div>
-                    <h4 class="settings-subtitle">Import / Export</h4>
-                    <div class="settings-io-buttons">
-                        <button id="btn-import" class="btn-secondary" data-i18n="btn.import">Import</button>
-                        <button id="btn-export" class="btn-secondary" data-i18n="btn.export">Export</button>
-                        <button id="btn-export-svg" class="btn-secondary">SVG</button>
-                        <button id="btn-export-dxf" class="btn-secondary">DXF</button>
-                        <button id="btn-export-pdf" class="btn-secondary">PDF HD</button>
-                    </div>
-                    <div class="settings-divider"></div>
                     <button id="btn-clear-all" class="btn-secondary settings-danger-btn" data-i18n="btn.clearAll">Clear all</button>
                     <div class="settings-divider"></div>
                     <h4 class="settings-subtitle" data-i18n="btn.offline">Offline Version</h4>
@@ -317,52 +302,86 @@
             </div>
         </div>
 
-        <div id="modal-print" class="modal hidden">
-            <h3 data-i18n="modal.print.title">Druckeinstellungen</h3>
-            <div class="modal-body">
-                <label><span data-i18n="modal.print.paper">Papierformat</span>
-                    <select id="print-paper">
-                        <option value="a4">A4</option>
-                        <option value="a3">A3</option>
-                        <option value="a2">A2</option>
-                    </select>
-                </label>
-                <label><span data-i18n="modal.print.orientation">Ausrichtung</span>
-                    <select id="print-orientation">
-                        <option value="landscape" data-i18n="modal.print.landscape">Querformat</option>
-                        <option value="portrait" data-i18n="modal.print.portrait">Hochformat</option>
-                    </select>
-                </label>
-                <label><span data-i18n="modal.print.scale">Maßstab</span>
-                    <select id="print-scale">
-                        <option value="auto" data-i18n="modal.print.scaleAuto">Automatisch (an Seite anpassen)</option>
-                        <option value="50">1:50</option>
-                        <option value="100">1:100</option>
-                        <option value="200">1:200</option>
-                        <option value="500">1:500</option>
-                    </select>
-                </label>
-                <label><input type="checkbox" id="print-grid" checked> <span data-i18n="modal.print.grid">Raster drucken</span></label>
-                <label><input type="checkbox" id="print-distances"> <span data-i18n="modal.print.distances">Show distances</span></label>
-                <label><input type="checkbox" id="print-objlist"> <span data-i18n="modal.print.objList">Object list</span></label>
-                <label><input type="checkbox" id="print-treasure"> <span data-i18n="modal.print.treasure">Treasure map style</span> <em style="font-size:11px;color:var(--text-secondary)">(experimental)</em></label>
-                <label><span data-i18n="modal.print.titleLabel">Titel</span> <input type="text" id="print-title" data-i18n-placeholder="btn.newSite"></label>
-                <div class="settings-divider"></div>
-                <label><span data-i18n="modal.print.format">Exportformat</span>
-                    <select id="print-format">
-                        <option value="print" data-i18n="modal.print.formatPrint">Drucken (PDF)</option>
-                        <option value="png" data-i18n="modal.print.formatPng">Als PNG speichern</option>
-                        <option value="jpeg" data-i18n="modal.print.formatJpeg">Als JPEG speichern</option>
-                    </select>
-                </label>
-            </div>
-            <div class="print-donate-hint">
-                <span data-i18n="modal.print.donate">If you like the camp planner, I would appreciate a small support!</span>
-                <a href="https://paypal.me/marc85444" target="_blank" rel="noopener" class="donate-link-small">PayPal &#9749;</a>
+        <div id="modal-print" class="modal modal-export hidden">
+            <h3>Export / Print</h3>
+            <div class="export-columns">
+                <div class="export-left">
+                    <h4 class="settings-subtitle">JSON Data</h4>
+                    <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px">Saves all camp sites, objects, layers, templates and settings as JSON file.</p>
+                    <div style="display:flex;gap:6px;margin-bottom:12px">
+                        <button id="btn-import" class="btn-secondary" style="flex:1" data-i18n="btn.import">Import</button>
+                        <button id="btn-export" class="btn-secondary" style="flex:1" data-i18n="btn.export">Export</button>
+                    </div>
+
+                    <div class="settings-divider"></div>
+                    <h4 class="settings-subtitle">Print / Image Export</h4>
+                    <div class="modal-body">
+                        <label><span data-i18n="modal.print.paper">Paper</span>
+                            <select id="print-paper">
+                                <option value="a4">A4</option>
+                                <option value="a3">A3</option>
+                                <option value="a2">A2</option>
+                            </select>
+                        </label>
+                        <label><span data-i18n="modal.print.orientation">Orientation</span>
+                            <select id="print-orientation">
+                                <option value="landscape" data-i18n="modal.print.landscape">Landscape</option>
+                                <option value="portrait" data-i18n="modal.print.portrait">Portrait</option>
+                            </select>
+                        </label>
+                        <label><span data-i18n="modal.print.scale">Scale</span>
+                            <select id="print-scale">
+                                <option value="auto" data-i18n="modal.print.scaleAuto">Auto (fit to page)</option>
+                                <option value="50">1:50</option>
+                                <option value="100">1:100</option>
+                                <option value="200">1:200</option>
+                                <option value="500">1:500</option>
+                            </select>
+                        </label>
+                        <label><input type="checkbox" id="print-grid" checked> <span data-i18n="modal.print.grid">Print grid</span></label>
+                        <label><input type="checkbox" id="print-distances"> <span data-i18n="modal.print.distances">Show distances</span></label>
+                        <label><input type="checkbox" id="print-objlist"> <span data-i18n="modal.print.objList">Object list</span></label>
+                        <label><input type="checkbox" id="print-treasure"> <span data-i18n="modal.print.treasure">Treasure map</span> <em style="font-size:11px;color:var(--text-secondary)">(experimental)</em></label>
+                        <label><span data-i18n="modal.print.titleLabel">Title</span> <input type="text" id="print-title" data-i18n-placeholder="btn.newSite"></label>
+                    </div>
+                </div>
+                <div class="export-right">
+                    <h4 class="settings-subtitle">Format</h4>
+                    <div class="export-format-grid">
+                        <button class="export-fmt-btn" id="fmt-png">
+                            <span class="export-fmt-icon">PNG</span>
+                            <span class="export-fmt-label">Image (300 DPI)</span>
+                        </button>
+                        <button class="export-fmt-btn" id="fmt-jpeg">
+                            <span class="export-fmt-icon">JPG</span>
+                            <span class="export-fmt-label">Image (compressed)</span>
+                        </button>
+                        <button class="export-fmt-btn" id="fmt-pdf">
+                            <span class="export-fmt-icon">PDF</span>
+                            <span class="export-fmt-label">Print / PDF</span>
+                        </button>
+                        <button class="export-fmt-btn" id="fmt-pdfhd">
+                            <span class="export-fmt-icon">HD</span>
+                            <span class="export-fmt-label">PDF HD (4x DPI)</span>
+                        </button>
+                        <button class="export-fmt-btn" id="fmt-svg">
+                            <span class="export-fmt-icon">SVG</span>
+                            <span class="export-fmt-label">Vector graphics</span>
+                        </button>
+                        <button class="export-fmt-btn" id="fmt-dxf">
+                            <span class="export-fmt-icon">DXF</span>
+                            <span class="export-fmt-label">CAD (AutoCAD)</span>
+                        </button>
+                    </div>
+
+                    <div class="print-donate-hint" style="margin-top:auto">
+                        <span data-i18n="modal.print.donate">If you like the camp planner, I would appreciate a small support!</span>
+                        <a href="https://paypal.me/marc85444" target="_blank" rel="noopener" class="donate-link-small">PayPal &#9749;</a>
+                    </div>
+                </div>
             </div>
             <div class="modal-actions">
-                <button id="print-cancel" class="btn-secondary" data-i18n="modal.print.cancel">Cancel</button>
-                <button id="print-go" class="btn-primary" data-i18n="modal.print.export">Export</button>
+                <button id="print-cancel" class="btn-secondary">Close</button>
             </div>
         </div>
 

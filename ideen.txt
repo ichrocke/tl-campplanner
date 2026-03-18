@@ -25,17 +25,15 @@ Zukuenftige Feature-Ideen
 - QR-Code zum Teilen
 
 ## Import/Export
-- KML-Export fuer Google Earth
+- KML fuer Google Earth
 - GPX-Import
 
 ## Mobil
 - GPS-Positionierung
 - PWA mit Service Worker
-- AR-Modus
 
 ## Verwaltung
 - Buchungssystem-Anbindung
-- Veranstaltungszeitplan
 - PDF-Bericht mit Checkliste
 
 ## Technik
