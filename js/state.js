@@ -264,6 +264,42 @@ const State = (() => {
             _listeners.forEach(fn => fn());
         },
 
+        redo() {
+            if (_undoPointer >= _undoStack.length - 1) return;
+            _undoPointer++;
+            const data = JSON.parse(_undoStack[_undoPointer]);
+            _sites = data.sites;
+            _activeSiteIndex = data.activeSiteIndex;
+            _minDistance = data.minDistance;
+            _listeners.forEach(fn => fn());
+        },
+
+        // Clipboard
+        _clipboard: null,
+        copyObjects(ids) {
+            const site = this.activeSite;
+            if (!site) return;
+            const objs = site.objects.filter(o => ids.has(o.id));
+            this._clipboard = JSON.parse(JSON.stringify(objs));
+        },
+        pasteObjects(offsetX, offsetY) {
+            const site = this.activeSite;
+            if (!site || !this._clipboard) return [];
+            const newIds = [];
+            this._clipboard.forEach(o => {
+                const obj = JSON.parse(JSON.stringify(o));
+                obj.id = generateId();
+                obj.x += (offsetX || 1);
+                obj.y += (offsetY || 1);
+                if (obj.points) obj.points.forEach(p => { p.x += (offsetX || 1); p.y += (offsetY || 1); });
+                obj.layerId = site.activeLayerId;
+                site.objects.push(obj);
+                newIds.push(obj.id);
+            });
+            notify();
+            return newIds;
+        },
+
         exportJSON() {
             return JSON.stringify({
                 version: 1,

@@ -483,5 +483,35 @@ const IO = (() => {
         URL.revokeObjectURL(url);
     }
 
-    return { exportFile, importFile, print, downloadOffline };
+    function exportSVG() {
+        const site = State.activeSite;
+        if (!site) return;
+        const bounds = getContentBounds(site);
+        if (!bounds) return;
+        const pad = 2;
+        const ppm = 30;
+        const w = bounds.width * ppm + pad * 2 * ppm;
+        const h = bounds.height * ppm + pad * 2 * ppm;
+        // Render to canvas then convert
+        const mapCanvas = Canvas.renderOffscreen(
+            Math.round(w), Math.round(h), bounds,
+            { showGrid: false, showDistances: false, margin: pad * ppm, dpiScale: 2 }
+        );
+        if (!mapCanvas) return;
+        const dataUrl = mapCanvas.toDataURL('image/png');
+        const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="${w}mm" height="${h}mm" viewBox="0 0 ${mapCanvas.width} ${mapCanvas.height}">
+  <image width="${mapCanvas.width}" height="${mapCanvas.height}" href="${dataUrl}"/>
+</svg>`;
+        const blob = new Blob([svg], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = (site.name || 'plan').replace(/[^a-zA-Z0-9_-]/g, '_') + '.svg';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    return { exportFile, importFile, print, downloadOffline, exportSVG };
 })();

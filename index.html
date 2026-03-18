@@ -49,7 +49,10 @@
                 <button id="btn-print" class="icon-btn" data-i18n-title="btn.print" title="Drucken">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 </button>
-                <button id="btn-settings" class="icon-btn" data-i18n-title="btn.settings" title="Einstellungen">
+                <button id="btn-notebook" class="icon-btn" title="Notebook" data-i18n-title="tool.notebook">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                </button>
+                <button id="btn-settings" class="icon-btn" data-i18n-title="btn.settings" title="Settings">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 </button>
             </div>
@@ -62,6 +65,7 @@
 
         <div id="main">
             <aside id="sidebar">
+                <button id="sidebar-toggle" class="sidebar-toggle">&#9776;</button>
                 <div class="sidebar-section">
                     <div class="sidebar-btn-row">
                         <button id="btn-custom-object" class="sidebar-btn-full" data-i18n="btn.newObject">+ New object...</button>
@@ -258,6 +262,7 @@
                     <div class="settings-io-buttons">
                         <button id="btn-import" class="btn-secondary" data-i18n="btn.import">Import</button>
                         <button id="btn-export" class="btn-secondary" data-i18n="btn.export">Export</button>
+                        <button id="btn-export-svg" class="btn-secondary">SVG</button>
                     </div>
                     <div class="settings-divider"></div>
                     <button id="btn-clear-all" class="btn-secondary settings-danger-btn" data-i18n="btn.clearAll">Clear all</button>
@@ -285,11 +290,16 @@
                         <tr><td><kbd>1</kbd>-<kbd>0</kbd></td><td data-i18n="shortcut.quickPlace">Quick place objects 1&ndash;10</td></tr>
                         <tr><td><kbd>Entf</kbd> / <kbd>X</kbd></td><td data-i18n="shortcut.delete">Objekt löschen</td></tr>
                         <tr><td><kbd>F2</kbd></td><td data-i18n="shortcut.rename">Umbenennen</td></tr>
+                        <tr><td><kbd>Ctrl+C</kbd></td><td data-i18n="shortcut.copy">Copy</td></tr>
+                        <tr><td><kbd>Ctrl+V</kbd></td><td data-i18n="shortcut.paste">Paste</td></tr>
                         <tr><td><kbd>Ctrl+D</kbd></td><td data-i18n="shortcut.duplicate">Duplicate</td></tr>
+                        <tr><td><kbd>Ctrl+A</kbd></td><td data-i18n="shortcut.selectAll">Select all (active layer)</td></tr>
                         <tr><td><kbd>Ctrl+G</kbd></td><td data-i18n="shortcut.group">Group objects</td></tr>
                         <tr><td><kbd>Ctrl+Shift+G</kbd></td><td data-i18n="shortcut.ungroup">Ungroup objects</td></tr>
                         <tr><td><kbd>Ctrl+Z</kbd></td><td data-i18n="shortcut.undo">Undo</td></tr>
-                        <tr><td><kbd>Esc</kbd></td><td data-i18n="shortcut.cancel">Abbrechen / Auswahl aufheben</td></tr>
+                        <tr><td><kbd>Ctrl+Y</kbd></td><td data-i18n="shortcut.redo">Redo</td></tr>
+                        <tr><td><kbd>&#8592;&#8593;&#8594;&#8595;</kbd></td><td data-i18n="shortcut.arrowMove">Move selected (1 grid step)</td></tr>
+                        <tr><td><kbd>Esc</kbd></td><td data-i18n="shortcut.cancel">Cancel / Deselect</td></tr>
                         <tr><td><kbd>Enter</kbd></td><td data-i18n="shortcut.finish">Zeichnung abschließen</td></tr>
                         <tr><td><kbd>Shift+Drag</kbd></td><td data-i18n="shortcut.panDrag">Ansicht verschieben</td></tr>
                         <tr><td><kbd>Shift+Drehen</kbd></td><td data-i18n="shortcut.rotSnap">15°-Raster</td></tr>

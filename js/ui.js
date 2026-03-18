@@ -22,6 +22,10 @@ const UI = (() => {
         buildColorSwatches();
         bindSidebarDivider();
         bindLayers();
+        // Mobile sidebar toggle
+        document.getElementById('sidebar-toggle').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('open');
+        });
     }
 
     // --- Layers ---
@@ -50,7 +54,9 @@ const UI = (() => {
             el.className = 'layer-item' + (layer.id === site.activeLayerId ? ' active' : '');
             const objCount = site.objects.filter(o => o.layerId === layer.id).length;
 
+            const lColor = layer.color || '#888';
             el.innerHTML = `
+                <span class="layer-color-dot" style="background:${lColor}"></span>
                 <button class="layer-vis-btn ${layer.visible ? '' : 'off'}" title="Visibility">${layer.visible ? '\u{1F441}' : '\u{1F441}'}</button>
                 <button class="layer-lock-btn ${layer.locked ? 'on' : ''}" title="Lock">${layer.locked ? '\u{1F6AB}' : '\u{1F513}'}</button>
                 <span class="layer-name" title="${layer.name}">${layer.name}</span>
@@ -68,6 +74,51 @@ const UI = (() => {
                 site.activeLayerId = layer.id;
                 State.notifyChange(true);
                 buildLayers();
+            });
+
+            // Color dot click
+            el.querySelector('.layer-color-dot').addEventListener('click', (e) => {
+                e.stopPropagation();
+                openColorPicker(layer.color || '#888', (c) => {
+                    layer.color = c;
+                    State.notifyChange(true);
+                    buildLayers();
+                });
+            });
+
+            // Right-click for layer options
+            el.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const items = [
+                    { label: I18n.t('tab.rename'), action: () => {
+                        const n = prompt(I18n.t('layer.rename'), layer.name);
+                        if (n && n.trim()) { layer.name = n.trim(); State.notifyChange(true); buildLayers(); }
+                    }},
+                    { label: I18n.t('layer.opacity'), action: () => {
+                        const o = prompt(I18n.t('layer.opacity') + ' (0.1-1.0):', layer.opacity !== undefined ? layer.opacity : 1);
+                        if (o !== null) { layer.opacity = Math.max(0.1, Math.min(1, parseFloat(o) || 1)); State.notifyChange(true); Canvas.render(); }
+                    }},
+                ];
+                if (i < site.layers.length - 1) {
+                    items.push({ label: I18n.t('layer.merge'), action: () => {
+                        const targetId = site.layers[i + 1].id;
+                        site.objects.forEach(o => { if (o.layerId === layer.id) o.layerId = targetId; });
+                        site.layers.splice(i, 1);
+                        if (site.activeLayerId === layer.id) site.activeLayerId = targetId;
+                        State.notifyChange(); buildLayers(); buildPlacedList(); Canvas.render();
+                    }});
+                }
+                if (site.layers.length > 1) {
+                    items.push({ label: I18n.t('layer.flatten'), action: () => {
+                        const keepId = site.layers[site.layers.length - 1].id;
+                        site.objects.forEach(o => { o.layerId = keepId; });
+                        site.layers = [site.layers[site.layers.length - 1]];
+                        site.activeLayerId = keepId;
+                        State.notifyChange(); buildLayers(); buildPlacedList(); Canvas.render();
+                    }});
+                }
+                createContextMenuAt(e.clientX, e.clientY, items);
             });
 
             // Double-click to rename
@@ -868,6 +919,18 @@ const UI = (() => {
             buildPalette();
         });
 
+        // Notebook
+        document.getElementById('btn-notebook').addEventListener('click', () => {
+            const site = State.activeSite;
+            if (!site) return;
+            const notes = site.notebook || '';
+            const result = prompt(I18n.t('msg.notebook') + ':', notes);
+            if (result !== null) {
+                site.notebook = result;
+                State.notifyChange(true);
+            }
+        });
+
         document.getElementById('btn-clear-all').addEventListener('click', () => {
             if (confirm(I18n.t('msg.confirmClearAll'))) {
                 Canvas.clearSelection();
@@ -875,6 +938,8 @@ const UI = (() => {
                 State.clear();
             }
         });
+
+        document.getElementById('btn-export-svg').addEventListener('click', () => { IO.exportSVG(); });
 
         document.getElementById('btn-offline').addEventListener('click', () => {
             IO.downloadOffline();
@@ -1018,8 +1083,17 @@ const UI = (() => {
 
         // --- Pipe/Line settings ---
         if (obj.type === 'fence') {
+            let pipeLen = 0;
+            if (obj.points && obj.points.length >= 2) {
+                for (let i = 0; i < obj.points.length - 1; i++) {
+                    const dx = obj.points[i+1].x - obj.points[i].x;
+                    const dy = obj.points[i+1].y - obj.points[i].y;
+                    pipeLen += Math.sqrt(dx*dx + dy*dy);
+                }
+            }
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('tool.fence')}</div>
+                <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px">${I18n.t('props.pipeLength')}: ${pipeLen.toFixed(1)} m</div>
                 <label>${I18n.t('props.lineThickness')} <input type="number" id="prop-linethickness" value="${obj.lineThickness || 4}" min="1" max="20" step="1"></label>
                 <label>${I18n.t('props.vertexSize')} <input type="number" id="prop-vertexsize" value="${obj.vertexSize || 0}" min="0" max="10" step="1" placeholder="auto"></label>
                 <div class="prop-section-subtitle">${I18n.t('props.colorPresets')}</div>
@@ -1375,6 +1449,24 @@ const UI = (() => {
             </div>
         </div>`;
 
+        // Bulk color
+        html += `<div class="prop-section">
+            <label>${I18n.t('props.bulkColor')} <input type="color" id="prop-bulk-color" value="#4a90d9"></label>
+        </div>`;
+
+        // Align buttons
+        html += `<div class="prop-section">
+            <div class="prop-section-title">${I18n.t('ctx.align')}</div>
+            <div style="display:flex;gap:3px;flex-wrap:wrap">
+                <button class="rot-preset" id="align-left" title="${I18n.t('ctx.alignLeft')}">&#9664;</button>
+                <button class="rot-preset" id="align-right" title="${I18n.t('ctx.alignRight')}">&#9654;</button>
+                <button class="rot-preset" id="align-top" title="${I18n.t('ctx.alignTop')}">&#9650;</button>
+                <button class="rot-preset" id="align-bottom" title="${I18n.t('ctx.alignBottom')}">&#9660;</button>
+                <button class="rot-preset" id="dist-h" title="${I18n.t('ctx.distributeH')}">&#8596;</button>
+                <button class="rot-preset" id="dist-v" title="${I18n.t('ctx.distributeV')}">&#8597;</button>
+            </div>
+        </div>`;
+
         html += `<div class="prop-actions">
                 <button class="btn-duplicate" id="prop-multi-group">${I18n.t('ctx.group')}</button>
                 <button class="btn-duplicate" id="prop-multi-ungroup">${I18n.t('ctx.ungroup')}</button>
@@ -1435,6 +1527,44 @@ const UI = (() => {
                 grpRotSlider.value = rot;
                 applyGroupRotation(rot);
             });
+        });
+
+        // Bulk color
+        document.getElementById('prop-bulk-color').addEventListener('change', (e) => {
+            [...Canvas.selectedIds].forEach(id => State.updateObject(id, { color: e.target.value }));
+            Canvas.render();
+        });
+
+        // Alignment
+        document.getElementById('align-left').addEventListener('click', () => {
+            const minX = Math.min(...selObjs.map(o => o.x - (o.width||0)/2));
+            selObjs.forEach(o => { o.x = minX + (o.width||0)/2; }); State.notifyChange(); Canvas.render();
+        });
+        document.getElementById('align-right').addEventListener('click', () => {
+            const maxX = Math.max(...selObjs.map(o => o.x + (o.width||0)/2));
+            selObjs.forEach(o => { o.x = maxX - (o.width||0)/2; }); State.notifyChange(); Canvas.render();
+        });
+        document.getElementById('align-top').addEventListener('click', () => {
+            const minY = Math.min(...selObjs.map(o => o.y - (o.height||0)/2));
+            selObjs.forEach(o => { o.y = minY + (o.height||0)/2; }); State.notifyChange(); Canvas.render();
+        });
+        document.getElementById('align-bottom').addEventListener('click', () => {
+            const maxY = Math.max(...selObjs.map(o => o.y + (o.height||0)/2));
+            selObjs.forEach(o => { o.y = maxY - (o.height||0)/2; }); State.notifyChange(); Canvas.render();
+        });
+        document.getElementById('dist-h').addEventListener('click', () => {
+            if (selObjs.length < 3) return;
+            const sorted = [...selObjs].sort((a,b) => a.x - b.x);
+            const minX = sorted[0].x, maxX = sorted[sorted.length-1].x;
+            const step = (maxX - minX) / (sorted.length - 1);
+            sorted.forEach((o, i) => { o.x = minX + i * step; }); State.notifyChange(); Canvas.render();
+        });
+        document.getElementById('dist-v').addEventListener('click', () => {
+            if (selObjs.length < 3) return;
+            const sorted = [...selObjs].sort((a,b) => a.y - b.y);
+            const minY = sorted[0].y, maxY = sorted[sorted.length-1].y;
+            const step = (maxY - minY) / (sorted.length - 1);
+            sorted.forEach((o, i) => { o.y = minY + i * step; }); State.notifyChange(); Canvas.render();
         });
 
         document.getElementById('prop-multi-group').addEventListener('click', () => {
@@ -1578,6 +1708,15 @@ const UI = (() => {
     // --- Context Menu ---
     function showCanvasContextMenu(x, y, worldPos) {
         createContextMenuAt(x, y, [
+            { label: I18n.t('ctx.escapeRoute'), action: () => {
+                Tools.setPendingTemplate({
+                    type: 'fence', name: I18n.t('ctx.escapeRoute'),
+                    width: 0, height: 0, guyRopeDistance: 0,
+                    color: '#16a34a', shape: 'rect', fenceHeight: 1.5,
+                    lineThickness: 3, vertexSize: 3,
+                });
+            }},
+            { sep: true },
             { label: I18n.t('btn.import'), action: () => {
                 const input = document.createElement('input');
                 input.type = 'file'; input.accept = '.json';
@@ -1841,6 +1980,21 @@ const UI = (() => {
         document.getElementById('status-coords').textContent = `X: ${x.toFixed(1)} m   Y: ${y.toFixed(1)} m`;
         const site = State.activeSite;
         if (site) document.getElementById('status-grid').textContent = site.gridSize + ' m';
+        // Status info for selected object
+        const info = document.getElementById('status-info');
+        if (Canvas.selectionCount === 1) {
+            const obj = site ? site.objects.find(o => o.id === Canvas.selectedId) : null;
+            if (obj) {
+                const t = obj.type;
+                const sz = (t === 'area' || t === 'ground' || t === 'fence' || t === 'text' || t === 'guideline')
+                    ? t : `${obj.width}\u00d7${obj.height}m`;
+                info.textContent = `${obj.name} (${sz})`;
+            } else info.textContent = '';
+        } else if (Canvas.selectionCount > 1) {
+            info.textContent = Canvas.selectionCount + ' objects';
+        } else {
+            info.textContent = '';
+        }
     }
 
     function updateZoom(z) {

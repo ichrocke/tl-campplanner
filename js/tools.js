@@ -778,9 +778,21 @@ const Tools = (() => {
         }
 
         switch (e.key) {
-            case 'v': case 'V': setTool('select'); break;
+            // v/V handled below (after Ctrl+V check)
             case 'h': case 'H': setTool('pan'); break;
-            case 'a': case 'A': setTool('area'); break;
+            case 'a': case 'A':
+                if (e.ctrlKey || e.metaKey) {
+                    e.preventDefault();
+                    const s = State.activeSite;
+                    if (s) {
+                        const layerObjs = s.objects.filter(o => o.layerId === s.activeLayerId);
+                        Canvas.selectMultiple(layerObjs.map(o => o.id));
+                        if (Canvas.selectionCount > 1) UI.showMultiProperties();
+                        else if (Canvas.selectionCount === 1) UI.showProperties(s.objects.find(o => o.id === Canvas.selectedId));
+                        Canvas.render();
+                    }
+                } else { setTool('area'); }
+                break;
             case '+': case '=': {
                 const s = State.activeSite;
                 if (s) { s.gridSize = Math.min(10, Math.round((s.gridSize + 0.25) * 100) / 100); State.notifyChange(true); Canvas.render(); }
@@ -840,8 +852,49 @@ const Tools = (() => {
                     Canvas.render();
                 }
                 break;
-            case 'z':
-                if (e.ctrlKey || e.metaKey) { e.preventDefault(); State.undo(); Canvas.render(); }
+            case 'z': case 'Z':
+                if ((e.ctrlKey || e.metaKey) && e.shiftKey) { e.preventDefault(); State.redo(); Canvas.render(); break; }
+                if ((e.ctrlKey || e.metaKey) && !e.shiftKey) { e.preventDefault(); State.undo(); Canvas.render(); }
+                break;
+            case 'y':
+                if (e.ctrlKey || e.metaKey) { e.preventDefault(); State.redo(); Canvas.render(); }
+                break;
+            case 'c': case 'C':
+                if ((e.ctrlKey || e.metaKey) && Canvas.selectionCount > 0) {
+                    e.preventDefault();
+                    State.copyObjects(Canvas.selectedIds);
+                }
+                break;
+            case 'v': case 'V':
+                if ((e.ctrlKey || e.metaKey) && State._clipboard) {
+                    e.preventDefault();
+                    const newIds = State.pasteObjects(1, 1);
+                    Canvas.selectMultiple(newIds);
+                    if (newIds.length === 1) {
+                        const obj = State.activeSite.objects.find(o => o.id === newIds[0]);
+                        if (obj) UI.showProperties(obj);
+                    } else if (newIds.length > 1) UI.showMultiProperties();
+                    Canvas.render();
+                    break;
+                }
+                if (!e.ctrlKey && !e.metaKey) setTool('select');
+                break;
+            case 'ArrowUp': case 'ArrowDown': case 'ArrowLeft': case 'ArrowRight':
+                if (Canvas.selectionCount > 0) {
+                    e.preventDefault();
+                    const gs = State.activeSite ? State.activeSite.gridSize : 0.5;
+                    const dx = e.key === 'ArrowRight' ? gs : e.key === 'ArrowLeft' ? -gs : 0;
+                    const dy = e.key === 'ArrowDown' ? gs : e.key === 'ArrowUp' ? -gs : 0;
+                    [...Canvas.selectedIds].forEach(id => {
+                        const obj = State.activeSite.objects.find(o => o.id === id);
+                        if (obj && !obj.locked) {
+                            obj.x += dx; obj.y += dy;
+                            if (obj.points) obj.points.forEach(p => { p.x += dx; p.y += dy; });
+                        }
+                    });
+                    State.notifyChange();
+                    Canvas.render();
+                }
                 break;
             case 'g':
                 if ((e.ctrlKey || e.metaKey) && !e.shiftKey && Canvas.selectionCount > 1) {

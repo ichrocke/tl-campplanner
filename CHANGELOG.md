@@ -1,5 +1,28 @@
 # Changelog
 
+## [4.0.0] - 2026-03-18
+
+### Added
+- **Redo** (Ctrl+Y / Ctrl+Shift+Z): Undo steps can now be redone
+- **Clipboard** (Ctrl+C / Ctrl+V): Copy and paste objects between sites
+- **Ctrl+A**: Select all objects on the active layer
+- **Arrow keys**: Move selected objects by 1 grid step
+- **Layer opacity**: Right-click layer to set transparency (0.1-1.0)
+- **Layer colors**: Click color dot on layer to set identification color
+- **Layer merge**: Right-click to merge layer into the one below
+- **Layer flatten**: Right-click to flatten all layers into one
+- **Pipe length calculator**: Total pipe length shown in properties
+- **Notebook**: Per-site notepad accessible from toolbar
+- **Bulk color change**: Color picker in multi-selection properties to recolor all selected
+- **Alignment tools**: Align left/right/top/bottom, distribute horizontally/vertically (multi-selection)
+- **SVG export**: Export plan as SVG file (in settings)
+- **Escape route tool**: Right-click canvas to start drawing an escape route (green dashed pipe)
+- **Responsive layout**: Sidebar collapses on small screens with toggle button
+- **Status bar info**: Shows selected object name, type and size
+
+### Changed
+- No distance measurements for ground areas, bgimages, guidelines, symbols
+
 ## [3.1.0] - 2026-03-18
 
 ### Added

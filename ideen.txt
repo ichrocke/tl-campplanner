@@ -1,151 +1,57 @@
-Feature-Ideen fuer den Zeltplatzplaner
-=======================================
+Zukuenftige Feature-Ideen
+=========================
 
-STATUS: [x] = umgesetzt, [ ] = offen, [~] = teilweise
+## Naechste Schritte
+- Dunkler Modus (gesamte Oberflaeche)
+- An Objektkanten einrasten (nicht nur am Raster)
+- Objekte spiegeln (horizontal/vertikal)
+- Auto-Nummerierung beim Duplizieren (Zelt 1, Zelt 2, ...)
+- Uebersichts-Minikarte in der Ecke
 
+## Erweiterte Planung
+- Automatische Abstandsbeschriftung zwischen naechsten Objekten
+- Flaechennutzungsgrad (Zelte vs. Gesamtflaeche in Prozent)
+- Personenkapazitaets-Rechner (Summe aller Zeltplaetze)
+- Durchfahrtsbreiten-Pruefung (mind. 3,5m fuer Fahrzeuge)
+- Sonnenstand-Overlay (Schattenwurf zu bestimmter Uhrzeit)
+- Brandschutzzonen-Visualisierung
 
-## Ebenen & Organisation
-[x] Mehrere Ebenen pro Zeltplatz
-[x] Ebenen ein-/ausblenden, sperren, umsortieren
-[x] Objekte zwischen Ebenen verschieben
-[x] Aktive Ebene anzeigen
-[ ] Ebenen-Transparenz (Deckkraft pro Ebene)
-[ ] Ebenen-Farben (farbliche Kennzeichnung)
-[ ] Ebenen zusammenfuehren
-[ ] Alle Ebenen zu einer zusammenfassen
+## Infrastruktur
+- Stromanschlusspunkte mit Kapazitaetsangabe (16A, 32A, CEE)
+- Wasserhahn-Symbole mit Durchfluss
+- Stromverteilungsplan (welcher Kasten versorgt welches Zelt)
+- Beleuchtungsradius fuer Lichtmasten
+- WLAN-Reichweiten-Kreise
 
+## Zusammenarbeit
+- Plan per Link teilen (Cloud-Speicher)
+- Echtzeit-Zusammenarbeit
+- QR-Code zum Teilen
+- Versionshistorie / Aenderungsvergleich
 
-## Infrastruktur & Versorgung
-[x] Leitungs-/Rohrtool mit einstellbarer Dicke und Farbvorlagen
-[x] Sicherheitssymbole (Erste Hilfe, Feuerloescher, Gas, Elektrik usw.)
-[ ] Stromanschlusspunkte mit Kapazitaetsangabe (16A, 32A, CEE)
-[ ] Wasserhahn-Symbole mit Durchfluss/Richtung
-[ ] Abwasser-/Kanalmarkierungen (gestrichelte Leitungen)
-[ ] Lichtmasten mit Beleuchtungsradius
-[ ] WLAN-Zugangspunkte mit Reichweiten-Kreis
-[ ] Stromverteilungsplan (welcher Kasten versorgt welches Zelt)
-[ ] Kabellaengen-Rechner entlang der Leitungswege
+## Export-Erweiterungen
+- DXF/DWG-Export fuer CAD-Software
+- PDF mit auswaehlbarem Text
+- CSV/Excel Objektinventar
+- Google Earth KML-Export
+- GPX-Import (GPS-Track als Grundflaeche)
 
+## Mobil
+- GPS-Positionierung ("Ich bin hier")
+- Kamera: Foto aufnehmen, Umriss nachzeichnen
+- Installierbare PWA mit Service Worker
+- AR-Modus (Plan ueber Kamera legen)
 
-## Vermessung & Planung
-[x] Dauerhafte Masslinien mit Abstandsangaben
-[x] Kantenlaengen an Grundflaechen
-[x] Flaecheninhalt in m2 auf Grundflaechen
-[ ] Automatische Abstandsbeschriftung zwischen naechsten Objekten
-[ ] Flaechennutzungsgrad (Zelte vs. Gesamtflaeche in Prozent)
-[ ] Personenkapazitaets-Rechner (Summe aller Zeltplaetze)
-[ ] Dauerhafte Mindestabstand-Verletzungsanzeige (nicht nur beim Ziehen)
-[ ] Wege-Planung / Gehwege zwischen Zelten
-[ ] Durchfahrtsbreiten-Pruefung (mindestens 3,5m fuer Fahrzeuge)
-[ ] Gefaelle-Anzeiger fuer Entwaesserungsplanung
-[ ] Sonnenstand-Overlay (Schattenwurf zu bestimmter Uhrzeit/Datum)
+## Verwaltung
+- Buchungssystem-Anbindung
+- Saisonale Layout-Voreinstellungen
+- Kapazitaetsgrenzen pro Grundflaeche
+- Preiszonen-Darstellung
+- Veranstaltungszeitplan (Aufbau/Event/Abbau)
+- PDF-Bericht (Lageplan + Inventar + Checkliste)
 
-
-## Zusammenarbeit & Teilen
-[ ] Plan per Link teilen (Cloud-Speicher)
-[ ] Echtzeit-Zusammenarbeit (WebSocket/WebRTC)
-[ ] Kommentar-/Notiz-Pins auf der Karte
-[ ] Versionshistorie / Aenderungsvergleich
-[ ] QR-Code-Erstellung zum Teilen der Plan-URL
-[ ] Export als Link mit eingebetteten Daten (URL-kodiert)
-[ ] Team-Rollen (nur ansehen, bearbeiten, verwalten)
-
-
-## Vorlagen & Vorgaben
-[x] Objektordner in der Palette
-[x] Palette umsortierbar
-[x] Rechtsklick zum Bearbeiten von Vorlagen
-[x] Tab-Duplizierung
-[ ] Zeltplatz-Layouts als wiederverwendbare Vorlagen speichern
-[ ] Vorlagen-Bibliothek / Marktplatz mit gaengigen Aufbauten
-[ ] Objekte zwischen Zeltplaetzen kopieren (Strg+C/V Zwischenablage)
-[ ] Objekte und Gruppen spiegeln (horizontal/vertikal)
-[ ] Ausrichtungswerkzeuge (gleichmaessig verteilen, Kanten/Mitten ausrichten)
-[ ] An Objektkanten einrasten (nicht nur am Raster)
-[ ] Vorlagen von anderen Nutzern importieren (Vorlagendateien teilen)
-
-
-## Darstellung & Bedienung
-[x] Objekt-Transparenz
-[x] Schatzkarten-Druckstil
-[x] SVG-Sicherheitssymbole
-[ ] Dunkler Modus (gesamte Oberflaeche)
-[ ] Eigene Bodentexturen (fotorealistisch: Gras, Kies, Sand, Schlamm)
-[ ] Topografie-/Hoehenlinien
-[ ] 3D-Isometrie-Vorschau
-[ ] Wetter-Overlay (Windrichtung, Regenzonen)
-[ ] Animierter Wasserfluss auf Leitungen
-[ ] Heatmap-Overlay (Zeltdichte)
-[ ] Nachtmodus-Ansicht (beleuchtete Bereiche anzeigen)
-[ ] Eigene Farbthemen / Branding
-
-
-## Import/Export
-[x] JSON-Export/Import
-[x] PNG/JPEG mit 300 DPI
-[x] Drucken als PDF
-[x] Offline-HTML herunterladen
-[x] Grundflaechen-Export/Import
-[x] Objekt-Export/Import
-[ ] SVG-Export fuer Vektorgrafik-Bearbeitung
-[ ] DXF/DWG-Export fuer CAD-Software (AutoCAD)
-[ ] PDF-Export mit auswaehlbarem Text und Formularfeldern
-[ ] Tabellen-Export (CSV/Excel Objektinventar)
-[ ] Google Earth KML/KMZ-Export
-[ ] GPX-Import (GPS-Track als Grundflaeche)
-[ ] Grundriss-Import (PDF/DWG)
-
-
-## Mobil & Tablet
-[x] Touch-Unterstuetzung (Tippen, Ziehen, Pinch-Zoom, Langdruck)
-[x] Groessere Touch-Ziele
-[ ] Responsive Layout fuer Handys (einklappbare Seitenleiste)
-[ ] GPS-basierte Positionierung ("Ich bin hier"-Markierung)
-[ ] Kamera-Integration (Foto aufnehmen, Umriss als Grundflaeche nachzeichnen)
-[ ] Vollstaendige PWA mit Service Worker (installierbare App)
-[ ] AR-Modus (Plan ueber Kamera-Livebild legen)
-[ ] Offline-First mit Synchronisierung bei Internetverbindung
-
-
-## Verwaltung & Management
-[ ] Ein-/Auschecken pro Zeltplatz verfolgen
-[ ] Buchungssystem-Anbindung (API)
-[ ] Saisonale Layout-Voreinstellungen (Sommer-/Winterkonfigurationen)
-[ ] Fluchtweg-Planung und Brandschutzzonen
-[ ] Kapazitaetsgrenzen pro Grundflaeche (max. Personen)
-[ ] Preiszonen-Darstellung (farblich markierte Bereiche)
-[ ] Veranstaltungszeitplan (Aufbau -> Veranstaltung -> Abbau)
-[ ] Inventarverwaltung (welche Ausruestung steht wo)
-[ ] PDF-Bericht-Erstellung (Lageplan + Inventar + Checkliste)
-
-
-## Komfort-Funktionen
-[x] Auto-Speichern mit Umschalter
-[x] Rueckgaengig (50 Schritte)
-[x] Rastergroesse per Taste (+/-)
-[x] Einfaerbe-Werkzeug fuer schnelles Umfaerben
-[x] Seitenleisten-Trennbalken verschiebbar
-[ ] Objekte suchen/filtern nach Name, Typ oder Ebene
-[ ] Massen-Eigenschaftsaenderung (Farbe/Groesse aller Ausgewaehlten aendern)
-[ ] Dauerhaftes Lineal/Massband auf dem Bildschirm
-[ ] Zwischenablage (Strg+C/V zwischen Plaetzen und Tabs)
-[ ] "Als Vorlage speichern" aus platziertem Objekt
-[ ] Auto-Nummerierung (Zelt 1, Zelt 2, ... beim Duplizieren)
-[ ] Uebersichts-Minikarte in der Ecke zur Navigation
-[ ] Pfeiltasten zum Verschieben ausgewaehlter Objekte (1 Rasterschritt)
-[ ] Strg+A um alles auf der aktiven Ebene auszuwaehlen
-[ ] An Objektkanten einrasten (nicht nur am Raster)
-[ ] Wiederherstellen (Strg+Y / Strg+Umschalt+Z)
-[ ] Aenderungsverlauf-Panel mit letzten Aenderungen
-[ ] Lineal an Kanten (dauerhafte cm/m-Markierungen)
-[ ] Statusleiste: Info zum ausgewaehlten Objekt (Typ, Groesse, Position)
-
-
-## Leistung & Technik
-[ ] Web Worker fuer aufwaendige Operationen (Export, Schatzkarte)
-[ ] Canvas-Rendering-Optimierung (nur geaenderte Bereiche neu zeichnen)
-[ ] Lazy Loading fuer grosse Plaetze (virtualisierte Objektliste)
-[ ] IndexedDB fuer groesseren Speicher (ueber localStorage 5MB hinaus)
-[ ] Service Worker fuer echten Offline-Modus
-[ ] Automatisierte Test-Suite
-[ ] Plugin-/Erweiterungssystem fuer eigene Werkzeuge
+## Technik
+- Web Worker fuer aufwaendige Operationen
+- IndexedDB fuer groesseren Speicher
+- Plugin-/Erweiterungssystem
+- Canvas-Optimierung (nur geaenderte Bereiche neu zeichnen)

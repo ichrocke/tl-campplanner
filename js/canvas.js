@@ -186,6 +186,12 @@ const Canvas = (() => {
         return !layer || layer.visible;
     }
 
+    function getLayerOpacity(site, layerId) {
+        if (!layerId || !site.layers) return 1;
+        const layer = site.layers.find(l => l.id === layerId);
+        return (layer && layer.opacity !== undefined) ? layer.opacity : 1;
+    }
+
     function drawBgImages(site) {
         site.objects.forEach(obj => {
             if (obj.type !== 'bgimage' || !obj.dataUrl) return;
@@ -510,9 +516,11 @@ const Canvas = (() => {
             }
         }
 
-        // Apply object opacity
+        // Apply layer + object opacity
+        const layerOp = getLayerOpacity(State.activeSite, obj.layerId);
         const objOp = obj.objectOpacity !== undefined ? obj.objectOpacity : 1;
-        if (objOp < 1) ctx.globalAlpha = objOp;
+        const combinedOp = layerOp * objOp;
+        if (combinedOp < 1) ctx.globalAlpha = combinedOp;
 
         // --- Area annotation ---
         if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
