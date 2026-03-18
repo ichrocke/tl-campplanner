@@ -960,7 +960,7 @@ const UI = (() => {
             <div class="prop-section-title">${obj.type === 'guideline' ? I18n.t('tool.measure') : I18n.t('props.general')}</div>
             ${obj.type === 'guideline'
                 ? `<div style="font-size:14px;font-weight:700;color:var(--primary);text-align:center;padding:4px 0">${obj.name}</div>`
-                : `<label>${I18n.t('props.name')} <input type="text" id="prop-name" value="${obj.name}"></label>
+                : `<label>${I18n.t('props.name')} <textarea id="prop-name" rows="1" style="resize:vertical;font-family:var(--font);font-size:12px">${(obj.name || '').replace(/</g, '&lt;')}</textarea></label>
                    <label>${I18n.t('props.description')} <textarea id="prop-desc" rows="2" placeholder="${I18n.t('props.descPlaceholder')}" style="resize:vertical;font-family:var(--font);font-size:12px">${descVal}</textarea></label>
                    <div class="prop-grid">
                        <label>${I18n.t('props.descColor')} <input type="color" id="prop-desc-color" value="${obj.descColor || '#94a3b8'}"></label>
@@ -1142,7 +1142,16 @@ const UI = (() => {
             });
         };
 
-        bind('prop-name', 'name');
+        // Name textarea (multiline)
+        const nameEl = document.getElementById('prop-name');
+        if (nameEl) {
+            nameEl.addEventListener('input', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                State.updateObject(obj.id, { name: nameEl.value });
+                Canvas.render();
+                buildPlacedList();
+            });
+        }
 
         // Ground-specific handlers
         const gpBtn = document.getElementById('prop-ground-print');
@@ -1569,7 +1578,7 @@ const UI = (() => {
     // --- Context Menu ---
     function showCanvasContextMenu(x, y, worldPos) {
         createContextMenuAt(x, y, [
-            { label: I18n.t('ground.import'), action: () => {
+            { label: I18n.t('btn.import'), action: () => {
                 const input = document.createElement('input');
                 input.type = 'file'; input.accept = '.json';
                 input.onchange = () => {
@@ -1606,8 +1615,19 @@ const UI = (() => {
                                 }
                                 State.notifyChange();
                                 Canvas.render();
+                            } else if (data.type === 'object_export' && data.object && site) {
+                                const o = data.object;
+                                const dx = worldPos.x - o.x;
+                                const dy = worldPos.y - o.y;
+                                o.x = worldPos.x; o.y = worldPos.y;
+                                if (o.points) o.points.forEach(p => { p.x += dx; p.y += dy; });
+                                o.id = State.generateId();
+                                o.layerId = site.activeLayerId;
+                                site.objects.push(o);
+                                State.notifyChange();
+                                Canvas.render();
                             } else {
-                                alert(I18n.t('msg.importError') + 'Not a ground area file');
+                                alert(I18n.t('msg.importError') + 'Unknown file format');
                             }
                         } catch (err) { alert(I18n.t('msg.importError') + err.message); }
                     };
@@ -1644,6 +1664,14 @@ const UI = (() => {
                     State.notifyChange();
                     Canvas.render();
                 }
+            }},
+            { label: I18n.t('btn.export'), action: () => {
+                const data = { type: 'object_export', version: 1, object: JSON.parse(JSON.stringify(obj)) };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = (obj.name || 'object').replace(/[^a-zA-Z0-9_-]/g, '_') + '.json'; a.click();
+                URL.revokeObjectURL(url);
             }},
             { sep: true },
             ...(() => {

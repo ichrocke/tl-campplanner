@@ -667,16 +667,19 @@ const Canvas = (() => {
         const nameW = ctx.measureText(obj.name).width;
         const fitsInside = nameW < (w - 4) && fontSize < h * 0.5;
 
+        const nameLines = (obj.name || '').split('\n');
         if (fitsInside) {
             ctx.textBaseline = 'middle';
-            ctx.fillText(obj.name, 0, -fontSize * 0.35);
+            const nlh = fontSize * 1.1;
+            let ny = -fontSize * 0.35 - (nameLines.length - 1) * nlh / 2;
+            nameLines.forEach(line => { ctx.fillText(line, 0, ny); ny += nlh; });
             ctx.font = `${Math.max(8, fontSize - 2)}px sans-serif`;
             ctx.fillStyle = '#64748b';
-            ctx.fillText(`${obj.width}\u00d7${obj.height}m`, 0, fontSize * 0.55);
+            ctx.fillText(`${obj.width}\u00d7${obj.height}m`, 0, ny - nlh / 2 + fontSize * 0.6);
         } else {
-            // Render above the object
             ctx.textBaseline = 'bottom';
-            ctx.fillText(obj.name, 0, -h / 2 - 4);
+            let ny = -h / 2 - 4 - (nameLines.length - 1) * fontSize * 1.1;
+            nameLines.forEach(line => { ctx.fillText(line, 0, ny); ny += fontSize * 1.1; });
             ctx.font = `${Math.max(8, fontSize - 2)}px sans-serif`;
             ctx.fillStyle = '#64748b';
             ctx.textBaseline = 'top';
@@ -1551,11 +1554,14 @@ const Canvas = (() => {
         if (!site) return [];
         const obj = site.objects.find(o => o.id === objId);
         if (!obj) return [];
+        // No distance measurement for ground, bgimage, guideline, symbol
+        if (obj.type === 'ground' || obj.type === 'bgimage' || obj.type === 'guideline' || obj.type === 'symbol') return [];
         const results = [];
         const minD = State.minDistance;
 
         site.objects.forEach(other => {
             if (other.id === obj.id) return;
+            if (other.type === 'ground' || other.type === 'bgimage' || other.type === 'guideline' || other.type === 'symbol') return;
             const r = objDistance(obj, other);
             if (r.dist < minD * 2 && r.p1 && r.p2) {
                 let color;
