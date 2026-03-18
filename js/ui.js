@@ -484,11 +484,12 @@ const UI = (() => {
     function buildPlacedItem(obj, indented) {
         const el = document.createElement('div');
         el.className = 'placed-item' + (Canvas.isSelected(obj.id) ? ' active' : '') + (indented ? ' placed-item-indented' : '');
-        const dims = (obj.type === 'area' || obj.type === 'text' || obj.type === 'fence') ? obj.type : `${obj.width}\u00d7${obj.height}`;
+        const dims = (obj.type === 'area' || obj.type === 'text' || obj.type === 'fence' || obj.type === 'ground') ? obj.type : `${obj.width}\u00d7${obj.height}`;
         const desc = obj.description ? ` - ${obj.description.split('\n')[0]}` : '';
+        const lockStr = obj.locked ? ' &#128274;' : '';
         el.innerHTML = `
             <div class="placed-item-color" style="background:${obj.color}"></div>
-            <span class="placed-item-name" title="${obj.name}${desc}">${obj.name}</span>
+            <span class="placed-item-name" title="${obj.name}${desc}">${obj.name}${lockStr}</span>
             <span class="placed-item-dims">${dims}</span>`;
         el.addEventListener('click', (e) => {
             if (e.ctrlKey || e.metaKey) {
@@ -809,7 +810,7 @@ const UI = (() => {
         }
 
         // --- Section: Rotation ---
-        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'guideline' && obj.type !== 'ground') {
+        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'guideline') {
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.rotation')}</div>
                 <div class="prop-row">
@@ -870,6 +871,16 @@ const UI = (() => {
                     <label>${I18n.t('props.lineWidth')} <input type="number" id="prop-linewidth" value="${obj.lineWidth || 0}" min="0" max="3" step="0.1" placeholder="auto"></label>
                 </div>` : ''}
                 <label>${I18n.t('props.opacity')} <input type="range" id="prop-obj-opacity" min="0.05" max="1" step="0.05" value="${opVal}" style="width:100%"></label>
+            </div>`;
+        }
+
+        // --- Lock (ground + bgimage) ---
+        if (obj.type === 'ground' || obj.type === 'bgimage') {
+            html += `<div class="prop-section">
+                <label style="flex-direction:row !important;align-items:center !important;gap:6px !important;cursor:pointer">
+                    <input type="checkbox" id="prop-locked" ${obj.locked ? 'checked' : ''} style="width:auto">
+                    &#128274; ${I18n.t('props.lockObj')}
+                </label>
             </div>`;
         }
 
@@ -963,6 +974,16 @@ const UI = (() => {
         bind('prop-desc-color', 'descColor');
         bind('prop-desc-size', 'descSize', parseFloat);
         bind('prop-entrance', 'entranceSide');
+        // Lock checkbox
+        const lockCb = document.getElementById('prop-locked');
+        if (lockCb) {
+            lockCb.addEventListener('change', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                State.updateObject(obj.id, { locked: lockCb.checked });
+                Canvas.render();
+                buildPlacedList();
+            });
+        }
         // Object opacity slider
         const objOpSlider = document.getElementById('prop-obj-opacity');
         if (objOpSlider) {

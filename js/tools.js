@@ -150,10 +150,12 @@ const Tools = (() => {
     function onSelectDown(e, world, snapped, site) {
         const ctrlKey = e.ctrlKey || e.metaKey;
 
-        // 1. Check rotation handle
+        // 1. Check rotation handle (skip if locked)
         if (Canvas.selectionCount === 1) {
             const sel = site.objects.find(o => o.id === Canvas.selectedId);
-            if (sel && Canvas.pointOnRotHandle(world.x, world.y, sel)) {
+            if (sel && sel.locked) {
+                // Locked objects: allow selection but not manipulation
+            } else if (sel && Canvas.pointOnRotHandle(world.x, world.y, sel)) {
                 drag = {
                     type: 'rotate', objId: sel.id,
                     startAngle: Math.atan2(world.x - sel.x, -(world.y - sel.y)) * 180 / Math.PI,
@@ -233,12 +235,19 @@ const Tools = (() => {
                     UI.showMultiProperties();
                 }
             }
-            drag = {
-                type: 'move',
-                offsetX: world.x, offsetY: world.y,
-                origPositions: getSelectedPositions(site),
-                moved: false,
-            };
+            // Don't allow move if any selected object is locked
+            const anyLocked = [...Canvas.selectedIds].some(id => {
+                const o = site.objects.find(x => x.id === id);
+                return o && o.locked;
+            });
+            if (!anyLocked) {
+                drag = {
+                    type: 'move',
+                    offsetX: world.x, offsetY: world.y,
+                    origPositions: getSelectedPositions(site),
+                    moved: false,
+                };
+            }
         } else {
             if (ctrlKey) {
                 drag = { type: 'rectSelect', x1: world.x, y1: world.y, additive: true };

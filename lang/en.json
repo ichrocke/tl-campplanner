@@ -237,5 +237,15 @@
   "modal.settings.autosave": "Auto-save",
   "ground.export": "Export ground area",
   "ground.import": "Import ground area",
-  "ground.printOnly": "Print only this ground area"
+  "ground.printOnly": "Print only this ground area",
+  "props.locked": "Locked",
+  "props.lockObj": "Lock position",
+  "shortcut.gridSize": "Grid size +/-",
+  "shortcut.paint": "Paint color",
+  "shortcut.group": "Group objects",
+  "shortcut.ungroup": "Ungroup objects",
+  "template.electricBox": "Electric box",
+  "template.waterPoint": "Water point",
+  "template.powerLine": "Power line",
+  "template.waterLine": "Water line"
 }

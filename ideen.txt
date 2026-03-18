@@ -1,0 +1,85 @@
+Feature Ideas for Camp Planner
+==============================
+
+## Layer System (planned)
+- Multiple layers per camp site (e.g. "Ground", "Tents", "Infrastructure")
+- Show/hide layers independently
+- Lock entire layers
+- Move objects between layers
+- Reorder layers (affects rendering order)
+- Active layer indicator
+- Layer opacity
+
+## Infrastructure
+- Electrical connection points with capacity labels (16A, 32A)
+- Water tap symbols with flow direction
+- Cable/pipe routing as line objects with different dash patterns
+- Drainage/sewage line markers
+- Light pole positions
+- WiFi access point range circles
+
+## Measurements & Planning
+- Automatic distance labels between nearest objects
+- Area utilization percentage (tents vs. total ground)
+- Person capacity calculator (based on tent sizes)
+- Minimum distance violation highlighting
+- Path routing (walkways between tents)
+- Vehicle access width checker
+
+## Collaboration
+- Share plan via link (store in cloud)
+- Real-time collaboration (WebSocket)
+- Comment/note pins on the map
+- Version history / revision comparison
+- QR code generation for sharing
+
+## Templates & Presets
+- Saveable camp layouts as templates
+- Template library with common setups
+- Copy objects between camp sites (clipboard)
+- Mirror/flip objects and groups
+- Alignment tools (distribute evenly, align edges)
+- Snap to other objects (not just grid)
+
+## Visual Improvements
+- Dark mode
+- Custom ground textures (grass, gravel, sand)
+- Topography/elevation contour lines
+- Shadow casting based on time of day
+- 3D preview mode
+- Weather overlay (wind direction indicator)
+- Photo overlay matching (GPS-based image placement)
+
+## Import/Export
+- Import from GPS coordinates (GPX files)
+- SVG export for vector graphics
+- DXF/DWG export for CAD software
+- PDF export with form fields
+- Spreadsheet export (object inventory)
+- Google Earth KML export
+
+## Mobile
+- Responsive layout for phones
+- GPS-based positioning ("I am here" marker)
+- Camera integration (take photo, trace outline)
+- Offline PWA with service worker
+- AR mode (overlay plan on camera view)
+
+## Administration
+- Check-in/check-out tracking per tent spot
+- Booking integration
+- Seasonal layout presets (summer/winter)
+- Emergency exits and fire safety zones
+- Capacity limits per ground area
+- Price zones visualization
+
+## Quality of Life
+- Search/filter objects by name or type
+- Bulk property editing (change color of all selected)
+- Snap to object edges (not just grid)
+- Ruler/tape measure that stays on screen
+- Clipboard (Ctrl+C/V between sites)
+- Object templates from existing objects ("save as template")
+- Auto-numbering (Tent 1, Tent 2, ...)
+- Bird's-eye minimap in corner
+- Keyboard-only navigation (arrow keys to move selected)

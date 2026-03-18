@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.5.0] - 2026-03-18
+
+### Added
+- **Lock/freeze objects**: Ground areas and background images can be locked via padlock checkbox in properties. Locked objects cannot be moved, rotated or vertex-edited. Lock icon shown on canvas (next to m²) and in placed objects list
+- **Ground area rotation**: Ground areas now support rotation via rotation handle and properties panel (slider + presets)
+- **Infrastructure templates**: Electric box (yellow, 0.6x0.6m) and water point (blue circle, 0.5m) added to default palette. Power/water lines can be drawn with the fence tool
+- **Complete shortcuts table**: Added P (paint), +/- (grid size), Ctrl+G (group), Ctrl+Shift+G (ungroup) to settings keyboard shortcuts list
+
+### Added files
+- **ideen.txt**: Collection of future feature ideas (layers, collaboration, mobile, infrastructure, etc.)
+
 ## [2.4.0] - 2026-03-17
 
 ### Added

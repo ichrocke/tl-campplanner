@@ -413,7 +413,8 @@ const Canvas = (() => {
                 ctx.fillStyle = darkColor;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.fillText(area.toFixed(1) + ' m\u00b2', cp.x, cp.y);
+                const lockIcon = obj.locked ? ' \u{1F512}' : '';
+                ctx.fillText(area.toFixed(1) + ' m\u00b2' + lockIcon, cp.x, cp.y);
                 if (obj.name) {
                     ctx.font = '10px sans-serif';
                     ctx.fillText(obj.name, cp.x, cp.y + 14);

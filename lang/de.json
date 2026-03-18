@@ -237,5 +237,15 @@
   "modal.settings.autosave": "Auto-Speichern",
   "ground.export": "Grundfläche exportieren",
   "ground.import": "Grundfläche importieren",
-  "ground.printOnly": "Nur diese Grundfläche drucken"
+  "ground.printOnly": "Nur diese Grundfläche drucken",
+  "props.locked": "Gesperrt",
+  "props.lockObj": "Position sperren",
+  "shortcut.gridSize": "Rastergröße +/-",
+  "shortcut.paint": "Einfärben",
+  "shortcut.group": "Objekte gruppieren",
+  "shortcut.ungroup": "Gruppierung aufheben",
+  "template.electricBox": "Stromkasten",
+  "template.waterPoint": "Wasseranschluss",
+  "template.powerLine": "Stromleitung",
+  "template.waterLine": "Wasserleitung"
 }

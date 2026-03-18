@@ -237,5 +237,15 @@
   "modal.settings.autosave": "Auto-guardar",
   "ground.export": "Exportar terreno",
   "ground.import": "Importar terreno",
-  "ground.printOnly": "Imprimir solo este terreno"
+  "ground.printOnly": "Imprimir solo este terreno",
+  "props.locked": "Bloqueado",
+  "props.lockObj": "Bloquear posición",
+  "shortcut.gridSize": "Tamaño cuadrícula +/-",
+  "shortcut.paint": "Pintar",
+  "shortcut.group": "Agrupar objetos",
+  "shortcut.ungroup": "Desagrupar objetos",
+  "template.electricBox": "Caja eléctrica",
+  "template.waterPoint": "Punto de agua",
+  "template.powerLine": "Línea eléctrica",
+  "template.waterLine": "Tubería de agua"
 }
