@@ -305,16 +305,23 @@ const UI = (() => {
                 Object.entries(Canvas.SYMBOLS).forEach(([id, sym]) => {
                     const btn = document.createElement('button');
                     btn.className = 'symbol-btn';
-                    // Mini preview
-                    const cvs = document.createElement('canvas');
-                    cvs.width = 32; cvs.height = 32;
-                    const c = cvs.getContext('2d');
-                    c.translate(16, 16);
-                    c.fillStyle = sym.bg; c.strokeStyle = '#333'; c.lineWidth = 1;
-                    c.beginPath(); c.roundRect(-14, -14, 28, 28, 3); c.fill(); c.stroke();
-                    c.fillStyle = sym.fg; c.strokeStyle = sym.fg; c.lineWidth = 1.5;
-                    sym.draw(c, 24);
-                    btn.appendChild(cvs);
+                    if (sym.src) {
+                        const img = document.createElement('img');
+                        img.src = sym.src;
+                        img.width = 28; img.height = 28;
+                        img.style.objectFit = 'contain';
+                        btn.appendChild(img);
+                    } else {
+                        const cvs = document.createElement('canvas');
+                        cvs.width = 32; cvs.height = 32;
+                        const c = cvs.getContext('2d');
+                        c.translate(16, 16);
+                        c.fillStyle = sym.bg; c.strokeStyle = '#333'; c.lineWidth = 1;
+                        c.beginPath(); c.roundRect(-14, -14, 28, 28, 3); c.fill(); c.stroke();
+                        c.fillStyle = sym.fg; c.strokeStyle = sym.fg; c.lineWidth = 1.5;
+                        sym.draw(c, 24);
+                        btn.appendChild(cvs);
+                    }
                     const label = document.createElement('span');
                     label.className = 'symbol-btn-label';
                     label.textContent = sym.name;
