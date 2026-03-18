@@ -432,6 +432,32 @@ const UI = (() => {
                 buildPalette();
             });
 
+            // Right-click to rename folder
+            header.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                createContextMenuAt(e.clientX, e.clientY, [
+                    { label: I18n.t('tab.rename'), action: () => {
+                        const newName = prompt(I18n.t('btn.newFolderPrompt'), fname);
+                        if (newName && newName.trim() && newName.trim() !== fname) {
+                            const nn = newName.trim();
+                            templates.forEach(t => { if (t.folder === fname) t.folder = nn; });
+                            if (site.templateFolders) {
+                                const fi = site.templateFolders.indexOf(fname);
+                                if (fi >= 0) site.templateFolders[fi] = nn;
+                            }
+                            State.notifyChange(true); buildPalette();
+                        }
+                    }},
+                    { sep: true },
+                    { label: I18n.t('props.delete'), className: 'danger', action: () => {
+                        templates.forEach(t => { if (t.folder === fname) delete t.folder; });
+                        if (site.templateFolders) site.templateFolders = site.templateFolders.filter(f => f !== fname);
+                        State.notifyChange(true); buildPalette();
+                    }},
+                ]);
+            });
+
             // Drop zone on folder header (to move items into folder)
             header.addEventListener('dragover', (e) => { e.preventDefault(); header.classList.add('drag-over'); });
             header.addEventListener('dragleave', () => { header.classList.remove('drag-over'); });
@@ -507,6 +533,44 @@ const UI = (() => {
         el.addEventListener('click', (e) => {
             if (e.target.closest('.palette-delete') || e.target.closest('.palette-drag-handle')) return;
             Tools.setPendingTemplate(t);
+        });
+
+        // Right-click to edit template
+        el.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            createContextMenuAt(e.clientX, e.clientY, [
+                { label: I18n.t('tab.rename'), action: () => {
+                    const name = prompt(I18n.t('props.name') + ':', t.name);
+                    if (name && name.trim()) { t.name = name.trim(); State.notifyChange(true); buildPalette(); }
+                }},
+                { label: I18n.t('props.width') + ' / ' + I18n.t('props.depth'), action: () => {
+                    const w = prompt(I18n.t('props.width') + ' (m):', t.width);
+                    if (w !== null) { t.width = parseFloat(w) || t.width; }
+                    const h = prompt(I18n.t('props.depth') + ' (m):', t.height);
+                    if (h !== null) { t.height = parseFloat(h) || t.height; }
+                    State.notifyChange(true); buildPalette();
+                }},
+                { label: I18n.t('props.color'), action: () => {
+                    openColorPicker(t.color, (c) => { t.color = c; State.notifyChange(true); buildPalette(); });
+                }},
+                { label: I18n.t('props.shape'), action: () => {
+                    const shapes = ['rect', 'triangle', 'hexagon', 'octagon', 'circle'];
+                    const names = shapes.map(s => I18n.t('props.shape.' + s));
+                    const current = shapes.indexOf(t.shape);
+                    const next = (current + 1) % shapes.length;
+                    t.shape = shapes[next];
+                    State.notifyChange(true); buildPalette();
+                }},
+                { label: I18n.t('props.guyRope.distance'), action: () => {
+                    const d = prompt(I18n.t('props.guyRope.distance') + ':', t.guyRopeDistance || 0);
+                    if (d !== null) { t.guyRopeDistance = parseFloat(d) || 0; State.notifyChange(true); buildPalette(); }
+                }},
+                { sep: true },
+                { label: I18n.t('props.delete'), className: 'danger', action: () => {
+                    State.removeTemplate(idx); buildPalette();
+                }},
+            ]);
         });
 
         // Drag-and-drop reorder
