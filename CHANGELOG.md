@@ -1,5 +1,23 @@
 # Changelog
 
+## [4.2.0] - 2026-03-18
+
+### Added
+- **Post-it notes** (N): Yellow sticky notes placeable on canvas with multiline text, shadow effect and folded corner. Editable text, color and size in properties
+- **Notebook popup**: Full-size modal with large textarea (was invisible due to wrong DOM placement)
+
+### Changed
+- **PDF HD**: Now downloads as high-res PNG directly (was opening browser tab)
+- **Settings dialog**: Wider (780px), export buttons in 3-column grid
+- **Pipes**: Show as "pipe" in placed objects, "note" for post-its
+
+### Fixed
+- Notebook modal was outside modal-overlay, causing invisible popup
+
+### Removed
+- Escape route tool
+- Responsive sidebar toggle
+
 ## [4.1.0] - 2026-03-18
 
 ### Added

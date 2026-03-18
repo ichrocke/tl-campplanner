@@ -343,6 +343,15 @@ const UI = (() => {
             });
         });
 
+        // Post-it
+        document.getElementById('btn-postit').addEventListener('click', () => {
+            Tools.setPendingTemplate({
+                type: 'postit', name: 'Note',
+                width: 3, height: 3, guyRopeDistance: 0,
+                color: '#fef08a', shape: 'rect', text: '',
+            });
+        });
+
         // Symbol picker
         document.getElementById('btn-symbols').addEventListener('click', () => {
             const picker = document.getElementById('symbol-picker');
@@ -746,7 +755,7 @@ const UI = (() => {
     function buildPlacedItem(obj, indented) {
         const el = document.createElement('div');
         el.className = 'placed-item' + (Canvas.isSelected(obj.id) ? ' active' : '') + (indented ? ' placed-item-indented' : '');
-        const typeLabel = obj.type === 'fence' ? 'pipe' : obj.type;
+        const typeLabel = obj.type === 'fence' ? 'pipe' : obj.type === 'postit' ? 'note' : obj.type;
         const dims = (obj.type === 'area' || obj.type === 'text' || obj.type === 'fence' || obj.type === 'ground' || obj.type === 'bgimage' || obj.type === 'guideline') ? typeLabel : `${obj.width}\u00d7${obj.height}`;
         const desc = obj.description ? ` - ${obj.description.split('\n')[0]}` : '';
         const lockStr = obj.locked ? ' &#128274;' : '';
@@ -1069,6 +1078,18 @@ const UI = (() => {
             </div>`;
         }
 
+        // --- Post-it text ---
+        if (obj.type === 'postit') {
+            html += `<div class="prop-section">
+                <div class="prop-section-title">Post-it</div>
+                <label>Text <textarea id="prop-postit-text" rows="4" style="resize:vertical;font-family:var(--font);font-size:12px;background:#fffef5">${(obj.text || '').replace(/</g, '&lt;')}</textarea></label>
+                <div class="prop-grid">
+                    <label>${I18n.t('props.width')} <input type="number" id="prop-width" value="${obj.width}" min="1" max="20" step="0.5"></label>
+                    <label>${I18n.t('props.depth')} <input type="number" id="prop-height" value="${obj.height}" min="1" max="20" step="0.5"></label>
+                </div>
+            </div>`;
+        }
+
         // --- Symbol size ---
         if (obj.type === 'symbol') {
             html += `<div class="prop-section">
@@ -1279,6 +1300,14 @@ const UI = (() => {
         }
         bind('prop-fontsize', 'fontSize', parseFloat);
         bind('prop-fenceheight', 'fenceHeight', parseFloat);
+        const postitText = document.getElementById('prop-postit-text');
+        if (postitText) {
+            postitText.addEventListener('input', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                State.updateObject(obj.id, { text: postitText.value });
+                Canvas.render();
+            });
+        }
         bind('prop-linethickness', 'lineThickness', parseFloat);
         bind('prop-vertexsize', 'vertexSize', parseFloat);
         // Pipe color presets

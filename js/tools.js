@@ -807,6 +807,11 @@ const Tools = (() => {
             case 'm': case 'M': setTool('measure'); break;
             case 'f': case 'F': setTool('fence'); break;
             case 'p': case 'P': setTool('paint'); break;
+            case 'n': case 'N':
+                if (!e.ctrlKey && !e.metaKey) {
+                    Tools.setPendingTemplate({ type: 'postit', name: 'Note', width: 3, height: 3, guyRopeDistance: 0, color: '#fef08a', shape: 'rect', text: '' });
+                }
+                break;
             case 'F2':
                 // Rename selected object
                 if (Canvas.selectionCount === 1) {

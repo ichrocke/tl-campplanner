@@ -861,12 +861,14 @@ body {
 
 /* ---- Settings IO Buttons ---- */
 .settings-io-buttons {
-    display: flex;
-    gap: 8px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
 }
 
 .settings-io-buttons button {
-    flex: 1;
+    font-size: 11px;
+    padding: 5px 8px;
 }
 
 .settings-danger-btn {
@@ -1332,7 +1334,7 @@ body {
 
 .modal.hidden { display: none; }
 
-.modal-settings { min-width: 640px; max-width: 700px; }
+.modal-settings { min-width: 780px; max-width: 850px; }
 
 .settings-columns {
     display: flex;

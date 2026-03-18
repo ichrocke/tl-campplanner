@@ -500,6 +500,54 @@ const Canvas = (() => {
         // --- Background image and ground (rendered separately) ---
         if (obj.type === 'bgimage' || obj.type === 'ground') return;
 
+        // --- Post-it ---
+        if (obj.type === 'postit') {
+            const pos = w2s(obj.x, obj.y);
+            const w = obj.width * z, h = obj.height * z;
+            ctx.save();
+            ctx.translate(pos.x, pos.y);
+            ctx.rotate((obj.rotation || 0) * Math.PI / 180);
+            // Shadow
+            ctx.shadowColor = 'rgba(0,0,0,0.15)';
+            ctx.shadowBlur = 6;
+            ctx.shadowOffsetX = 2; ctx.shadowOffsetY = 2;
+            // Paper
+            ctx.fillStyle = obj.color || '#fef08a';
+            ctx.fillRect(-w/2, -h/2, w, h);
+            ctx.shadowColor = 'transparent';
+            // Fold corner
+            ctx.fillStyle = 'rgba(0,0,0,0.08)';
+            ctx.beginPath();
+            ctx.moveTo(w/2 - w*0.2, h/2);
+            ctx.lineTo(w/2, h/2 - h*0.2);
+            ctx.lineTo(w/2, h/2);
+            ctx.closePath();
+            ctx.fill();
+            // Text
+            const fs = Math.max(7, Math.min(11, z * 0.35));
+            ctx.font = `${fs}px sans-serif`;
+            ctx.fillStyle = '#333';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            const lines = (obj.text || obj.name || '').split('\n');
+            let ty = -h/2 + 4;
+            lines.forEach(line => {
+                if (ty < h/2 - 4) ctx.fillText(line, -w/2 + 4, ty, w - 8);
+                ty += fs + 2;
+            });
+            // Selection
+            if (isSel) {
+                ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 2; ctx.setLineDash([5, 3]);
+                ctx.strokeRect(-w/2-2, -h/2-2, w+4, h+4); ctx.setLineDash([]);
+            } else if (isHov) {
+                ctx.strokeStyle = '#2563eb55'; ctx.lineWidth = 1.5; ctx.setLineDash([4, 3]);
+                ctx.strokeRect(-w/2-1, -h/2-1, w+2, h+2); ctx.setLineDash([]);
+            }
+            ctx.restore();
+            ctx.globalAlpha = 1;
+            return;
+        }
+
         // --- Symbol ---
         if (obj.type === 'symbol') {
             drawSymbol(obj, z, isSel, isHov);
@@ -1387,7 +1435,12 @@ const Canvas = (() => {
     }
 
     function pointInObj(px, py, obj) {
-        // Symbol: square hit test
+        // Post-it / Symbol: rect hit test
+        if (obj.type === 'postit') {
+            const hw = obj.width / 2, hh = obj.height / 2;
+            const dx = px - obj.x, dy = py - obj.y;
+            return Math.abs(dx) <= hw && Math.abs(dy) <= hh;
+        }
         if (obj.type === 'symbol') {
             const s = Math.max(obj.width, obj.height) / 2;
             const dx = px - obj.x, dy = py - obj.y;

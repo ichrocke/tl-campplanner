@@ -3,47 +3,38 @@ Zukuenftige Feature-Ideen
 
 ## Darstellung
 - Dunkler Modus
-- Eigene Bodentexturen (Gras, Kies, Sand)
-- 3D-Isometrie-Vorschau
-- Heatmap-Overlay (Zeltdichte)
-- Nachtmodus (beleuchtete Bereiche)
+- Bodentexturen (Gras, Kies, Sand)
+- 3D-Vorschau
+- Nachtmodus mit Beleuchtung
 
 ## Planung
 - An Objektkanten einrasten
-- Objekte spiegeln (horizontal/vertikal)
-- Auto-Nummerierung beim Duplizieren
-- Uebersichts-Minikarte
-- Flaechennutzungsgrad anzeigen
+- Objekte spiegeln
+- Auto-Nummerierung
+- Minimap zur Navigation
 - Personenkapazitaet berechnen
-- Durchfahrtsbreiten pruefen
 - Sonnenstand-Overlay
 
 ## Infrastruktur
-- Stromanschluss-Kapazitaeten (16A/32A)
-- Stromverteilungsplan
+- Stromkapazitaeten (16A/32A)
 - Beleuchtungsradius
 - WLAN-Reichweiten
 
 ## Zusammenarbeit
 - Plan per Link teilen
-- Echtzeit-Zusammenarbeit
 - QR-Code zum Teilen
-- Versionshistorie
 
 ## Import/Export
-- Google Earth KML-Export
+- KML-Export fuer Google Earth
 - GPX-Import
-- Grundriss-Import (PDF)
 
 ## Mobil
 - GPS-Positionierung
-- Kamera-Grundriss-Nachzeichnung
 - PWA mit Service Worker
 - AR-Modus
 
 ## Verwaltung
 - Buchungssystem-Anbindung
-- Saisonale Layouts
 - Veranstaltungszeitplan
 - PDF-Bericht mit Checkliste
 
@@ -51,4 +42,3 @@ Zukuenftige Feature-Ideen
 - Web Worker fuer Export
 - IndexedDB-Speicher
 - Plugin-System
-- Canvas-Optimierung

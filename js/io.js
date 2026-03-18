@@ -550,28 +550,20 @@ const IO = (() => {
     }
 
     function exportVectorPDF() {
-        // High-res PDF-like export using SVG embedded in HTML for zoom
         const site = State.activeSite;
         if (!site) return;
         const bounds = getContentBounds(site);
         if (!bounds) return;
-        const ppm = 30;
-        const w = Math.round(bounds.width * ppm + 120);
-        const h = Math.round(bounds.height * ppm + 120);
-        const mapCanvas = Canvas.renderOffscreen(w, h, bounds, { showGrid: true, margin: 60, dpiScale: 4 });
+        // A3 landscape at 300 DPI
+        const w = 1587; // A3 landscape width at 96 DPI
+        const h = 1123;
+        const mapCanvas = Canvas.renderOffscreen(w, h, bounds, { showGrid: true, margin: 60, dpiScale: 3 });
         if (!mapCanvas) return;
-        const dataUrl = mapCanvas.toDataURL('image/png');
-        const win = window.open('', '_blank');
-        if (!win) { alert(I18n.t('msg.popupBlocked')); return; }
-        win.document.write(`<!DOCTYPE html><html><head><title>${site.name || 'Plan'} - Vector PDF</title>
-            <style>
-                body { margin: 0; background: #eee; display: flex; justify-content: center; }
-                img { max-width: none; cursor: zoom-in; margin: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
-                @media print { body { background: #fff; } img { margin: 0; width: 100%; box-shadow: none; } }
-            </style></head><body>
-            <img src="${dataUrl}" onclick="this.style.width=this.style.width?'':'100%'">
-            </body></html>`);
-        win.document.close();
+        // Download as high-res PNG (PDF-quality)
+        const a = document.createElement('a');
+        a.href = mapCanvas.toDataURL('image/png');
+        a.download = (site.name || 'plan').replace(/[^a-zA-Z0-9_-]/g, '_') + '_HD.png';
+        a.click();
     }
 
     return { exportFile, importFile, print, downloadOffline, exportSVG, exportDXF, exportVectorPDF };

@@ -129,6 +129,9 @@
                         <svg width="16" height="16" viewBox="0 0 16 16"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="11" y1="11" x2="14" y2="14" stroke="currentColor" stroke-width="1.5"/><line x1="5" y1="7" x2="9" y2="7" stroke="currentColor" stroke-width="1.3"/></svg>
                     </button>
                     <div class="float-sep"></div>
+                    <button id="btn-postit" class="tool-btn" title="Post-it">
+                        <svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" rx="1" fill="#fef08a" stroke="#eab308" stroke-width="1"/><line x1="4" y1="5" x2="12" y2="5" stroke="#a3a3a3" stroke-width="0.5"/><line x1="4" y1="8" x2="12" y2="8" stroke="#a3a3a3" stroke-width="0.5"/><line x1="4" y1="11" x2="9" y2="11" stroke="#a3a3a3" stroke-width="0.5"/></svg>
+                    </button>
                     <button id="btn-symbols" class="tool-btn" title="Symbols">
                         <svg width="16" height="16" viewBox="0 0 16 16"><rect x="1" y="1" width="14" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.3"/><line x1="8" y1="4" x2="8" y2="10" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="12" r="1" fill="currentColor"/></svg>
                     </button>
@@ -287,6 +290,7 @@
                         <tr><td><kbd>T</kbd></td><td data-i18n="shortcut.text">Textfeld platzieren</td></tr>
                         <tr><td><kbd>M</kbd></td><td data-i18n="shortcut.measure">Measure distance</td></tr>
                         <tr><td><kbd>P</kbd></td><td data-i18n="shortcut.paint">Paint color</td></tr>
+                        <tr><td><kbd>N</kbd></td><td>Post-it</td></tr>
                         <tr><td><kbd>+</kbd> / <kbd>-</kbd></td><td data-i18n="shortcut.gridSize">Grid size +/-</td></tr>
                         <tr><td><kbd>1</kbd>-<kbd>0</kbd></td><td data-i18n="shortcut.quickPlace">Quick place objects 1&ndash;10</td></tr>
                         <tr><td><kbd>Entf</kbd> / <kbd>X</kbd></td><td data-i18n="shortcut.delete">Objekt löschen</td></tr>
@@ -385,8 +389,6 @@
                 <button id="text-ok" class="btn-primary" data-i18n="modal.text.place">Platzieren</button>
             </div>
         </div>
-    </div>
-
         <div id="modal-notebook" class="modal modal-notebook hidden">
             <h3 data-i18n="tool.notebook">Notebook</h3>
             <textarea id="notebook-text" class="notebook-textarea" placeholder="Notes..."></textarea>

@@ -191,6 +191,11 @@ const State = (() => {
                 obj.lineThickness = template.lineThickness || 4;
                 obj.vertexSize = template.vertexSize || 0;
             }
+            if (template.type === 'postit') {
+                obj.text = template.text || '';
+                obj.width = template.width || 3;
+                obj.height = template.height || 3;
+            }
             if (template.type === 'symbol') {
                 obj.symbolId = template.symbolId || '';
                 obj.width = template.width || 1;
