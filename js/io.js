@@ -473,7 +473,9 @@ const IO = (() => {
         }
 
         // Patch canvas.js: replace image paths with data URLs
+        // Patch all JS files that reference compass
         jsCode.canvas = jsCode.canvas.split("'img/compass.png'").join("'" + compass + "'");
+        jsCode.io = jsCode.io.split("'img/compass.png'").join("'" + compass + "'");
         Object.entries(symbolB64).forEach(([p, d]) => {
             jsCode.canvas = jsCode.canvas.split("'" + p + "'").join("'" + d + "'");
         });
