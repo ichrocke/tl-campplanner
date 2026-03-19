@@ -430,7 +430,7 @@ const IO = (() => {
         // Embed each JS file
         for (let i = 0; i < jsContents.length; i++) {
             const code = (i === 2) ? canvasJs : jsContents[i];
-            const safe = JSON.stringify(code).replace(/<\//g, '<\\/');
+            const safe = JSON.stringify(code).replace(/</g, '\\u003c');
             html += '<script>eval(' + safe + ')' + '<' + '/script>\n';
         }
 
@@ -551,13 +551,25 @@ const IO = (() => {
             }
         }
 
-        // Patch index.html: inject inline language data before the script loader
-        // This makes the app work on file:// protocol where XHR is blocked
+        // Patch index.html for offline use
         const idxFile = zipFiles.find(f => f.name === 'index.html');
         if (idxFile) {
             let idxHtml = new TextDecoder().decode(idxFile.data);
+            // Inject language data
             const langScript = '<script>window._offlineLangs=' + JSON.stringify(langJsons) + ';</script>\n';
             idxHtml = idxHtml.replace('<script>', langScript + '<script>');
+            // Embed compass and logo as data URLs to prevent canvas tainting on file://
+            const logoFile = zipFiles.find(f => f.name === 'img/logo.png');
+            const compassFile = zipFiles.find(f => f.name === 'img/compass.png');
+            if (logoFile) {
+                const b64 = btoa(String.fromCharCode(...new Uint8Array(logoFile.data)));
+                idxHtml = idxHtml.replace(/src="img\/logo\.png"/g, 'src="data:image/png;base64,' + b64 + '"');
+            }
+            if (compassFile) {
+                const b64 = btoa(String.fromCharCode(...new Uint8Array(compassFile.data)));
+                // Also patch the JS compass src
+                idxHtml = idxHtml.replace(/img\/compass\.png/g, 'data:image/png;base64,' + b64);
+            }
             idxFile.data = new TextEncoder().encode(idxHtml).buffer;
         }
 
