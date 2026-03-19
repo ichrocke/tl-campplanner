@@ -1,0 +1,50 @@
+Zukuenftige Feature-Ideen
+=========================
+
+## Darstellung
+- Dunkler Modus
+- Bodentexturen (Gras, Kies, Sand)
+- 3D-Vorschau
+- Nachtmodus mit Beleuchtung
+- Heatmap (Zeltdichte)
+
+## Planung
+- An Objektkanten einrasten
+- Objekte spiegeln
+- Auto-Nummerierung
+- Minimap zur Navigation
+- Personenkapazitaet berechnen
+- Sonnenstand-Overlay
+- Durchfahrtsbreiten pruefen
+
+## Infrastruktur
+- Stromkapazitaeten (16A/32A)
+- Beleuchtungsradius
+- WLAN-Reichweiten
+- Stromverteilungsplan
+
+## Zusammenarbeit
+- Plan per Link teilen
+- QR-Code zum Teilen
+- Versionshistorie
+
+## Import/Export
+- KML fuer Google Earth
+- GPX-Import
+- CSV-Inventarliste
+
+## Mobil
+- GPS-Positionierung
+- PWA mit Service Worker
+
+## Verwaltung
+- Buchungssystem-Anbindung
+- Veranstaltungszeitplan
+- PDF-Bericht mit Checkliste
+- Kapazitaetsgrenzen pro Flaeche
+
+## Technik
+- Web Worker fuer Export
+- IndexedDB-Speicher
+- Plugin-System
+- Redo-Historie anzeigen

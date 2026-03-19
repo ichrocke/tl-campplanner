@@ -1,5 +1,33 @@
 # Changelog
 
+## [5.1.0] - 2026-03-19
+
+### Added
+- **Ctrl+S**: Keyboard shortcut for JSON export
+- **Offline download** (textarea-based): Single self-contained HTML file with all CSS, JS, images, fonts and languages embedded. Uses hidden textarea + DOM script injection to avoid HTML parser conflicts
+- **Pirate font** ("Pieces of Eight"): Used for all text in treasure map mode
+
+### Changed
+- **Treasure map complete overhaul**:
+  - No meter/m² labels, no symbols, no post-its, no guidelines, no descriptions
+  - Objects: only wobbly hand-drawn outlines (no fill, no guy ropes, no entrance markers)
+  - Ground areas: irregular wobbly outlines
+  - All text in pirate font with slight rotation
+  - Title large in pirate font top-left
+  - Paper tears: physics-based rip simulation (rare but up to 200px deep, smooth curved returns)
+  - Paper creases: wide gradient-based folds (40px shadow + 30px highlight with sharp center line)
+  - More grain noise, bigger stain spots, stronger vignette
+  - Font preloaded via document.fonts.load() before rendering
+
+### Removed
+- PDF HD export
+- Responsive sidebar toggle
+
+### Fixed
+- Offline mode: all previous approaches (inline scripts, base64, JSON.stringify) failed due to HTML parser conflicts. Final solution uses textarea storage + DOM script element creation
+- findGroundVertex reference error removed
+- Compass image path patched in both canvas.js and io.js for offline
+
 ## [5.0.0] - 2026-03-18
 
 ### Added
