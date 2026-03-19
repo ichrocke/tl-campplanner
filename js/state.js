@@ -20,6 +20,8 @@ const State = (() => {
             { type: 'tent', name: I18n.t('template.yurtRound'), width: 5, height: 5, guyRopeDistance: 1.0, color: '#7c3aed', shape: 'circle' },
             { type: 'tent', name: I18n.t('template.yurt6'), width: 5, height: 5, guyRopeDistance: 1.0, color: '#6d28d9', shape: 'hexagon' },
             { type: 'tent', name: I18n.t('template.yurt8'), width: 5, height: 5, guyRopeDistance: 1.0, color: '#5b21b6', shape: 'octagon' },
+            { type: 'tent', name: I18n.t('template.yurt10'), width: 6, height: 6, guyRopeDistance: 1.2, color: '#4c1d95', shape: 'decagon' },
+            { type: 'tent', name: I18n.t('template.yurt12'), width: 7, height: 7, guyRopeDistance: 1.5, color: '#3b0764', shape: 'dodecagon' },
             { type: 'firepit', name: I18n.t('template.firepit'), width: 2, height: 2, guyRopeDistance: 0, color: '#ea580c', shape: 'circle' },
             { type: 'bar', name: I18n.t('template.bar'), width: 3, height: 1, guyRopeDistance: 0, color: '#9333ea', shape: 'rect' },
             { type: 'entrance', name: I18n.t('template.entrance'), width: 2, height: 0.25, guyRopeDistance: 0, color: '#16a34a', shape: 'rect' },

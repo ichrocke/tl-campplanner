@@ -280,5 +280,9 @@
   "ctx.distributeV": "Distribuir verticalmente",
   "msg.notebook": "Cuaderno",
   "props.bulkColor": "Establecer color para todos",
-  "ctx.escapeRoute": "Marcar ruta de escape"
+  "ctx.escapeRoute": "Marcar ruta de escape",
+  "props.shape.decagon": "Decagono",
+  "props.shape.dodecagon": "Dodecagono",
+  "template.yurt10": "Yurta (decagono)",
+  "template.yurt12": "Yurta (dodecagono)"
 }

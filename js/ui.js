@@ -603,6 +603,7 @@ const UI = (() => {
         const shapeStyle = t.shape === 'circle' ? 'border-radius:50%'
             : t.shape === 'hexagon' ? 'clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%)'
             : t.shape === 'octagon' ? 'clip-path:polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%)'
+            : (t.shape === 'decagon' || t.shape === 'dodecagon') ? 'border-radius:50%'
             : t.shape === 'triangle' ? 'clip-path:polygon(50% 0%,100% 100%,0% 100%)'
             : '';
         const shortcutLabel = idx < 10 ? `<span class="palette-shortcut">${(idx + 1) % 10}</span>` : '';
@@ -1069,6 +1070,8 @@ const UI = (() => {
                         <option value="triangle" ${obj.shape === 'triangle' ? 'selected' : ''}>${I18n.t('props.shape.triangle')}</option>
                         <option value="hexagon" ${obj.shape === 'hexagon' ? 'selected' : ''}>${I18n.t('props.shape.hexagon')}</option>
                         <option value="octagon" ${obj.shape === 'octagon' ? 'selected' : ''}>${I18n.t('props.shape.octagon')}</option>
+                        <option value="decagon" ${obj.shape === 'decagon' ? 'selected' : ''}>${I18n.t('props.shape.decagon')}</option>
+                        <option value="dodecagon" ${obj.shape === 'dodecagon' ? 'selected' : ''}>${I18n.t('props.shape.dodecagon')}</option>
                         <option value="circle" ${obj.shape === 'circle' ? 'selected' : ''}>${I18n.t('props.shape.circle')}</option>
                     </select>
                 </label>`}

@@ -75,6 +75,8 @@ const Canvas = (() => {
             case 'triangle': return 3;
             case 'hexagon': return 6;
             case 'octagon': return 8;
+            case 'decagon': return 10;
+            case 'dodecagon': return 12;
             default: return 0; // rect or circle handled separately
         }
     }

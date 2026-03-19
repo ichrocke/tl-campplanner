@@ -280,5 +280,9 @@
   "ctx.distributeV": "Distribuisci verticalmente",
   "msg.notebook": "Taccuino",
   "props.bulkColor": "Imposta colore per tutti",
-  "ctx.escapeRoute": "Segna via di fuga"
+  "ctx.escapeRoute": "Segna via di fuga",
+  "props.shape.decagon": "Decagono",
+  "props.shape.dodecagon": "Dodecagono",
+  "template.yurt10": "Yurta (decagono)",
+  "template.yurt12": "Yurta (dodecagono)"
 }
