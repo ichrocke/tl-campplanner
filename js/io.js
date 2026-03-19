@@ -477,10 +477,9 @@ const IO = (() => {
             canvasJs = canvasJs.split("'" + path + "'").join("'" + dataUrl + "'");
         });
 
-        // Embed all JS as base64-encoded scripts to avoid HTML parser issues
+        // Embed all JS using JSON.stringify to safely escape all special chars
         function embedScript(js) {
-            const encoded = btoa(unescape(encodeURIComponent(js)));
-            return '<script>eval(decodeURIComponent(escape(atob("' + encoded + '"))))</script>\n';
+            return '<script>eval(' + JSON.stringify(js) + ')<\/script>\n';
         }
         html += embedScript(i18nJs);
         for (let i = 1; i < jsContents.length; i++) {
