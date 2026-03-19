@@ -377,127 +377,113 @@ const IO = (() => {
     }
 
     async function downloadOffline() {
-        const files = {
-            css: ['css/style.css'],
-            js: ['js/i18n.js', 'js/state.js', 'js/canvas.js', 'js/tools.js', 'js/ui.js', 'js/io.js', 'js/touch.js', 'js/app.js'],
-            lang: ['lang/de.json', 'lang/en.json', 'lang/es.json', 'lang/it.json'],
-            img: ['img/logo.png', 'img/compass.png'],
-            symbols: ['img/symbols/first_aid.svg', 'img/symbols/fire_ext.svg', 'img/symbols/gas_bottle.svg', 'img/symbols/electric.svg', 'img/symbols/exit.svg', 'img/symbols/assembly.svg'],
-        };
+        const allFiles = [
+            'index.html',
+            'css/style.css',
+            'js/i18n.js', 'js/state.js', 'js/canvas.js', 'js/tools.js',
+            'js/ui.js', 'js/io.js', 'js/touch.js', 'js/app.js',
+            'lang/de.json', 'lang/en.json', 'lang/es.json', 'lang/it.json',
+            'img/logo.png', 'img/compass.png',
+            'img/symbols/first_aid.svg', 'img/symbols/fire_ext.svg',
+            'img/symbols/gas_bottle.svg', 'img/symbols/electric.svg',
+            'img/symbols/exit.svg', 'img/symbols/assembly.svg',
+        ];
 
-        // Fetch all text files
-        const fetchText = async (url) => {
-            const r = await fetch(url + '?v=' + Date.now());
-            return r.text();
-        };
-        const fetchDataUrl = async (url) => {
-            const r = await fetch(url);
-            const blob = await r.blob();
-            return new Promise(resolve => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result);
-                reader.readAsDataURL(blob);
+        // Simple ZIP builder (no compression, store only)
+        function createZip(files) {
+            const entries = [];
+            let offset = 0;
+
+            // Local file headers + data
+            const parts = [];
+            files.forEach(({ name, data }) => {
+                const nameBytes = new TextEncoder().encode(name);
+                const header = new ArrayBuffer(30);
+                const hv = new DataView(header);
+                hv.setUint32(0, 0x04034b50, true); // signature
+                hv.setUint16(4, 20, true); // version
+                hv.setUint16(6, 0, true); // flags
+                hv.setUint16(8, 0, true); // compression (store)
+                hv.setUint16(10, 0, true); // mod time
+                hv.setUint16(12, 0, true); // mod date
+                // CRC32
+                let crc = 0xFFFFFFFF;
+                for (let i = 0; i < data.byteLength; i++) {
+                    crc ^= new Uint8Array(data)[i];
+                    for (let j = 0; j < 8; j++) crc = (crc >>> 1) ^ (crc & 1 ? 0xEDB88320 : 0);
+                }
+                crc ^= 0xFFFFFFFF;
+                hv.setUint32(14, crc, true);
+                hv.setUint32(18, data.byteLength, true); // compressed size
+                hv.setUint32(22, data.byteLength, true); // uncompressed size
+                hv.setUint16(26, nameBytes.length, true); // name length
+                hv.setUint16(28, 0, true); // extra length
+
+                entries.push({ name: nameBytes, offset, headerSize: 30 + nameBytes.length + data.byteLength, crc, size: data.byteLength });
+                parts.push(new Uint8Array(header), nameBytes, new Uint8Array(data));
+                offset += 30 + nameBytes.length + data.byteLength;
             });
-        };
 
-        const css = await fetchText(files.css[0]);
-        const jsContents = [];
-        for (const f of files.js) jsContents.push(await fetchText(f));
-        const langData = {};
-        for (const f of files.lang) {
-            const key = f.replace('lang/', '').replace('.json', '');
-            langData[key] = await fetchText(f);
+            // Central directory
+            const cdParts = [];
+            let cdSize = 0;
+            entries.forEach(e => {
+                const cd = new ArrayBuffer(46);
+                const cv = new DataView(cd);
+                cv.setUint32(0, 0x02014b50, true);
+                cv.setUint16(4, 20, true);
+                cv.setUint16(6, 20, true);
+                cv.setUint16(8, 0, true);
+                cv.setUint16(10, 0, true);
+                cv.setUint16(12, 0, true);
+                cv.setUint16(14, 0, true);
+                cv.setUint32(16, e.crc, true);
+                cv.setUint32(20, e.size, true);
+                cv.setUint32(24, e.size, true);
+                cv.setUint16(28, e.name.length, true);
+                cv.setUint16(30, 0, true);
+                cv.setUint16(32, 0, true);
+                cv.setUint16(34, 0, true);
+                cv.setUint16(36, 0, true);
+                cv.setUint32(38, 0, true);
+                cv.setUint32(42, e.offset, true);
+                cdParts.push(new Uint8Array(cd), e.name);
+                cdSize += 46 + e.name.length;
+            });
+
+            // End of central directory
+            const ecd = new ArrayBuffer(22);
+            const ev = new DataView(ecd);
+            ev.setUint32(0, 0x06054b50, true);
+            ev.setUint16(4, 0, true);
+            ev.setUint16(6, 0, true);
+            ev.setUint16(8, entries.length, true);
+            ev.setUint16(10, entries.length, true);
+            ev.setUint32(12, cdSize, true);
+            ev.setUint32(16, offset, true);
+            ev.setUint16(20, 0, true);
+
+            return new Blob([...parts, ...cdParts, new Uint8Array(ecd)], { type: 'application/zip' });
         }
-        const logoDataUrl = await fetchDataUrl(files.img[0]);
-        const compassDataUrl = await fetchDataUrl(files.img[1]);
-        // Load symbol SVGs as data URLs
-        const symbolDataUrls = {};
-        for (const f of (files.symbols || [])) {
+
+        // Fetch all files
+        const zipFiles = [];
+        for (const path of allFiles) {
             try {
-                const svgText = await fetchText(f);
-                symbolDataUrls[f] = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgText)));
-            } catch (e) { /* skip missing symbols */ }
-        }
-
-        // Get current index.html and extract the body
-        const indexHtml = await fetchText('index.html');
-
-        // Build self-contained HTML
-        let html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n';
-        html += '<meta charset="UTF-8">\n';
-        html += '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n';
-        html += '<title>Tyra Lorena Camp Planner (Offline)</title>\n';
-        html += '<style>\n' + css + '\n</style>\n';
-        html += '</head>\n';
-
-        // Extract body content from index.html (between <body> and </body>)
-        const bodyMatch = indexHtml.match(/<body>([\s\S]*?)<\/body>/i);
-        let body = bodyMatch ? bodyMatch[1] : '';
-
-        // Replace image src with data URLs
-        body = body.replace(/src="img\/logo\.png"/g, 'src="' + logoDataUrl + '"');
-        body = body.replace(/src="img\/compass\.png"/g, 'src="' + compassDataUrl + '"');
-
-        // Remove the script loader at the bottom
-        body = body.replace(/<script>[\s\S]*?\.forEach[\s\S]*?<\/script>/g, '');
-
-        html += '<body>\n' + body + '\n';
-
-        // Embed translations as global variable
-        html += '<script>\nwindow._offlineLangs = ' + JSON.stringify(langData) + ';\n</script>\n';
-
-        // Patch i18n.js to use embedded translations instead of fetch
-        let i18nJs = jsContents[0];
-        i18nJs = i18nJs.replace(
-            /function load\(lang\) \{[\s\S]*?if \(xhr\.status === 200\) \{[\s\S]*?\}\s*\}/,
-            `function load(lang) {
-        if (window._offlineLangs && window._offlineLangs[lang]) {
-            _translations = JSON.parse(window._offlineLangs[lang]);
-            _lang = lang;
-        } else {
-            var xhr = new XMLHttpRequest();
-            xhr.open('GET', 'lang/' + lang + '.json?v=' + Date.now(), false);
-            xhr.send();
-            if (xhr.status === 200) {
-                _translations = JSON.parse(xhr.responseText);
-                _lang = lang;
+                const r = await fetch(path + '?v=' + Date.now());
+                const buf = await r.arrayBuffer();
+                zipFiles.push({ name: path, data: buf });
+            } catch (e) {
+                console.warn('Skip:', path, e);
             }
         }
-    }`
-        );
 
-        // Patch canvas.js compass image src and symbol paths
-        let canvasJs = jsContents[2];
-        canvasJs = canvasJs.replace(
-            "_compassImg.src = 'img/compass.png';",
-            "_compassImg.src = '" + compassDataUrl + "';"
-        );
-        // Replace symbol SVG paths with data URLs
-        Object.entries(symbolDataUrls).forEach(([path, dataUrl]) => {
-            canvasJs = canvasJs.split("'" + path + "'").join("'" + dataUrl + "'");
-        });
-
-        // Embed all JS using JSON.stringify + escape </ in the JSON string
-        function embedScript(js) {
-            // JSON.stringify escapes quotes/backslashes/newlines but NOT forward slashes
-            // Must escape </ ONLY inside the JSON string to prevent premature tag close
-            var encoded = JSON.stringify(js).replace(/<\//g, '<\\/');
-            return '<script>eval(' + encoded + ')' + '</script>\n';
-        }
-        html += embedScript(i18nJs);
-        for (let i = 1; i < jsContents.length; i++) {
-            const js = (i === 2) ? canvasJs : jsContents[i];
-            html += embedScript(js);
-        }
-
-        html += '</body>\n</html>';
-
-        // Download
-        const blob = new Blob([html], { type: 'text/html' });
-        const url = URL.createObjectURL(blob);
+        // Create and download ZIP
+        const zipBlob = createZip(zipFiles);
+        const url = URL.createObjectURL(zipBlob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'campplanner-offline.html';
+        a.download = 'campplanner-offline.zip';
         a.click();
         URL.revokeObjectURL(url);
     }
