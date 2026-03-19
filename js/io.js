@@ -85,10 +85,11 @@ const IO = (() => {
 
         // Use Canvas.renderOffscreen - same rendering as on screen, scaled up for DPI
         const mapCanvas = Canvas.renderOffscreen(canvasW, canvasH, bounds, {
-            showGrid: showGrid,
-            showDistances: showDistances,
+            showGrid: treasureMap ? false : showGrid,
+            showDistances: treasureMap ? false : showDistances,
             margin: marginPx,
             dpiScale: dpiScale,
+            treasureMap: treasureMap,
         });
 
         if (!mapCanvas) return;
@@ -358,7 +359,39 @@ const IO = (() => {
         ctx.stroke();
         ctx.globalAlpha = 1;
 
-        // 7. Decorative corner flourishes
+        // 7. Paper fold/crease lines
+        ctx.globalAlpha = 0.08;
+        ctx.strokeStyle = '#3d2b1f';
+        ctx.lineWidth = 1;
+        // Horizontal fold
+        const foldY = h * (0.35 + Math.random() * 0.3);
+        ctx.beginPath();
+        ctx.moveTo(0, foldY);
+        for (let x = 0; x < w; x += 10) {
+            ctx.lineTo(x, foldY + Math.sin(x * 0.02) * 2);
+        }
+        ctx.stroke();
+        // Vertical fold
+        const foldX = w * (0.4 + Math.random() * 0.2);
+        ctx.beginPath();
+        ctx.moveTo(foldX, 0);
+        for (let y = 0; y < h; y += 10) {
+            ctx.lineTo(foldX + Math.sin(y * 0.02) * 2, y);
+        }
+        ctx.stroke();
+        // Diagonal crease
+        ctx.globalAlpha = 0.04;
+        ctx.beginPath();
+        const cx1 = Math.random() * w * 0.3, cy1 = Math.random() * h * 0.3;
+        const cx2 = w - Math.random() * w * 0.3, cy2 = h - Math.random() * h * 0.3;
+        ctx.moveTo(cx1, cy1);
+        for (let t = 0; t <= 1; t += 0.02) {
+            ctx.lineTo(cx1 + (cx2-cx1)*t + Math.sin(t*20)*3, cy1 + (cy2-cy1)*t + Math.cos(t*15)*3);
+        }
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+
+        // 8. Decorative corner flourishes
         ctx.strokeStyle = '#654321';
         ctx.lineWidth = 1.5;
         ctx.globalAlpha = 0.25;

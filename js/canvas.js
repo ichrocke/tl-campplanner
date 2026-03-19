@@ -16,6 +16,7 @@ const Canvas = (() => {
     // selectedGroundIndex removed - grounds are now regular objects
     let placementPreview = null;
     let pathPreview = []; // for path/area drawing
+    let _treasureMode = false; // treasure map rendering mode
 
     function init(el) {
         canvas = el;
@@ -409,34 +410,47 @@ const Canvas = (() => {
                 ctx.setLineDash([]);
             }
 
-            // Edge lengths
-            ctx.font = '10px sans-serif';
-            ctx.fillStyle = darkColor;
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'bottom';
-            for (let i = 0; i < pts.length; i++) {
-                const a = pts[i];
-                const b = pts[(i + 1) % pts.length];
-                if (i === pts.length - 1 && pts.length < 3) break;
-                const dist = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
-                const mp = w2s((a.x + b.x) / 2, (a.y + b.y) / 2);
-                ctx.fillText(dist.toFixed(1) + ' m', mp.x, mp.y - 4);
+            // Edge lengths (skip in treasure mode)
+            if (!_treasureMode) {
+                ctx.font = '10px sans-serif';
+                ctx.fillStyle = darkColor;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'bottom';
+                for (let i = 0; i < pts.length; i++) {
+                    const a = pts[i];
+                    const b = pts[(i + 1) % pts.length];
+                    if (i === pts.length - 1 && pts.length < 3) break;
+                    const dist = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
+                    const mp = w2s((a.x + b.x) / 2, (a.y + b.y) / 2);
+                    ctx.fillText(dist.toFixed(1) + ' m', mp.x, mp.y - 4);
+                }
             }
 
             // Area + name display
             if (pts.length >= 3) {
-                const area = polygonArea(pts);
                 const center = polygonCentroid(pts);
                 const cp = w2s(center.x, center.y);
-                ctx.font = 'bold 12px sans-serif';
-                ctx.fillStyle = darkColor;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                const lockIcon = obj.locked ? ' \u{1F512}' : '';
-                ctx.fillText(area.toFixed(1) + ' m\u00b2' + lockIcon, cp.x, cp.y);
-                if (obj.name) {
-                    ctx.font = '10px sans-serif';
-                    ctx.fillText(obj.name, cp.x, cp.y + 14);
+                if (_treasureMode) {
+                    // Treasure: only name in handwritten style
+                    if (obj.name) {
+                        ctx.font = "italic 11px 'Georgia','Times New Roman',serif";
+                        ctx.fillStyle = '#3d2b1f';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(obj.name, cp.x, cp.y);
+                    }
+                } else {
+                    const area = polygonArea(pts);
+                    ctx.font = 'bold 12px sans-serif';
+                    ctx.fillStyle = darkColor;
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    const lockIcon = obj.locked ? ' \u{1F512}' : '';
+                    ctx.fillText(area.toFixed(1) + ' m\u00b2' + lockIcon, cp.x, cp.y);
+                    if (obj.name) {
+                        ctx.font = '10px sans-serif';
+                        ctx.fillText(obj.name, cp.x, cp.y + 14);
+                    }
                 }
             }
         });
@@ -505,6 +519,9 @@ const Canvas = (() => {
 
         // --- Background image and ground (rendered separately) ---
         if (obj.type === 'bgimage' || obj.type === 'ground') return;
+
+        // Treasure mode: skip symbols, post-its, guidelines
+        if (_treasureMode && (obj.type === 'symbol' || obj.type === 'postit' || obj.type === 'guideline')) return;
 
         // --- Post-it ---
         if (obj.type === 'postit') {
@@ -614,6 +631,9 @@ const Canvas = (() => {
         const w = obj.width * z;
         const h = obj.height * z;
 
+        // Guy ropes (skip in treasure mode)
+        if (_treasureMode && obj.guyRopeDistance > 0) { /* skip */ }
+        else
         // Guy ropes (with per-side control for rect)
         if (obj.guyRopeDistance > 0) {
             const gd = obj.guyRopeDistance;
@@ -670,16 +690,77 @@ const Canvas = (() => {
         }
 
         // Object body
-        const alpha = '99';
-        ctx.fillStyle = obj.color + alpha;
-        ctx.strokeStyle = obj.color;
-        ctx.lineWidth = 1.5 * ls;
-        traceShapePath(obj, z, 0);
-        ctx.fill();
-        ctx.stroke();
+        if (_treasureMode) {
+            // Treasure: wobbly outlines only, no fill, thicker stroke
+            ctx.strokeStyle = '#3d2b1f';
+            ctx.lineWidth = 2;
+            const amp = Math.max(0.5, Math.min(w, h) * 0.015);
+            const sides = getShapeSides(obj.shape);
+            if (obj.shape === 'circle') {
+                ctx.beginPath();
+                for (let i = 0; i <= 20; i++) {
+                    const a = (i / 20) * Math.PI * 2;
+                    const r = w / 2 + Math.sin(a * 5 + obj.x) * amp;
+                    if (i === 0) ctx.moveTo(Math.cos(a) * r, Math.sin(a) * r);
+                    else ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+                }
+                ctx.closePath();
+            } else if (sides >= 3) {
+                ctx.beginPath();
+                const pts = [];
+                for (let i = 0; i < sides; i++) {
+                    const a = (i / sides) * Math.PI * 2 - Math.PI / 2;
+                    pts.push({ x: Math.cos(a) * w / 2, y: Math.sin(a) * h / 2 });
+                }
+                for (let i = 0; i < pts.length; i++) {
+                    const a = pts[i], b = pts[(i + 1) % pts.length];
+                    const dx = b.x - a.x, dy = b.y - a.y, len = Math.sqrt(dx*dx+dy*dy);
+                    const nx = -dy/len, ny = dx/len;
+                    const steps = Math.max(3, Math.floor(len / 5));
+                    if (i === 0) ctx.moveTo(a.x, a.y);
+                    for (let j = 1; j <= steps; j++) {
+                        const t = j / steps;
+                        const wobble = Math.sin(j * 2.7 + a.x * 0.1) * amp;
+                        ctx.lineTo(a.x + dx*t + nx*wobble, a.y + dy*t + ny*wobble);
+                    }
+                }
+                ctx.closePath();
+            } else {
+                // Wobbly rect
+                ctx.beginPath();
+                const hw = w/2, hh = h/2;
+                function wline(x1,y1,x2,y2) {
+                    const ddx=x2-x1,ddy=y2-y1,len=Math.sqrt(ddx*ddx+ddy*ddy);
+                    const nnx=-ddy/len,nny=ddx/len;
+                    const st=Math.max(3,Math.floor(len/5));
+                    for(let j=1;j<=st;j++){
+                        const t=j/st;
+                        const wb=Math.sin(j*2.7+x1*0.1)*amp;
+                        ctx.lineTo(x1+ddx*t+nnx*wb,y1+ddy*t+nny*wb);
+                    }
+                }
+                ctx.moveTo(-hw,-hh);
+                wline(-hw,-hh,hw,-hh);
+                wline(hw,-hh,hw,hh);
+                wline(hw,hh,-hw,hh);
+                wline(-hw,hh,-hw,-hh);
+                ctx.closePath();
+            }
+            ctx.fillStyle = 'rgba(61,43,31,0.06)';
+            ctx.fill();
+            ctx.stroke();
+        } else {
+            const alpha = '99';
+            ctx.fillStyle = obj.color + alpha;
+            ctx.strokeStyle = obj.color;
+            ctx.lineWidth = 1.5 * ls;
+            traceShapePath(obj, z, 0);
+            ctx.fill();
+            ctx.stroke();
+        }
 
-        // Tent center line
-        if (obj.type === 'tent' && obj.shape === 'rect') {
+        // Tent center line (skip in treasure mode)
+        if (!_treasureMode && obj.type === 'tent' && obj.shape === 'rect') {
             ctx.strokeStyle = obj.color;
             ctx.globalAlpha = 0.4;
             ctx.lineWidth = 0.8 * ls;
@@ -689,8 +770,8 @@ const Canvas = (() => {
             ctx.globalAlpha = 1;
         }
 
-        // Entrance marker
-        if (obj.entranceSide && obj.entranceSide !== 'none') {
+        // Entrance marker (skip in treasure mode)
+        if (!_treasureMode && obj.entranceSide && obj.entranceSide !== 'none') {
             const es = obj.entranceSide;
             const ew = Math.min(w, h) * 0.4;
             const eh = Math.max(8, Math.min(w, h) * 0.12);
@@ -721,7 +802,18 @@ const Canvas = (() => {
             ctx.stroke();
         }
 
-        // Name label – if object too small, render above instead of inside
+        // Name label
+        if (_treasureMode) {
+            // Treasure: handwritten name only, no dimensions
+            const tfs = Math.max(9, Math.min(13, z * 0.4)) * fs;
+            ctx.font = `italic ${tfs}px 'Georgia','Times New Roman',serif`;
+            ctx.fillStyle = '#3d2b1f';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const nameLines = (obj.name || '').split('\n');
+            let ny = -(nameLines.length - 1) * tfs * 0.55;
+            nameLines.forEach(line => { ctx.fillText(line, 0, ny); ny += tfs * 1.1; });
+        } else {
         const fontSize = Math.max(9, Math.min(13, z * 0.4)) * fs;
         ctx.font = `600 ${fontSize}px sans-serif`;
         ctx.textAlign = 'center';
@@ -747,9 +839,10 @@ const Canvas = (() => {
             ctx.textBaseline = 'top';
             ctx.fillText(`${obj.width}\u00d7${obj.height}m`, 0, h / 2 + 3);
         }
+        }
 
-        // Description (free text, multiline) below dimensions
-        if (obj.description) {
+        // Description (skip in treasure mode)
+        if (obj.description && !_treasureMode) {
             const descFs = obj.descSize ? Math.max(6, obj.descSize * z * 0.4) : Math.max(7, fontSize - 2);
             ctx.font = `italic ${descFs}px sans-serif`;
             ctx.fillStyle = obj.descColor || '#94a3b8';
@@ -1674,6 +1767,8 @@ const Canvas = (() => {
         if (!site) return null;
 
         const dpiScale = (options && options.dpiScale) || 1;
+        const origTreasure = _treasureMode;
+        _treasureMode = !!(options && options.treasureMap);
 
         // Save state
         const origCanvas = canvas;
@@ -1755,6 +1850,7 @@ const Canvas = (() => {
         selectedIds.clear();
         origSel.forEach(id => selectedIds.add(id));
         hoveredId = origHov;
+        _treasureMode = origTreasure;
 
         return oc;
     }
