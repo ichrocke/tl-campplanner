@@ -493,32 +493,12 @@ const IO = (() => {
         html += '<style>\n' + css + '\n</style>\n';
         html += '</head>\n<body>\n' + body + '\n';
 
-        // All code goes into ONE script block as a JSON object
-        // JSON.stringify handles quotes/newlines, \u003c replaces ALL < to prevent HTML parser issues
+        // Pack all JS modules into a JSON object
         const modules = {};
         modules._langs = langs;
         for (const n of jsNames) modules[n] = jsCode[n];
 
-        const payload = JSON.stringify(modules).replace(/</g, '\\u003c');
-
-        html += '<script>\n';
-        html += '(function(){\n';
-        html += 'var _m = JSON.parse(\'' + payload.replace(/'/g, "\\'").replace(/\\/g, '\\\\').replace(/\\\\u003c/g, '\\u003c') + '\');\n';
-        // Hmm this gets complicated with escaping. Let me use a different approach.
-        html += '})();\n';
-        html += '</script>\n';
-        html += '</body></html>';
-
-        // Actually, let me use a simpler approach
-        // Store payload in a hidden textarea, read it via DOM
-        html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n';
-        html += '<meta charset="UTF-8">\n';
-        html += '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">\n';
-        html += '<title>Camp Planner (Offline)</title>\n';
-        html += '<style>\n' + css + '\n</style>\n';
-        html += '</head>\n<body>\n' + body + '\n';
-
-        // Store all JS code in a hidden textarea (HTML-safe, no script parsing)
+        // Store in hidden textarea (HTML-escaped, safe from parser)
         html += '<textarea id="_offline_data" style="display:none">';
         html += JSON.stringify(modules).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         html += '</textarea>\n';
