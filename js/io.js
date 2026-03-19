@@ -505,11 +505,13 @@ const IO = (() => {
         html += JSON.stringify(modules).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         html += '</textarea>\n';
 
-        // Tiny bootstrap script that reads the textarea and evals each module
+        // Bootstrap: read textarea, create script elements for each module
         html += '<script>\n';
         html += 'var _d=JSON.parse(document.getElementById("_offline_data").value.replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&"));\n';
         html += 'window._offlineLangs=_d._langs;\n';
-        html += '["i18n","state","canvas","tools","ui","io","touch","app"].forEach(function(n){try{(0,eval)(_d[n])}catch(e){console.error(n,e)}});\n';
+        html += '["i18n","state","canvas","tools","ui","io","touch","app"].forEach(function(n){\n';
+        html += '  var s=document.createElement("script");s.textContent=_d[n];document.head.appendChild(s);\n';
+        html += '});\n';
         html += '</script>\n';
         html += '</body>\n</html>';
 
