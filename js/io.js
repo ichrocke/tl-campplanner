@@ -444,22 +444,5 @@ const IO = (() => {
         URL.revokeObjectURL(url);
     }
 
-    function exportVectorPDF() {
-        const site = State.activeSite;
-        if (!site) return;
-        const bounds = getContentBounds(site);
-        if (!bounds) return;
-        // A3 landscape at 300 DPI
-        const w = 1587; // A3 landscape width at 96 DPI
-        const h = 1123;
-        const mapCanvas = Canvas.renderOffscreen(w, h, bounds, { showGrid: true, margin: 60, dpiScale: 3 });
-        if (!mapCanvas) return;
-        // Download as high-res PNG (PDF-quality)
-        const a = document.createElement('a');
-        a.href = mapCanvas.toDataURL('image/png');
-        a.download = (site.name || 'plan').replace(/[^a-zA-Z0-9_-]/g, '_') + '_HD.png';
-        a.click();
-    }
-
-    return { exportFile, importFile, print, exportSVG, exportDXF, exportVectorPDF };
+    return { exportFile, importFile, print, exportSVG, exportDXF };
 })();
