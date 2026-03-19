@@ -444,5 +444,99 @@ const IO = (() => {
         URL.revokeObjectURL(url);
     }
 
-    return { exportFile, importFile, print, exportSVG, exportDXF };
+    async function downloadOffline() {
+        const fetchText = async (u) => (await fetch(u + '?v=' + Date.now())).text();
+        const fetchB64 = async (u) => {
+            const b = await (await fetch(u)).blob();
+            return new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(b); });
+        };
+
+        // Gather all assets
+        const css = await fetchText('css/style.css');
+        const jsNames = ['i18n','state','canvas','tools','ui','io','touch','app'];
+        const jsCode = {};
+        for (const n of jsNames) jsCode[n] = await fetchText('js/' + n + '.js');
+
+        const langs = {};
+        for (const l of ['de','en','es','it']) langs[l] = await fetchText('lang/' + l + '.json');
+
+        const logo = await fetchB64('img/logo.png');
+        const compass = await fetchB64('img/compass.png');
+
+        const symbolIds = ['first_aid','fire_ext','gas_bottle','electric','exit','assembly'];
+        const symbolB64 = {};
+        for (const s of symbolIds) {
+            try {
+                const svg = await fetchText('img/symbols/' + s + '.svg');
+                symbolB64['img/symbols/' + s + '.svg'] = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+            } catch(e) {}
+        }
+
+        // Patch canvas.js: replace image paths with data URLs
+        jsCode.canvas = jsCode.canvas.split("'img/compass.png'").join("'" + compass + "'");
+        Object.entries(symbolB64).forEach(([p, d]) => {
+            jsCode.canvas = jsCode.canvas.split("'" + p + "'").join("'" + d + "'");
+        });
+
+        // Get body from index.html
+        const idx = await fetchText('index.html');
+        const m = idx.match(/<body>([\s\S]*)<\/body>/i);
+        let body = m ? m[1] : '';
+        body = body.replace(/src="img\/logo\.png"/g, 'src="' + logo + '"');
+        body = body.replace(/<script>[\s\S]*?\.forEach[\s\S]*?<\/script>/g, '');
+
+        // Build single HTML
+        let html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n';
+        html += '<meta charset="UTF-8">\n';
+        html += '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">\n';
+        html += '<title>Camp Planner (Offline)</title>\n';
+        html += '<style>\n' + css + '\n</style>\n';
+        html += '</head>\n<body>\n' + body + '\n';
+
+        // All code goes into ONE script block as a JSON object
+        // JSON.stringify handles quotes/newlines, \u003c replaces ALL < to prevent HTML parser issues
+        const modules = {};
+        modules._langs = langs;
+        for (const n of jsNames) modules[n] = jsCode[n];
+
+        const payload = JSON.stringify(modules).replace(/</g, '\\u003c');
+
+        html += '<script>\n';
+        html += '(function(){\n';
+        html += 'var _m = JSON.parse(\'' + payload.replace(/'/g, "\\'").replace(/\\/g, '\\\\').replace(/\\\\u003c/g, '\\u003c') + '\');\n';
+        // Hmm this gets complicated with escaping. Let me use a different approach.
+        html += '})();\n';
+        html += '</script>\n';
+        html += '</body></html>';
+
+        // Actually, let me use a simpler approach
+        // Store payload in a hidden textarea, read it via DOM
+        html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n';
+        html += '<meta charset="UTF-8">\n';
+        html += '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">\n';
+        html += '<title>Camp Planner (Offline)</title>\n';
+        html += '<style>\n' + css + '\n</style>\n';
+        html += '</head>\n<body>\n' + body + '\n';
+
+        // Store all JS code in a hidden textarea (HTML-safe, no script parsing)
+        html += '<textarea id="_offline_data" style="display:none">';
+        html += JSON.stringify(modules).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        html += '</textarea>\n';
+
+        // Tiny bootstrap script that reads the textarea and evals each module
+        html += '<script>\n';
+        html += 'var _d=JSON.parse(document.getElementById("_offline_data").value.replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&"));\n';
+        html += 'window._offlineLangs=_d._langs;\n';
+        html += '["i18n","state","canvas","tools","ui","io","touch","app"].forEach(function(n){try{(0,eval)(_d[n])}catch(e){console.error(n,e)}});\n';
+        html += '</script>\n';
+        html += '</body>\n</html>';
+
+        const blob = new Blob([html], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'campplanner-offline.html';
+        a.click();
+    }
+
+    return { exportFile, importFile, print, exportSVG, exportDXF, downloadOffline };
 })();
