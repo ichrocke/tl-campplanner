@@ -477,9 +477,12 @@ const IO = (() => {
             canvasJs = canvasJs.split("'" + path + "'").join("'" + dataUrl + "'");
         });
 
-        // Embed all JS using JSON.stringify to safely escape all special chars
+        // Embed all JS using JSON.stringify + escape </ in the JSON string
         function embedScript(js) {
-            return '<script>eval(' + JSON.stringify(js) + ')<\/script>\n';
+            // JSON.stringify escapes quotes/backslashes/newlines but NOT forward slashes
+            // We must escape </ to prevent HTML parser from closing the script tag
+            var encoded = JSON.stringify(js).replace(/<\//g, '<\\/');
+            return '<script>eval(' + encoded + ')<\/script>\n';
         }
         html += embedScript(i18nJs);
         for (let i = 1; i < jsContents.length; i++) {
