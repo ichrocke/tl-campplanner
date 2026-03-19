@@ -369,19 +369,40 @@ const Canvas = (() => {
                 return Math.max(0, parseInt(m, 16) - 40).toString(16).padStart(2, '0');
             });
 
-            ctx.beginPath();
-            const p0 = w2s(pts[0].x, pts[0].y);
-            ctx.moveTo(p0.x, p0.y);
-            for (let i = 1; i < pts.length; i++) {
-                const p = w2s(pts[i].x, pts[i].y);
-                ctx.lineTo(p.x, p.y);
-            }
-            if (pts.length >= 3) {
+            const screenPts = pts.map(pt => w2s(pt.x, pt.y));
+            const p0 = screenPts[0];
+            if (_treasureMode) {
+                // Wobbly ground outline
+                ctx.beginPath();
+                ctx.moveTo(p0.x, p0.y);
+                for (let i = 0; i < screenPts.length; i++) {
+                    const a = screenPts[i], b = screenPts[(i + 1) % screenPts.length];
+                    const dx = b.x - a.x, dy = b.y - a.y;
+                    const len = Math.sqrt(dx*dx + dy*dy);
+                    if (len < 1) continue;
+                    const nx = -dy/len, ny = dx/len;
+                    const steps = Math.max(4, Math.floor(len / 8));
+                    for (let j = 1; j <= steps; j++) {
+                        const t = j / steps;
+                        const wobble = (Math.sin(j * 2.3 + a.x * 0.05) + Math.cos(j * 1.7 + a.y * 0.05)) * 1.5;
+                        ctx.lineTo(a.x + dx*t + nx*wobble, a.y + dy*t + ny*wobble);
+                    }
+                }
                 ctx.closePath();
-                ctx.fillStyle = color + '14';
+                ctx.fillStyle = 'rgba(61,43,31,0.04)';
                 ctx.fill();
+                ctx.strokeStyle = '#3d2b1f';
+            } else {
+                ctx.beginPath();
+                ctx.moveTo(p0.x, p0.y);
+                for (let i = 1; i < screenPts.length; i++) ctx.lineTo(screenPts[i].x, screenPts[i].y);
+                if (pts.length >= 3) {
+                    ctx.closePath();
+                    ctx.fillStyle = color + '14';
+                    ctx.fill();
+                }
+                ctx.strokeStyle = isSel ? '#2563eb' : color;
             }
-            ctx.strokeStyle = isSel ? '#2563eb' : color;
             ctx.lineWidth = isSel ? 3 : 2;
             if (isSel) { ctx.setLineDash([6, 3]); }
             ctx.stroke();
@@ -804,15 +825,31 @@ const Canvas = (() => {
 
         // Name label
         if (_treasureMode) {
-            // Treasure: handwritten name only, no dimensions
-            const tfs = Math.max(9, Math.min(13, z * 0.4)) * fs;
-            ctx.font = `italic ${tfs}px 'Georgia','Times New Roman',serif`;
-            ctx.fillStyle = '#3d2b1f';
+            // Treasure: handwritten-style name, slight rotation for each letter
+            const tfs = Math.max(9, Math.min(14, z * 0.45)) * fs;
+            ctx.fillStyle = '#2a1a0a';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             const nameLines = (obj.name || '').split('\n');
             let ny = -(nameLines.length - 1) * tfs * 0.55;
-            nameLines.forEach(line => { ctx.fillText(line, 0, ny); ny += tfs * 1.1; });
+            nameLines.forEach(line => {
+                // Draw each character with slight random offset/rotation
+                ctx.save();
+                ctx.translate(0, ny);
+                ctx.rotate((Math.sin(obj.x * 0.5 + obj.y * 0.3) * 0.05));
+                ctx.font = `italic ${tfs + Math.sin(obj.x) * 1.5}px 'Georgia','Times New Roman',serif`;
+                const totalW = ctx.measureText(line).width;
+                let cx = -totalW / 2;
+                for (let c = 0; c < line.length; c++) {
+                    const ch = line[c];
+                    const cw = ctx.measureText(ch).width;
+                    const offY = Math.sin(c * 1.7 + obj.x) * 0.8;
+                    ctx.fillText(ch, cx + cw/2, offY);
+                    cx += cw;
+                }
+                ctx.restore();
+                ny += tfs * 1.2;
+            });
         } else {
         const fontSize = Math.max(9, Math.min(13, z * 0.4)) * fs;
         ctx.font = `600 ${fontSize}px sans-serif`;
