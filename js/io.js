@@ -477,11 +477,15 @@ const IO = (() => {
             canvasJs = canvasJs.split("'" + path + "'").join("'" + dataUrl + "'");
         });
 
-        // Embed all JS
-        html += '<script>\n' + i18nJs + '\n</script>\n';
+        // Embed all JS - escape anything that could break the <script> block
+        function escapeForEmbed(js) {
+            // Replace all </ sequences to prevent HTML parser from closing tags
+            return js.replace(/<\//g, '<\\/');
+        }
+        html += '<script>\n' + escapeForEmbed(i18nJs) + '\n</script>\n';
         for (let i = 1; i < jsContents.length; i++) {
             const js = (i === 2) ? canvasJs : jsContents[i];
-            html += '<script>\n' + js + '\n</script>\n';
+            html += '<script>\n' + escapeForEmbed(js) + '\n</script>\n';
         }
 
         html += '</body>\n</html>';

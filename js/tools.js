@@ -581,16 +581,6 @@ const Tools = (() => {
             }
         } else {
             if (activeTool === 'select') {
-                const gv = findGroundVertex(world, site);
-                if (gv) {
-                    Canvas.canvas.style.cursor = 'grab';
-                    Canvas.hoveredId = null;
-                    Canvas.highlightGroundVertex = gv;
-                    Canvas.render();
-                    return;
-                }
-                Canvas.highlightGroundVertex = null;
-
                 // Check resize handle hover (bgimage)
                 if (Canvas.selectionCount === 1) {
                     const sel = site.objects.find(o => o.id === Canvas.selectedId);
