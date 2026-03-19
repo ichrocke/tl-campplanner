@@ -452,10 +452,9 @@ const Canvas = (() => {
                 const center = polygonCentroid(pts);
                 const cp = w2s(center.x, center.y);
                 if (_treasureMode) {
-                    // Treasure: only name in handwritten style
                     if (obj.name) {
-                        ctx.font = "italic 11px 'Georgia','Times New Roman',serif";
-                        ctx.fillStyle = '#3d2b1f';
+                        ctx.font = "14px 'PirateFont', 'Georgia', serif";
+                        ctx.fillStyle = '#2a1a0a';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
                         ctx.fillText(obj.name, cp.x, cp.y);
@@ -825,30 +824,21 @@ const Canvas = (() => {
 
         // Name label
         if (_treasureMode) {
-            // Treasure: handwritten-style name, slight rotation for each letter
-            const tfs = Math.max(9, Math.min(14, z * 0.45)) * fs;
+            // Treasure: pirate font with slight wobble
+            const tfs = Math.max(10, Math.min(16, z * 0.5)) * fs;
+            ctx.font = `${tfs}px 'PirateFont', 'Georgia', serif`;
             ctx.fillStyle = '#2a1a0a';
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
             const nameLines = (obj.name || '').split('\n');
             let ny = -(nameLines.length - 1) * tfs * 0.55;
             nameLines.forEach(line => {
-                // Draw each character with slight random offset/rotation
                 ctx.save();
                 ctx.translate(0, ny);
-                ctx.rotate((Math.sin(obj.x * 0.5 + obj.y * 0.3) * 0.05));
-                ctx.font = `italic ${tfs + Math.sin(obj.x) * 1.5}px 'Georgia','Times New Roman',serif`;
-                const totalW = ctx.measureText(line).width;
-                let cx = -totalW / 2;
-                for (let c = 0; c < line.length; c++) {
-                    const ch = line[c];
-                    const cw = ctx.measureText(ch).width;
-                    const offY = Math.sin(c * 1.7 + obj.x) * 0.8;
-                    ctx.fillText(ch, cx + cw/2, offY);
-                    cx += cw;
-                }
+                ctx.rotate(Math.sin(obj.x * 0.5 + obj.y * 0.3) * 0.04);
+                ctx.fillText(line, 0, 0);
                 ctx.restore();
-                ny += tfs * 1.2;
+                ny += tfs * 1.3;
             });
         } else {
         const fontSize = Math.max(9, Math.min(13, z * 0.4)) * fs;

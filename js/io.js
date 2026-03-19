@@ -100,14 +100,13 @@ const IO = (() => {
 
         // Title (small, top-left)
         if (title) {
-            const fontFamily = treasureMap ? "'Georgia','Times New Roman',serif" : "sans-serif";
             pctx.font = treasureMap
-                ? `italic 8px ${fontFamily}`
-                : `600 8px sans-serif`;
-            pctx.fillStyle = treasureMap ? '#3d2b1f' : '#64748b';
+                ? "18px 'PirateFont', 'Georgia', serif"
+                : '600 8px sans-serif';
+            pctx.fillStyle = treasureMap ? '#2a1a0a' : '#64748b';
             pctx.textAlign = 'left';
             pctx.textBaseline = 'top';
-            pctx.fillText(title, 8, 6);
+            pctx.fillText(title, treasureMap ? 20 : 8, treasureMap ? 12 : 6);
         }
 
         // Treasure map effect (post-processing on full physical canvas)
@@ -337,71 +336,61 @@ const IO = (() => {
         ctx.fillRect(0, 0, w, h);
         ctx.globalCompositeOperation = 'source-over';
 
-        // 6. Torn/ripped edges with tears and chunks missing
-        // Fill edges with background color to create torn-off look
-        ctx.fillStyle = '#f5e6c8';
-        ctx.globalAlpha = 1;
-        // Top edge - irregular tears
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        for (let x = 0; x < w; x += 3) {
-            const tear = Math.random() < 0.03 ? 8 + Math.random() * 15 : Math.random() * 5;
-            ctx.lineTo(x, tear);
-        }
-        ctx.lineTo(w, 0); ctx.closePath(); ctx.fill();
-        // Bottom edge
-        ctx.beginPath();
-        ctx.moveTo(0, h);
-        for (let x = 0; x < w; x += 3) {
-            const tear = Math.random() < 0.03 ? 8 + Math.random() * 15 : Math.random() * 5;
-            ctx.lineTo(x, h - tear);
-        }
-        ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
-        // Left edge
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        for (let y = 0; y < h; y += 3) {
-            const tear = Math.random() < 0.03 ? 8 + Math.random() * 15 : Math.random() * 5;
-            ctx.lineTo(tear, y);
-        }
-        ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
-        // Right edge
-        ctx.beginPath();
-        ctx.moveTo(w, 0);
-        for (let y = 0; y < h; y += 3) {
-            const tear = Math.random() < 0.03 ? 8 + Math.random() * 15 : Math.random() * 5;
-            ctx.lineTo(w - tear, y);
-        }
-        ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
-        // Dark edge line along tears
-        ctx.strokeStyle = '#8b6914';
-        ctx.lineWidth = 1;
-        ctx.globalAlpha = 0.4;
-        [['top', w, true], ['bottom', w, true], ['left', h, false], ['right', h, false]].forEach(([side, len, horiz]) => {
-            ctx.beginPath();
-            for (let i = 0; i < len; i += 3) {
-                const tear = Math.random() < 0.03 ? 8 + Math.random() * 12 : Math.random() * 4;
-                if (side === 'top') ctx.lineTo(i, tear);
-                else if (side === 'bottom') ctx.lineTo(i, h - tear);
-                else if (side === 'left') ctx.lineTo(tear, i);
-                else ctx.lineTo(w - tear, i);
+        // 6. Torn/ripped edges - BIG tears and chunks
+        function tearEdge(len) {
+            const pts = [];
+            let depth = 3;
+            for (let i = 0; i < len; i += 2) {
+                // Random deep tears
+                if (Math.random() < 0.02) depth = 20 + Math.random() * 40;
+                else if (Math.random() < 0.05) depth = 10 + Math.random() * 20;
+                else depth = depth * 0.85 + (2 + Math.random() * 6) * 0.15;
+                pts.push(depth);
             }
-            ctx.stroke();
-        });
+            return pts;
+        }
+        ctx.fillStyle = '#e8d5a3';
+        ctx.globalAlpha = 1;
+        const topTear = tearEdge(w), botTear = tearEdge(w);
+        const leftTear = tearEdge(h), rightTear = tearEdge(h);
+        // Top
+        ctx.beginPath(); ctx.moveTo(0, 0);
+        topTear.forEach((d, i) => ctx.lineTo(i * 2, d));
+        ctx.lineTo(w, 0); ctx.closePath(); ctx.fill();
+        // Bottom
+        ctx.beginPath(); ctx.moveTo(0, h);
+        botTear.forEach((d, i) => ctx.lineTo(i * 2, h - d));
+        ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
+        // Left
+        ctx.beginPath(); ctx.moveTo(0, 0);
+        leftTear.forEach((d, i) => ctx.lineTo(d, i * 2));
+        ctx.lineTo(0, h); ctx.closePath(); ctx.fill();
+        // Right
+        ctx.beginPath(); ctx.moveTo(w, 0);
+        rightTear.forEach((d, i) => ctx.lineTo(w - d, i * 2));
+        ctx.lineTo(w, h); ctx.closePath(); ctx.fill();
+        // Dark shadow along tears
+        ctx.strokeStyle = '#654321';
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath(); topTear.forEach((d, i) => ctx.lineTo(i * 2, d)); ctx.stroke();
+        ctx.beginPath(); botTear.forEach((d, i) => ctx.lineTo(i * 2, h - d)); ctx.stroke();
+        ctx.beginPath(); leftTear.forEach((d, i) => ctx.lineTo(d, i * 2)); ctx.stroke();
+        ctx.beginPath(); rightTear.forEach((d, i) => ctx.lineTo(w - d, i * 2)); ctx.stroke();
         ctx.globalAlpha = 1;
 
-        // 7. Paper fold/crease lines (prominent)
+        // 7. Paper fold/crease lines (very prominent)
         // Horizontal fold with shadow
         const foldY = h * (0.3 + Math.random() * 0.4);
-        ctx.globalAlpha = 0.15;
-        ctx.strokeStyle = '#5a3a1a';
-        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.25;
+        ctx.strokeStyle = '#4a2a0a';
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(0, foldY);
         for (let x = 0; x < w; x += 6) ctx.lineTo(x, foldY + Math.sin(x * 0.015) * 3);
         ctx.stroke();
         // Light line next to fold (highlight)
-        ctx.globalAlpha = 0.06;
+        ctx.globalAlpha = 0.12;
         ctx.strokeStyle = '#fff';
         ctx.beginPath();
         ctx.moveTo(0, foldY + 2);
@@ -409,9 +398,9 @@ const IO = (() => {
         ctx.stroke();
         // Vertical fold
         const foldX = w * (0.35 + Math.random() * 0.3);
-        ctx.globalAlpha = 0.12;
-        ctx.strokeStyle = '#5a3a1a';
-        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.22;
+        ctx.strokeStyle = '#4a2a0a';
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.moveTo(foldX, 0);
         for (let y = 0; y < h; y += 6) ctx.lineTo(foldX + Math.sin(y * 0.015) * 3, y);

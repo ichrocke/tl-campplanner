@@ -27,6 +27,13 @@
     --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
+@font-face {
+    font-family: 'PirateFont';
+    src: url('../fonts/Pieces of Eight.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
