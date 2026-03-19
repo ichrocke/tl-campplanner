@@ -468,14 +468,30 @@ const IO = (() => {
 
         // Fetch all files
         const zipFiles = [];
+        const langJsons = {};
         for (const path of allFiles) {
             try {
                 const r = await fetch(path + '?v=' + Date.now());
                 const buf = await r.arrayBuffer();
+                // Collect language JSONs for inline embedding
+                if (path.startsWith('lang/') && path.endsWith('.json')) {
+                    const key = path.replace('lang/', '').replace('.json', '');
+                    langJsons[key] = new TextDecoder().decode(buf);
+                }
                 zipFiles.push({ name: path, data: buf });
             } catch (e) {
                 console.warn('Skip:', path, e);
             }
+        }
+
+        // Patch index.html: inject inline language data before the script loader
+        // This makes the app work on file:// protocol where XHR is blocked
+        const idxFile = zipFiles.find(f => f.name === 'index.html');
+        if (idxFile) {
+            let idxHtml = new TextDecoder().decode(idxFile.data);
+            const langScript = '<script>window._offlineLangs=' + JSON.stringify(langJsons) + ';</script>\n';
+            idxHtml = idxHtml.replace('<script>', langScript + '<script>');
+            idxFile.data = new TextEncoder().encode(idxHtml).buffer;
         }
 
         // Create and download ZIP
