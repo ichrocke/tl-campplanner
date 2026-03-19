@@ -376,6 +376,73 @@ const IO = (() => {
         ctx.globalAlpha = 1;
     }
 
+    async function downloadOfflineHTML() {
+        const fetchText = async (url) => (await fetch(url + '?v=' + Date.now())).text();
+        const fetchDataUrl = async (url) => {
+            const blob = await (await fetch(url)).blob();
+            return new Promise(r => { const fr = new FileReader(); fr.onload = () => r(fr.result); fr.readAsDataURL(blob); });
+        };
+
+        const css = await fetchText('css/style.css');
+        const jsFiles = ['js/i18n.js','js/state.js','js/canvas.js','js/tools.js','js/ui.js','js/io.js','js/touch.js','js/app.js'];
+        const jsContents = [];
+        for (const f of jsFiles) jsContents.push(await fetchText(f));
+
+        const langData = {};
+        for (const l of ['de','en','es','it']) langData[l] = await fetchText('lang/' + l + '.json');
+
+        const logoData = await fetchDataUrl('img/logo.png');
+        const compassData = await fetchDataUrl('img/compass.png');
+
+        // Symbol SVGs as data URLs
+        const symbolFiles = ['first_aid','fire_ext','gas_bottle','electric','exit','assembly'];
+        const symbolMap = {};
+        for (const s of symbolFiles) {
+            try {
+                const svg = await fetchText('img/symbols/' + s + '.svg');
+                symbolMap['img/symbols/' + s + '.svg'] = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+            } catch(e) {}
+        }
+
+        // Get body from index.html
+        const indexHtml = await fetchText('index.html');
+        const bodyMatch = indexHtml.match(/<body>([\s\S]*)<\/body>/i);
+        let body = bodyMatch ? bodyMatch[1] : '';
+        body = body.replace(/src="img\/logo\.png"/g, 'src="' + logoData + '"');
+        // Remove script loader
+        body = body.replace(/<script>\s*\[[\s\S]*?<\/script>/g, '');
+
+        // Patch canvas.js: replace compass and symbol paths
+        let canvasJs = jsContents[2];
+        canvasJs = canvasJs.split("'img/compass.png'").join("'" + compassData + "'");
+        Object.entries(symbolMap).forEach(([p, d]) => { canvasJs = canvasJs.split("'" + p + "'").join("'" + d + "'"); });
+
+        // Build HTML
+        let html = '<!DOCTYPE html>\n<html lang="en">\n<head>\n<meta charset="UTF-8">\n';
+        html += '<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">\n';
+        html += '<title>Camp Planner (Offline)</title>\n';
+        html += '<style>\n' + css + '\n</style>\n</head>\n<body>\n' + body + '\n';
+
+        // Embed languages
+        html += '<script>\nwindow._offlineLangs=' + JSON.stringify(langData) + ';\n';
+        html += '</script>\n';
+
+        // Embed each JS file
+        for (let i = 0; i < jsContents.length; i++) {
+            const code = (i === 2) ? canvasJs : jsContents[i];
+            const safe = JSON.stringify(code).replace(/<\//g, '<\\/');
+            html += '<script>eval(' + safe + ')' + '<' + '/script>\n';
+        }
+
+        html += '</body>\n</html>';
+
+        const blob = new Blob([html], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'campplanner-offline.html';
+        a.click();
+    }
+
     async function downloadOffline() {
         const allFiles = [
             'index.html',
@@ -587,5 +654,5 @@ const IO = (() => {
         a.click();
     }
 
-    return { exportFile, importFile, print, downloadOffline, exportSVG, exportDXF, exportVectorPDF };
+    return { exportFile, importFile, print, downloadOffline, downloadOfflineHTML, exportSVG, exportDXF, exportVectorPDF };
 })();
