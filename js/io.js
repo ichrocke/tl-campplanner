@@ -344,19 +344,25 @@ const IO = (() => {
         ctx.fillRect(0, 0, w, h);
         ctx.globalCompositeOperation = 'source-over';
 
-        // 6. Torn/ripped edges - FEW but VERY deep tears
+        // 6. Torn/ripped edges - natural paper tear simulation
         function tearEdge(len) {
             const pts = [];
-            let depth = 2;
+            let depth = 3;
+            let vel = 0; // velocity for smooth curves
             for (let i = 0; i < len; i += 2) {
-                if (Math.random() < 0.005) {
-                    // Rare but massive tear (100-250px deep!)
-                    depth = 80 + Math.random() * 170;
-                } else {
-                    // Slowly return to baseline
-                    depth = depth * 0.92 + (1 + Math.random() * 4) * 0.08;
+                if (Math.random() < 0.003 && depth < 30) {
+                    // Start a big rip - sudden inward
+                    vel = 8 + Math.random() * 15;
                 }
-                pts.push(Math.max(1, depth));
+                // Apply velocity with damping
+                depth += vel;
+                vel *= 0.92; // dampen
+                vel += (Math.random() - 0.5) * 2; // wobble
+                // Gentle pull back to edge
+                if (depth > 5) depth -= depth * 0.008;
+                // Clamp
+                depth = Math.max(2, Math.min(200, depth));
+                pts.push(depth);
             }
             return pts;
         }
@@ -395,28 +401,41 @@ const IO = (() => {
             const dx = x2-x1, dy = y2-y1;
             const len = Math.sqrt(dx*dx+dy*dy);
             const nx = -dy/len, ny = dx/len;
-            // Dark shadow side
-            for (let offset = -8; offset <= 0; offset++) {
-                ctx.globalAlpha = 0.04 * (1 - Math.abs(offset) / 8);
-                ctx.strokeStyle = '#3a1a00';
-                ctx.lineWidth = 2;
+            // Dark shadow side (wide)
+            for (let offset = -40; offset <= 0; offset += 2) {
+                ctx.globalAlpha = 0.025 * (1 - Math.abs(offset) / 40);
+                ctx.strokeStyle = '#2a0a00';
+                ctx.lineWidth = 3;
                 ctx.beginPath();
-                for (let t = 0; t <= 1; t += 0.005) {
-                    const px = x1 + dx*t + nx*(offset + Math.sin(t*30)*1.5);
-                    const py = y1 + dy*t + ny*(offset + Math.sin(t*30)*1.5);
+                for (let t = 0; t <= 1; t += 0.003) {
+                    const wobble = Math.sin(t*20 + offset*0.1) * 2;
+                    const px = x1 + dx*t + nx*(offset + wobble);
+                    const py = y1 + dy*t + ny*(offset + wobble);
                     if (t === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
                 }
                 ctx.stroke();
             }
-            // Light highlight side
-            for (let offset = 1; offset <= 6; offset++) {
-                ctx.globalAlpha = 0.03 * (1 - offset / 6);
+            // Center line (sharp)
+            ctx.globalAlpha = 0.12;
+            ctx.strokeStyle = '#1a0a00';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let t = 0; t <= 1; t += 0.003) {
+                const px = x1 + dx*t + nx*Math.sin(t*20)*1;
+                const py = y1 + dy*t + ny*Math.sin(t*20)*1;
+                if (t === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+            // Light highlight side (wide)
+            for (let offset = 2; offset <= 30; offset += 2) {
+                ctx.globalAlpha = 0.02 * (1 - offset / 30);
                 ctx.strokeStyle = '#fffef0';
-                ctx.lineWidth = 2;
+                ctx.lineWidth = 3;
                 ctx.beginPath();
-                for (let t = 0; t <= 1; t += 0.005) {
-                    const px = x1 + dx*t + nx*(offset + Math.sin(t*30)*1.5);
-                    const py = y1 + dy*t + ny*(offset + Math.sin(t*30)*1.5);
+                for (let t = 0; t <= 1; t += 0.003) {
+                    const wobble = Math.sin(t*20 + offset*0.1) * 2;
+                    const px = x1 + dx*t + nx*(offset + wobble);
+                    const py = y1 + dy*t + ny*(offset + wobble);
                     if (t === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
                 }
                 ctx.stroke();
