@@ -480,9 +480,9 @@ const IO = (() => {
         // Embed all JS using JSON.stringify + escape </ in the JSON string
         function embedScript(js) {
             // JSON.stringify escapes quotes/backslashes/newlines but NOT forward slashes
-            // We must escape </ to prevent HTML parser from closing the script tag
+            // Must escape </ ONLY inside the JSON string to prevent premature tag close
             var encoded = JSON.stringify(js).replace(/<\//g, '<\\/');
-            return '<script>eval(' + encoded + ')<\/script>\n';
+            return '<script>eval(' + encoded + ')' + '</script>\n';
         }
         html += embedScript(i18nJs);
         for (let i = 1; i < jsContents.length; i++) {
