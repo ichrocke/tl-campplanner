@@ -477,15 +477,15 @@ const IO = (() => {
             canvasJs = canvasJs.split("'" + path + "'").join("'" + dataUrl + "'");
         });
 
-        // Embed all JS - escape anything that could break the <script> block
-        function escapeForEmbed(js) {
-            // Replace all </ sequences to prevent HTML parser from closing tags
-            return js.replace(/<\//g, '<\\/');
+        // Embed all JS as base64-encoded scripts to avoid HTML parser issues
+        function embedScript(js) {
+            const encoded = btoa(unescape(encodeURIComponent(js)));
+            return '<script>eval(decodeURIComponent(escape(atob("' + encoded + '"))))</script>\n';
         }
-        html += '<script>\n' + escapeForEmbed(i18nJs) + '\n</script>\n';
+        html += embedScript(i18nJs);
         for (let i = 1; i < jsContents.length; i++) {
             const js = (i === 2) ? canvasJs : jsContents[i];
-            html += '<script>\n' + escapeForEmbed(js) + '\n</script>\n';
+            html += embedScript(js);
         }
 
         html += '</body>\n</html>';
