@@ -68,7 +68,7 @@ const IO = (() => {
         }
     }
 
-    function printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, title, format) {
+    async function printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, title, format) {
         const papers = { a4: { w: 297, h: 210 }, a3: { w: 420, h: 297 }, a2: { w: 594, h: 420 } };
         let paper = papers[paperSel] || papers.a4;
         if (orientation === 'portrait') paper = { w: paper.h, h: paper.w };
@@ -82,6 +82,14 @@ const IO = (() => {
         const canvasW = Math.round(paper.w * basePxPerMm);
         const canvasH = Math.round(paper.h * basePxPerMm);
         const marginPx = Math.round(15 * basePxPerMm);
+
+        // Preload pirate font for treasure map
+        if (treasureMap) {
+            try {
+                await document.fonts.load("20px 'PirateFont'");
+                await new Promise(r => setTimeout(r, 100));
+            } catch(e) {}
+        }
 
         // Use Canvas.renderOffscreen - same rendering as on screen, scaled up for DPI
         const mapCanvas = Canvas.renderOffscreen(canvasW, canvasH, bounds, {
@@ -336,16 +344,19 @@ const IO = (() => {
         ctx.fillRect(0, 0, w, h);
         ctx.globalCompositeOperation = 'source-over';
 
-        // 6. Torn/ripped edges - BIG tears and chunks
+        // 6. Torn/ripped edges - FEW but VERY deep tears
         function tearEdge(len) {
             const pts = [];
-            let depth = 3;
+            let depth = 2;
             for (let i = 0; i < len; i += 2) {
-                // Random deep tears
-                if (Math.random() < 0.02) depth = 20 + Math.random() * 40;
-                else if (Math.random() < 0.05) depth = 10 + Math.random() * 20;
-                else depth = depth * 0.85 + (2 + Math.random() * 6) * 0.15;
-                pts.push(depth);
+                if (Math.random() < 0.005) {
+                    // Rare but massive tear (100-250px deep!)
+                    depth = 80 + Math.random() * 170;
+                } else {
+                    // Slowly return to baseline
+                    depth = depth * 0.92 + (1 + Math.random() * 4) * 0.08;
+                }
+                pts.push(Math.max(1, depth));
             }
             return pts;
         }
@@ -379,52 +390,44 @@ const IO = (() => {
         ctx.beginPath(); rightTear.forEach((d, i) => ctx.lineTo(w - d, i * 2)); ctx.stroke();
         ctx.globalAlpha = 1;
 
-        // 7. Paper fold/crease lines (very prominent)
-        // Horizontal fold with shadow
+        // 7. Paper fold creases (gradient-based for realism)
+        function drawFold(x1, y1, x2, y2) {
+            const dx = x2-x1, dy = y2-y1;
+            const len = Math.sqrt(dx*dx+dy*dy);
+            const nx = -dy/len, ny = dx/len;
+            // Dark shadow side
+            for (let offset = -8; offset <= 0; offset++) {
+                ctx.globalAlpha = 0.04 * (1 - Math.abs(offset) / 8);
+                ctx.strokeStyle = '#3a1a00';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (let t = 0; t <= 1; t += 0.005) {
+                    const px = x1 + dx*t + nx*(offset + Math.sin(t*30)*1.5);
+                    const py = y1 + dy*t + ny*(offset + Math.sin(t*30)*1.5);
+                    if (t === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            }
+            // Light highlight side
+            for (let offset = 1; offset <= 6; offset++) {
+                ctx.globalAlpha = 0.03 * (1 - offset / 6);
+                ctx.strokeStyle = '#fffef0';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (let t = 0; t <= 1; t += 0.005) {
+                    const px = x1 + dx*t + nx*(offset + Math.sin(t*30)*1.5);
+                    const py = y1 + dy*t + ny*(offset + Math.sin(t*30)*1.5);
+                    if (t === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+            }
+        }
+        // Horizontal fold
         const foldY = h * (0.3 + Math.random() * 0.4);
-        ctx.globalAlpha = 0.25;
-        ctx.strokeStyle = '#4a2a0a';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(0, foldY);
-        for (let x = 0; x < w; x += 6) ctx.lineTo(x, foldY + Math.sin(x * 0.015) * 3);
-        ctx.stroke();
-        // Light line next to fold (highlight)
-        ctx.globalAlpha = 0.12;
-        ctx.strokeStyle = '#fff';
-        ctx.beginPath();
-        ctx.moveTo(0, foldY + 2);
-        for (let x = 0; x < w; x += 6) ctx.lineTo(x, foldY + 2 + Math.sin(x * 0.015) * 3);
-        ctx.stroke();
+        drawFold(0, foldY, w, foldY);
         // Vertical fold
         const foldX = w * (0.35 + Math.random() * 0.3);
-        ctx.globalAlpha = 0.22;
-        ctx.strokeStyle = '#4a2a0a';
-        ctx.lineWidth = 3;
-        ctx.beginPath();
-        ctx.moveTo(foldX, 0);
-        for (let y = 0; y < h; y += 6) ctx.lineTo(foldX + Math.sin(y * 0.015) * 3, y);
-        ctx.stroke();
-        ctx.globalAlpha = 0.05;
-        ctx.strokeStyle = '#fff';
-        ctx.beginPath();
-        ctx.moveTo(foldX + 2, 0);
-        for (let y = 0; y < h; y += 6) ctx.lineTo(foldX + 2 + Math.sin(y * 0.015) * 3, y);
-        ctx.stroke();
-        // Diagonal creases
-        ctx.globalAlpha = 0.08;
-        ctx.strokeStyle = '#5a3a1a';
-        ctx.lineWidth = 1;
-        for (let cr = 0; cr < 2; cr++) {
-            ctx.beginPath();
-            const cx1 = Math.random() * w * 0.3, cy1 = Math.random() * h * 0.3;
-            const cx2 = w - Math.random() * w * 0.3, cy2 = h - Math.random() * h * 0.3;
-            ctx.moveTo(cx1, cy1);
-            for (let t = 0; t <= 1; t += 0.01) {
-                ctx.lineTo(cx1 + (cx2-cx1)*t + Math.sin(t*25)*2, cy1 + (cy2-cy1)*t + Math.cos(t*18)*2);
-            }
-            ctx.stroke();
-        }
+        drawFold(foldX, 0, foldX, h);
         ctx.globalAlpha = 1;
 
         // 8. Decorative corner flourishes
