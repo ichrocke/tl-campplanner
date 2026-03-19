@@ -379,9 +379,10 @@ const IO = (() => {
     async function downloadOffline() {
         const files = {
             css: ['css/style.css'],
-            js: ['js/i18n.js', 'js/state.js', 'js/canvas.js', 'js/tools.js', 'js/ui.js', 'js/io.js', 'js/app.js'],
+            js: ['js/i18n.js', 'js/state.js', 'js/canvas.js', 'js/tools.js', 'js/ui.js', 'js/io.js', 'js/touch.js', 'js/app.js'],
             lang: ['lang/de.json', 'lang/en.json', 'lang/es.json', 'lang/it.json'],
             img: ['img/logo.png', 'img/compass.png'],
+            symbols: ['img/symbols/first_aid.svg', 'img/symbols/fire_ext.svg', 'img/symbols/gas_bottle.svg', 'img/symbols/electric.svg', 'img/symbols/exit.svg', 'img/symbols/assembly.svg'],
         };
 
         // Fetch all text files
@@ -409,6 +410,14 @@ const IO = (() => {
         }
         const logoDataUrl = await fetchDataUrl(files.img[0]);
         const compassDataUrl = await fetchDataUrl(files.img[1]);
+        // Load symbol SVGs as data URLs
+        const symbolDataUrls = {};
+        for (const f of (files.symbols || [])) {
+            try {
+                const svgText = await fetchText(f);
+                symbolDataUrls[f] = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgText)));
+            } catch (e) { /* skip missing symbols */ }
+        }
 
         // Get current index.html and extract the body
         const indexHtml = await fetchText('index.html');
@@ -457,12 +466,16 @@ const IO = (() => {
     }`
         );
 
-        // Patch canvas.js compass image src
+        // Patch canvas.js compass image src and symbol paths
         let canvasJs = jsContents[2];
         canvasJs = canvasJs.replace(
             "_compassImg.src = 'img/compass.png';",
             "_compassImg.src = '" + compassDataUrl + "';"
         );
+        // Replace symbol SVG paths with data URLs
+        Object.entries(symbolDataUrls).forEach(([path, dataUrl]) => {
+            canvasJs = canvasJs.split("'" + path + "'").join("'" + dataUrl + "'");
+        });
 
         // Embed all JS
         html += '<script>\n' + i18nJs + '\n</script>\n';

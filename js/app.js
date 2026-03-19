@@ -82,7 +82,7 @@
     c.addEventListener('dblclick', (e) => Tools.onDblClick(e));
 
     // Touch events (tablet)
-    Touch.init(c);
+    if (typeof Touch !== 'undefined') Touch.init(c);
 
     // Keyboard events
     document.addEventListener('keydown', (e) => Tools.onKeyDown(e));
