@@ -1000,6 +1000,11 @@ const UI = (() => {
             State.showDistances = e.target.checked;
             Canvas.render();
         });
+        document.getElementById('compass-rotation').addEventListener('input', (e) => {
+            const site = State.activeSite;
+            if (site) { site.compassRotation = parseInt(e.target.value); Canvas.render(); }
+            document.getElementById('compass-rot-val').textContent = e.target.value;
+        });
 
         // (Background image controls moved to floating toolbar)
     }
@@ -1018,6 +1023,9 @@ const UI = (() => {
         document.getElementById('lang-select').value = I18n.lang;
         document.getElementById('autosave-toggle').checked = localStorage.getItem('zeltplaner_autosave_enabled') !== '0';
         document.getElementById('show-distances-toggle').checked = State.showDistances;
+        const cr = (site && site.compassRotation) || 0;
+        document.getElementById('compass-rotation').value = cr;
+        document.getElementById('compass-rot-val').textContent = cr;
     }
 
     // --- Properties Panel ---

@@ -1545,8 +1545,14 @@ const Canvas = (() => {
         }
         if (!_compassImg || !_compassImg.complete) return;
 
+        const site = State.activeSite;
+        const rot = (site && site.compassRotation) || 0;
         ctx.globalAlpha = 0.7;
-        ctx.drawImage(_compassImg, cx, cy, size, size);
+        ctx.save();
+        ctx.translate(cx + size / 2, cy + size / 2);
+        ctx.rotate(rot * Math.PI / 180);
+        ctx.drawImage(_compassImg, -size / 2, -size / 2, size, size);
+        ctx.restore();
         ctx.globalAlpha = 1;
     }
 
