@@ -561,13 +561,42 @@ const Tools = (() => {
                     break;
                 }
                 case 'rectDraw': {
-                    const x1 = drag.x1, y1 = drag.y1;
-                    const x2 = snapped.x, y2 = snapped.y;
-                    Canvas.groundPreview = [
-                        { x: x1, y: y1 }, { x: x2, y: y1 },
-                        { x: x2, y: y2 }, { x: x1, y: y2 }
+                    const rx1 = drag.x1, ry1 = drag.y1;
+                    const rx2 = snapped.x, ry2 = snapped.y;
+                    const rpts = [
+                        { x: rx1, y: ry1 }, { x: rx2, y: ry1 },
+                        { x: rx2, y: ry2 }, { x: rx1, y: ry2 }
                     ];
+                    Canvas.groundPreview = rpts;
                     Canvas.render();
+                    // Draw closing edge + dimensions
+                    const rctx = Canvas.canvas.getContext('2d');
+                    // Close the rectangle (4th to 1st point)
+                    const rp0 = Canvas.w2s(rpts[3].x, rpts[3].y);
+                    const rp1 = Canvas.w2s(rpts[0].x, rpts[0].y);
+                    rctx.setLineDash([6, 4]);
+                    rctx.strokeStyle = '#22c55e88';
+                    rctx.lineWidth = 2;
+                    rctx.beginPath(); rctx.moveTo(rp0.x, rp0.y); rctx.lineTo(rp1.x, rp1.y); rctx.stroke();
+                    rctx.setLineDash([]);
+                    // Dimensions
+                    const rw = Math.abs(rx2 - rx1).toFixed(1);
+                    const rh = Math.abs(ry2 - ry1).toFixed(1);
+                    rctx.font = 'bold 12px sans-serif';
+                    rctx.fillStyle = '#16a34a';
+                    rctx.textAlign = 'center';
+                    rctx.textBaseline = 'bottom';
+                    const midTop = Canvas.w2s((rx1 + rx2) / 2, Math.min(ry1, ry2));
+                    rctx.fillText(rw + ' m', midTop.x, midTop.y - 4);
+                    rctx.textBaseline = 'middle';
+                    const midRight = Canvas.w2s(Math.max(rx1, rx2), (ry1 + ry2) / 2);
+                    rctx.fillText(rh + ' m', midRight.x + 20, midRight.y);
+                    // Area
+                    const rArea = (Math.abs(rx2 - rx1) * Math.abs(ry2 - ry1)).toFixed(1);
+                    const midC = Canvas.w2s((rx1 + rx2) / 2, (ry1 + ry2) / 2);
+                    rctx.font = 'bold 13px sans-serif';
+                    rctx.textBaseline = 'middle';
+                    rctx.fillText(rArea + ' m\u00b2', midC.x, midC.y);
                     break;
                 }
                 case 'areaVertex': {
