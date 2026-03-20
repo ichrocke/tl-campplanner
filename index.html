@@ -211,12 +211,12 @@
 
         <div id="modal-settings" class="modal modal-settings hidden">
             <h3 data-i18n="modal.settings.title">Einstellungen</h3>
-            <div class="settings-columns-3">
-                <!-- Column 1: Grid, Display, Language -->
+            <div class="settings-columns-4">
+                <!-- Column 1: Grid & Snap -->
                 <div class="settings-col">
                     <div class="modal-body">
                         <h4 class="settings-subtitle">Grid &amp; Snap</h4>
-                        <label><span data-i18n="modal.settings.gridSize">Grid size</span>
+                        <label>Grid size
                             <select id="grid-size">
                                 <option value="0.25">0.25 m</option>
                                 <option value="0.5" selected>0.5 m</option>
@@ -225,19 +225,11 @@
                                 <option value="5">5 m</option>
                             </select>
                         </label>
-                        <label><input type="checkbox" id="snap-to-grid" checked> <span data-i18n="modal.settings.snapToGrid">Snap to grid</span></label>
-                        <label><span data-i18n="modal.settings.minDistance">Min distance (m)</span>
+                        <label><input type="checkbox" id="snap-to-grid" checked> Snap to grid</label>
+                        <label>Min distance (m)
                             <input type="number" id="min-distance" value="2" min="0" step="0.5">
                         </label>
                         <label><input type="checkbox" id="show-distances-toggle"> Show distances</label>
-                        <div class="settings-divider"></div>
-                        <h4 class="settings-subtitle">Display</h4>
-                        <label>Text size <input type="number" id="set-fontscale" value="1" min="0.3" max="3" step="0.1"></label>
-                        <label>Line width <input type="number" id="set-linescale" value="1" min="0.3" max="3" step="0.1"></label>
-                        <label>Rope width <input type="number" id="set-ropescale" value="1" min="0.3" max="3" step="0.1"></label>
-                        <label>Hatch width <input type="number" id="set-hatchscale" value="1" min="0.3" max="3" step="0.1"></label>
-                        <div class="settings-divider"></div>
-                        <label>Compass <input type="range" id="compass-rotation" min="0" max="360" step="1" value="0" style="width:80px"> <span id="compass-rot-val">0</span>&deg;</label>
                         <div class="settings-divider"></div>
                         <h4 class="settings-subtitle">Language</h4>
                         <label><select id="lang-select">
@@ -247,12 +239,24 @@
                             <option value="it">Italiano</option>
                         </select></label>
                         <label><input type="checkbox" id="autosave-toggle" checked> Auto-save</label>
-                        <input type="file" id="bg-file-input" accept="image/*" style="display:none">
                     </div>
                     <div class="settings-divider"></div>
                     <button id="btn-offline" class="btn-secondary" style="width:100%;font-size:11px">Download offline</button>
-                    <button id="btn-clear-all" class="btn-secondary settings-danger-btn" style="margin-top:4px" data-i18n="btn.clearAll">Clear all</button>
-                    <div class="settings-donate">
+                    <button id="btn-clear-all" class="btn-secondary settings-danger-btn" style="margin-top:4px">Clear all</button>
+                </div>
+                <!-- Column 2: Display -->
+                <div class="settings-col settings-col-border">
+                    <div class="modal-body">
+                        <h4 class="settings-subtitle">Display</h4>
+                        <label>Text size <input type="number" id="set-fontscale" value="1" min="0.3" max="3" step="0.1"></label>
+                        <label>Line width <input type="number" id="set-linescale" value="1" min="0.3" max="3" step="0.1"></label>
+                        <label>Rope width <input type="number" id="set-ropescale" value="1" min="0.3" max="3" step="0.1"></label>
+                        <label>Hatch width <input type="number" id="set-hatchscale" value="1" min="0.3" max="3" step="0.1"></label>
+                        <div class="settings-divider"></div>
+                        <label>Compass <input type="range" id="compass-rotation" min="0" max="360" step="1" value="0" style="width:80px"> <span id="compass-rot-val">0</span>&deg;</label>
+                    </div>
+                    <input type="file" id="bg-file-input" accept="image/*" style="display:none">
+                    <div class="settings-donate" style="margin-top:auto">
                         <div class="settings-divider"></div>
                         <a href="https://paypal.me/marc85444" target="_blank" rel="noopener" class="donate-link-big" data-i18n="donate.toolbar">Buy me a coffee &#9749;</a>
                     </div>
