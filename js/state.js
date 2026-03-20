@@ -397,6 +397,8 @@ const State = (() => {
             _activeSiteIndex = 0;
             _undoStack = [];
             _undoPointer = -1;
+            this._colorPalette = null;
+            this.showDistances = false;
             try { localStorage.removeItem('zeltplaner_autosave'); } catch (e) {}
             createSite();
         },

@@ -1202,7 +1202,7 @@ const UI = (() => {
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.guyRope')}</div>
                 <label>${I18n.t('props.guyRope.distance')} <input type="number" id="prop-guyrope" value="${obj.guyRopeDistance}" min="0" step="0.1"></label>
-                ${obj.guyRopeDistance > 0 ? `<label>${I18n.t('props.guyRope.ropeWidth')} <input type="number" id="prop-ropewidth" value="${obj.ropeWidth || 0}" min="0" max="3" step="0.1" placeholder="auto"></label>` : ''}
+                ${obj.guyRopeDistance > 0 ? `<label>${I18n.t('props.guyRope.ropeWidth')} <input type="number" id="prop-ropewidth" value="${obj.ropeWidth || ''}" min="0" max="3" step="0.1" placeholder="auto"></label>` : ''}
                 ${obj.guyRopeDistance > 0 && obj.shape === 'rect' ? `
                 <div class="prop-section-subtitle">${I18n.t('props.guyRope.sides')}</div>
                 <div class="guyrope-sides">
@@ -1220,8 +1220,8 @@ const UI = (() => {
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.display')}</div>
                 ${obj.type !== 'text' && obj.type !== 'fence' ? `<div class="prop-grid">
-                    <label>${I18n.t('props.labelSize')} <input type="number" id="prop-labelsize" value="${obj.labelSize || 0}" min="0" max="3" step="0.1" placeholder="auto"></label>
-                    <label>${I18n.t('props.lineWidth')} <input type="number" id="prop-linewidth" value="${obj.lineWidth || 0}" min="0" max="3" step="0.1" placeholder="auto"></label>
+                    <label>${I18n.t('props.labelSize')} <input type="number" id="prop-labelsize" value="${obj.labelSize || ''}" min="0" max="3" step="0.1" placeholder="auto"></label>
+                    <label>${I18n.t('props.lineWidth')} <input type="number" id="prop-linewidth" value="${obj.lineWidth || ''}" min="0" max="3" step="0.1" placeholder="auto"></label>
                     <label>Label X <input type="number" id="prop-labeloffx" value="${obj.labelOffsetX || 0}" step="0.5"></label>
                     <label>Label Y <input type="number" id="prop-labeloffy" value="${obj.labelOffsetY || 0}" step="0.5"></label>
                 </div>` : ''}
