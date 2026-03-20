@@ -1093,7 +1093,7 @@ const UI = (() => {
         html += `</div>`;
 
         // --- Section: Position & Size ---
-        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'guideline' && obj.type !== 'ground' && obj.type !== 'symbol') {
+        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'guideline' && obj.type !== 'ground' && obj.type !== 'symbol' && obj.type !== 'postit') {
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.posSize')}</div>
                 <div class="prop-grid">
@@ -1406,7 +1406,17 @@ const UI = (() => {
         bind('prop-ropewidth', 'ropeWidth', parseFloat);
         bind('prop-x', 'x', parseFloat);
         bind('prop-y', 'y', parseFloat);
-        bind('prop-width', 'width', parseFloat);
+        const propW = document.getElementById('prop-width');
+        if (propW) {
+            propW.addEventListener('change', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                const val = parseFloat(propW.value) || obj.width;
+                const updates = { width: val };
+                if (obj.type === 'symbol') updates.height = val;
+                State.updateObject(obj.id, updates);
+                Canvas.render(); buildPlacedList();
+            });
+        }
         bind('prop-height', 'height', parseFloat);
         bind('prop-rotation', 'rotation', parseFloat);
 
