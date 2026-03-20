@@ -268,40 +268,47 @@
                     </div>
                 </div>
                 <div class="settings-right">
-                    <h4 class="settings-subtitle" data-i18n="modal.settings.shortcuts">Tastenkürzel</h4>
-                    <table class="shortcuts-table">
-                        <tr><td><kbd>V</kbd></td><td data-i18n="shortcut.select">Auswählen</td></tr>
-                        <tr><td><kbd>H</kbd></td><td data-i18n="shortcut.pan">Ansicht verschieben</td></tr>
-                        <tr><td><kbd>G</kbd></td><td data-i18n="shortcut.ground">Grundfläche zeichnen</td></tr>
-                        <tr><td><kbd>A</kbd></td><td data-i18n="shortcut.area">Gebiet markieren</td></tr>
-                        <tr><td><kbd>F</kbd></td><td data-i18n="shortcut.fence">Zaun zeichnen</td></tr>
-                        <tr><td><kbd>T</kbd></td><td data-i18n="shortcut.text">Textfeld platzieren</td></tr>
-                        <tr><td><kbd>M</kbd></td><td data-i18n="shortcut.measure">Measure distance</td></tr>
-                        <tr><td><kbd>P</kbd></td><td data-i18n="shortcut.paint">Paint color</td></tr>
-                        <tr><td><kbd>N</kbd></td><td>Post-it</td></tr>
-                        <tr><td><kbd>B</kbd></td><td>Toggle distances</td></tr>
-                        <tr><td><kbd>+</kbd> / <kbd>-</kbd></td><td data-i18n="shortcut.gridSize">Grid size +/-</td></tr>
-                        <tr><td><kbd>1</kbd>-<kbd>0</kbd></td><td data-i18n="shortcut.quickPlace">Quick place objects 1&ndash;10</td></tr>
-                        <tr><td><kbd>Entf</kbd> / <kbd>X</kbd></td><td data-i18n="shortcut.delete">Objekt löschen</td></tr>
-                        <tr><td><kbd>F2</kbd></td><td data-i18n="shortcut.rename">Umbenennen</td></tr>
-                        <tr><td><kbd>Ctrl+C</kbd></td><td data-i18n="shortcut.copy">Copy</td></tr>
-                        <tr><td><kbd>Ctrl+V</kbd></td><td data-i18n="shortcut.paste">Paste</td></tr>
-                        <tr><td><kbd>Ctrl+D</kbd></td><td data-i18n="shortcut.duplicate">Duplicate</td></tr>
-                        <tr><td><kbd>Ctrl+A</kbd></td><td data-i18n="shortcut.selectAll">Select all (active layer)</td></tr>
-                        <tr><td><kbd>Ctrl+G</kbd></td><td data-i18n="shortcut.group">Group objects</td></tr>
-                        <tr><td><kbd>Ctrl+Shift+G</kbd></td><td data-i18n="shortcut.ungroup">Ungroup objects</td></tr>
-                        <tr><td><kbd>Ctrl+S</kbd></td><td>JSON Export</td></tr>
-                        <tr><td><kbd>Ctrl+Z</kbd></td><td data-i18n="shortcut.undo">Undo</td></tr>
-                        <tr><td><kbd>Ctrl+Y</kbd></td><td data-i18n="shortcut.redo">Redo</td></tr>
-                        <tr><td><kbd>&#8592;&#8593;&#8594;&#8595;</kbd></td><td data-i18n="shortcut.arrowMove">Move selected (1 grid step)</td></tr>
-                        <tr><td><kbd>Esc</kbd></td><td>Cancel / Deselect</td></tr>
-                        <tr><td><kbd>Enter</kbd></td><td>Finish drawing</td></tr>
-                        <tr><td><kbd>Shift+Drag</kbd></td><td>Pan view</td></tr>
-                        <tr><td><kbd>Shift+Rotate</kbd></td><td>15° snap</td></tr>
-                        <tr><td><kbd>Alt+Drag</kbd></td><td>Draw rectangle (Ground/Area tool)</td></tr>
-                        <tr><td><kbd>Right-click</kbd></td><td>Cancel tool / Context menu</td></tr>
-                        <tr><td><kbd>Scroll</kbd></td><td>Zoom</td></tr>
-                    </table>
+                    <h4 class="settings-subtitle" data-i18n="modal.settings.shortcuts">Keyboard Shortcuts</h4>
+                    <div class="shortcuts-columns">
+                        <table class="shortcuts-table">
+                            <tr><th colspan="2">Tools</th></tr>
+                            <tr><td><kbd>V</kbd></td><td>Select</td></tr>
+                            <tr><td><kbd>H</kbd></td><td>Pan view</td></tr>
+                            <tr><td><kbd>G</kbd></td><td>Ground area</td></tr>
+                            <tr><td><kbd>A</kbd></td><td>Area</td></tr>
+                            <tr><td><kbd>F</kbd></td><td>Pipes</td></tr>
+                            <tr><td><kbd>T</kbd></td><td>Text</td></tr>
+                            <tr><td><kbd>M</kbd></td><td>Measure</td></tr>
+                            <tr><td><kbd>P</kbd></td><td>Paint</td></tr>
+                            <tr><td><kbd>N</kbd></td><td>Post-it</td></tr>
+                            <tr><td><kbd>B</kbd></td><td>Toggle distances</td></tr>
+                            <tr><th colspan="2">Objects</th></tr>
+                            <tr><td><kbd>Del</kbd> / <kbd>X</kbd></td><td>Delete</td></tr>
+                            <tr><td><kbd>F2</kbd></td><td>Rename</td></tr>
+                            <tr><td><kbd>1</kbd>-<kbd>0</kbd></td><td>Quick place 1-10</td></tr>
+                            <tr><td><kbd>+</kbd> / <kbd>-</kbd></td><td>Grid size</td></tr>
+                            <tr><td><kbd>&#8592;&#8593;&#8594;&#8595;</kbd></td><td>Nudge (1 step)</td></tr>
+                        </table>
+                        <table class="shortcuts-table">
+                            <tr><th colspan="2">Edit</th></tr>
+                            <tr><td><kbd>Ctrl+C</kbd></td><td>Copy</td></tr>
+                            <tr><td><kbd>Ctrl+V</kbd></td><td>Paste</td></tr>
+                            <tr><td><kbd>Ctrl+D</kbd></td><td>Duplicate</td></tr>
+                            <tr><td><kbd>Ctrl+A</kbd></td><td>Select all (layer)</td></tr>
+                            <tr><td><kbd>Ctrl+G</kbd></td><td>Group</td></tr>
+                            <tr><td><kbd>Ctrl+Shift+G</kbd></td><td>Ungroup</td></tr>
+                            <tr><td><kbd>Ctrl+S</kbd></td><td>JSON Export</td></tr>
+                            <tr><td><kbd>Ctrl+Z</kbd></td><td>Undo</td></tr>
+                            <tr><td><kbd>Ctrl+Y</kbd></td><td>Redo</td></tr>
+                            <tr><th colspan="2">Canvas</th></tr>
+                            <tr><td><kbd>Esc</kbd></td><td>Cancel / Deselect</td></tr>
+                            <tr><td><kbd>Enter</kbd></td><td>Finish drawing</td></tr>
+                            <tr><td><kbd>Shift+Drag</kbd></td><td>Pan view</td></tr>
+                            <tr><td><kbd>Shift+Rot.</kbd></td><td>15° snap</td></tr>
+                            <tr><td><kbd>Alt+Drag</kbd></td><td>Draw rectangle</td></tr>
+                            <tr><td><kbd>Scroll</kbd></td><td>Zoom</td></tr>
+                        </table>
+                    </div>
                 </div>
             </div>
             <div class="modal-actions">
