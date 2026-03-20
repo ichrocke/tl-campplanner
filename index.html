@@ -211,11 +211,12 @@
 
         <div id="modal-settings" class="modal modal-settings hidden">
             <h3 data-i18n="modal.settings.title">Einstellungen</h3>
-            <div class="settings-columns">
-                <div class="settings-left">
+            <div class="settings-columns-3">
+                <!-- Column 1: Grid, Display, Language -->
+                <div class="settings-col">
                     <div class="modal-body">
-                        <h4 class="settings-subtitle" data-i18n="modal.settings.grid">Raster &amp; Abstände</h4>
-                        <label><span data-i18n="modal.settings.gridSize">Rastergröße</span>
+                        <h4 class="settings-subtitle">Grid &amp; Snap</h4>
+                        <label><span data-i18n="modal.settings.gridSize">Grid size</span>
                             <select id="grid-size">
                                 <option value="0.25">0.25 m</option>
                                 <option value="0.5" selected>0.5 m</option>
@@ -224,91 +225,85 @@
                                 <option value="5">5 m</option>
                             </select>
                         </label>
-                        <label><input type="checkbox" id="snap-to-grid" checked> <span data-i18n="modal.settings.snapToGrid">Am Raster einrasten</span></label>
-                        <label><span data-i18n="modal.settings.minDistance">Mindestabstand (m)</span>
+                        <label><input type="checkbox" id="snap-to-grid" checked> <span data-i18n="modal.settings.snapToGrid">Snap to grid</span></label>
+                        <label><span data-i18n="modal.settings.minDistance">Min distance (m)</span>
                             <input type="number" id="min-distance" value="2" min="0" step="0.5">
                         </label>
-                        <label><input type="checkbox" id="autosave-toggle" checked> <span data-i18n="modal.settings.autosave">Auto-save</span></label>
-                        <label><input type="checkbox" id="show-distances-toggle"> Show distances permanently</label>
-                        <label>Compass rotation <input type="range" id="compass-rotation" min="0" max="360" step="1" value="0" style="width:120px"> <span id="compass-rot-val">0</span>&deg;</label>
+                        <label><input type="checkbox" id="show-distances-toggle"> Show distances</label>
                         <div class="settings-divider"></div>
-                        <h4 class="settings-subtitle" data-i18n="modal.settings.display">Display</h4>
-                        <label><span data-i18n="modal.settings.fontSize">Textgröße (Faktor)</span>
-                            <input type="number" id="set-fontscale" value="1" min="0.3" max="3" step="0.1">
-                        </label>
-                        <label><span data-i18n="modal.settings.lineWidth">Liniendicke (Faktor)</span>
-                            <input type="number" id="set-linescale" value="1" min="0.3" max="3" step="0.1">
-                        </label>
-                        <label><span data-i18n="modal.settings.ropeWidth">Schnurdicke (Faktor)</span>
-                            <input type="number" id="set-ropescale" value="1" min="0.3" max="3" step="0.1">
-                        </label>
-                        <label><span data-i18n="modal.settings.hatchWidth">Schraffurdicke (Faktor)</span>
-                            <input type="number" id="set-hatchscale" value="1" min="0.3" max="3" step="0.1">
-                        </label>
+                        <h4 class="settings-subtitle">Display</h4>
+                        <label>Text size <input type="number" id="set-fontscale" value="1" min="0.3" max="3" step="0.1"></label>
+                        <label>Line width <input type="number" id="set-linescale" value="1" min="0.3" max="3" step="0.1"></label>
+                        <label>Rope width <input type="number" id="set-ropescale" value="1" min="0.3" max="3" step="0.1"></label>
+                        <label>Hatch width <input type="number" id="set-hatchscale" value="1" min="0.3" max="3" step="0.1"></label>
                         <div class="settings-divider"></div>
-                        <h4 class="settings-subtitle" data-i18n="modal.settings.language">Sprache</h4>
-                        <label><span data-i18n="modal.settings.language">Sprache</span>
-                            <select id="lang-select">
-                                <option value="de">Deutsch</option>
-                                <option value="en">English</option>
-                                <option value="es">Español</option>
-                                <option value="it">Italiano</option>
-                            </select>
-                        </label>
+                        <label>Compass <input type="range" id="compass-rotation" min="0" max="360" step="1" value="0" style="width:80px"> <span id="compass-rot-val">0</span>&deg;</label>
+                        <div class="settings-divider"></div>
+                        <h4 class="settings-subtitle">Language</h4>
+                        <label><select id="lang-select">
+                            <option value="de">Deutsch</option>
+                            <option value="en">English</option>
+                            <option value="es">Español</option>
+                            <option value="it">Italiano</option>
+                        </select></label>
+                        <label><input type="checkbox" id="autosave-toggle" checked> Auto-save</label>
                         <input type="file" id="bg-file-input" accept="image/*" style="display:none">
                     </div>
                     <div class="settings-divider"></div>
-                    <button id="btn-clear-all" class="btn-secondary settings-danger-btn" data-i18n="btn.clearAll">Clear all</button>
-                    <div class="settings-divider"></div>
-                    <button id="btn-offline" class="btn-secondary" style="width:100%">Download offline version</button>
+                    <button id="btn-offline" class="btn-secondary" style="width:100%;font-size:11px">Download offline</button>
+                    <button id="btn-clear-all" class="btn-secondary settings-danger-btn" style="margin-top:4px" data-i18n="btn.clearAll">Clear all</button>
                     <div class="settings-donate">
                         <div class="settings-divider"></div>
-                        <p class="donate-text" data-i18n="modal.settings.donate">Dir gef&auml;llt der Zeltplaner? Dann w&uuml;rde ich mich riesig &uuml;ber eine kleine Unterst&uuml;tzung freuen!</p>
-                        <a href="https://paypal.me/marc85444" target="_blank" rel="noopener" class="donate-link-big" data-i18n="donate.toolbar">Einen Kaffee spendieren &#9749;</a>
+                        <a href="https://paypal.me/marc85444" target="_blank" rel="noopener" class="donate-link-big" data-i18n="donate.toolbar">Buy me a coffee &#9749;</a>
                     </div>
                 </div>
-                <div class="settings-right">
-                    <h4 class="settings-subtitle" data-i18n="modal.settings.shortcuts">Keyboard Shortcuts</h4>
-                    <div class="shortcuts-columns">
-                        <table class="shortcuts-table">
-                            <tr><th colspan="2">Tools</th></tr>
-                            <tr><td><kbd>V</kbd></td><td>Select</td></tr>
-                            <tr><td><kbd>H</kbd></td><td>Pan view</td></tr>
-                            <tr><td><kbd>G</kbd></td><td>Ground area</td></tr>
-                            <tr><td><kbd>A</kbd></td><td>Area</td></tr>
-                            <tr><td><kbd>F</kbd></td><td>Pipes</td></tr>
-                            <tr><td><kbd>T</kbd></td><td>Text</td></tr>
-                            <tr><td><kbd>M</kbd></td><td>Measure</td></tr>
-                            <tr><td><kbd>P</kbd></td><td>Paint</td></tr>
-                            <tr><td><kbd>N</kbd></td><td>Post-it</td></tr>
-                            <tr><td><kbd>B</kbd></td><td>Toggle distances</td></tr>
-                            <tr><th colspan="2">Objects</th></tr>
-                            <tr><td><kbd>Del</kbd> / <kbd>X</kbd></td><td>Delete</td></tr>
-                            <tr><td><kbd>F2</kbd></td><td>Rename</td></tr>
-                            <tr><td><kbd>1</kbd>-<kbd>0</kbd></td><td>Quick place 1-10</td></tr>
-                            <tr><td><kbd>+</kbd> / <kbd>-</kbd></td><td>Grid size</td></tr>
-                            <tr><td><kbd>&#8592;&#8593;&#8594;&#8595;</kbd></td><td>Nudge (1 step)</td></tr>
-                        </table>
-                        <table class="shortcuts-table">
-                            <tr><th colspan="2">Edit</th></tr>
-                            <tr><td><kbd>Ctrl+C</kbd></td><td>Copy</td></tr>
-                            <tr><td><kbd>Ctrl+V</kbd></td><td>Paste</td></tr>
-                            <tr><td><kbd>Ctrl+D</kbd></td><td>Duplicate</td></tr>
-                            <tr><td><kbd>Ctrl+A</kbd></td><td>Select all (layer)</td></tr>
-                            <tr><td><kbd>Ctrl+G</kbd></td><td>Group</td></tr>
-                            <tr><td><kbd>Ctrl+Shift+G</kbd></td><td>Ungroup</td></tr>
-                            <tr><td><kbd>Ctrl+S</kbd></td><td>JSON Export</td></tr>
-                            <tr><td><kbd>Ctrl+Z</kbd></td><td>Undo</td></tr>
-                            <tr><td><kbd>Ctrl+Y</kbd></td><td>Redo</td></tr>
-                            <tr><th colspan="2">Canvas</th></tr>
-                            <tr><td><kbd>Esc</kbd></td><td>Cancel / Deselect</td></tr>
-                            <tr><td><kbd>Enter</kbd></td><td>Finish drawing</td></tr>
-                            <tr><td><kbd>Shift+Drag</kbd></td><td>Pan view</td></tr>
-                            <tr><td><kbd>Shift+Rot.</kbd></td><td>15° snap</td></tr>
-                            <tr><td><kbd>Alt+Drag</kbd></td><td>Draw rectangle</td></tr>
-                            <tr><td><kbd>Scroll</kbd></td><td>Zoom</td></tr>
-                        </table>
-                    </div>
+                <!-- Column 2: Shortcuts Tools + Objects -->
+                <div class="settings-col settings-col-border">
+                    <h4 class="settings-subtitle">Shortcuts: Tools</h4>
+                    <table class="shortcuts-table">
+                        <tr><td><kbd>V</kbd></td><td>Select</td></tr>
+                        <tr><td><kbd>H</kbd></td><td>Pan view</td></tr>
+                        <tr><td><kbd>G</kbd></td><td>Ground area</td></tr>
+                        <tr><td><kbd>A</kbd></td><td>Area</td></tr>
+                        <tr><td><kbd>F</kbd></td><td>Pipes</td></tr>
+                        <tr><td><kbd>T</kbd></td><td>Text</td></tr>
+                        <tr><td><kbd>M</kbd></td><td>Measure</td></tr>
+                        <tr><td><kbd>P</kbd></td><td>Paint</td></tr>
+                        <tr><td><kbd>N</kbd></td><td>Post-it</td></tr>
+                        <tr><td><kbd>B</kbd></td><td>Distances</td></tr>
+                    </table>
+                    <h4 class="settings-subtitle" style="margin-top:8px">Objects</h4>
+                    <table class="shortcuts-table">
+                        <tr><td><kbd>Del</kbd>/<kbd>X</kbd></td><td>Delete</td></tr>
+                        <tr><td><kbd>F2</kbd></td><td>Rename</td></tr>
+                        <tr><td><kbd>1</kbd>-<kbd>0</kbd></td><td>Quick place</td></tr>
+                        <tr><td><kbd>+</kbd>/<kbd>-</kbd></td><td>Grid size</td></tr>
+                        <tr><td><kbd>&#8592;&#8593;&#8594;&#8595;</kbd></td><td>Nudge</td></tr>
+                    </table>
+                </div>
+                <!-- Column 3: Shortcuts Edit + Canvas -->
+                <div class="settings-col settings-col-border">
+                    <h4 class="settings-subtitle">Shortcuts: Edit</h4>
+                    <table class="shortcuts-table">
+                        <tr><td><kbd>Ctrl+C</kbd></td><td>Copy</td></tr>
+                        <tr><td><kbd>Ctrl+V</kbd></td><td>Paste</td></tr>
+                        <tr><td><kbd>Ctrl+D</kbd></td><td>Duplicate</td></tr>
+                        <tr><td><kbd>Ctrl+A</kbd></td><td>Select all</td></tr>
+                        <tr><td><kbd>Ctrl+G</kbd></td><td>Group</td></tr>
+                        <tr><td><kbd>Ctrl+&#8679;G</kbd></td><td>Ungroup</td></tr>
+                        <tr><td><kbd>Ctrl+S</kbd></td><td>Export JSON</td></tr>
+                        <tr><td><kbd>Ctrl+Z</kbd></td><td>Undo</td></tr>
+                        <tr><td><kbd>Ctrl+Y</kbd></td><td>Redo</td></tr>
+                    </table>
+                    <h4 class="settings-subtitle" style="margin-top:8px">Canvas</h4>
+                    <table class="shortcuts-table">
+                        <tr><td><kbd>Esc</kbd></td><td>Cancel</td></tr>
+                        <tr><td><kbd>Enter</kbd></td><td>Finish</td></tr>
+                        <tr><td><kbd>Shift+Drag</kbd></td><td>Pan</td></tr>
+                        <tr><td><kbd>Shift+Rot.</kbd></td><td>15° snap</td></tr>
+                        <tr><td><kbd>Alt+Drag</kbd></td><td>Rectangle</td></tr>
+                        <tr><td><kbd>Scroll</kbd></td><td>Zoom</td></tr>
+                    </table>
                 </div>
             </div>
             <div class="modal-actions">

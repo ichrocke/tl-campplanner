@@ -1341,7 +1341,11 @@ body {
 
 .modal.hidden { display: none; }
 
-.modal-settings { min-width: 700px; max-width: 780px; }
+.modal-settings { min-width: 850px; max-width: 950px; }
+
+.settings-columns-3 { display: flex; gap: 16px; }
+.settings-col { flex: 1; min-width: 0; }
+.settings-col-border { border-left: 1px solid var(--border); padding-left: 16px; }
 .modal-export { min-width: 700px; max-width: 800px; }
 
 .export-columns { display: flex; gap: 20px; }
@@ -1431,13 +1435,7 @@ body {
     margin-bottom: 8px;
 }
 
-.shortcuts-columns {
-    display: flex;
-    gap: 12px;
-}
-
 .shortcuts-table {
-    flex: 1;
     border-collapse: collapse;
     font-size: 11px;
 }
