@@ -1,5 +1,14 @@
 # Changelog
 
+## [5.2.1] - 2026-03-20
+
+### Changed
+- **Settings dialog: 4-column layout** - Settings split into Grid/Snap, Display, Shortcuts Tools, Shortcuts Edit for compact overview
+- **Keyboard shortcuts** organized in categories with colored headers
+
+### Fixed
+- Grid snapping for ground/area objects: uses bounding box of actual points instead of width/height (which is 0)
+
 ## [5.2.0] - 2026-03-20
 
 ### Added
