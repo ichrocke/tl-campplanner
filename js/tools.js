@@ -147,8 +147,16 @@ const Tools = (() => {
         switch (activeTool) {
             case 'select': onSelectDown(e, world, snapped, site); break;
             case 'pan': drag = { type: 'pan', lastX: e.clientX, lastY: e.clientY }; break;
-            case 'ground': onGroundClick(snapped, site); break;
-            case 'area': onAreaClick(snapped, site); break;
+            case 'ground':
+                if (e.ctrlKey || e.metaKey) {
+                    drag = { type: 'rectDraw', tool: 'ground', x1: snapped.x, y1: snapped.y };
+                } else { onGroundClick(snapped, site); }
+                break;
+            case 'area':
+                if (e.ctrlKey || e.metaKey) {
+                    drag = { type: 'rectDraw', tool: 'area', x1: snapped.x, y1: snapped.y };
+                } else { onAreaClick(snapped, site); }
+                break;
             case 'fence': onFenceClick(snapped, site); break;
             case 'text': onTextClick(snapped, site); break;
             case 'measure': drag = { type: 'measure', x1: snapped.x, y1: snapped.y, x2: snapped.x, y2: snapped.y }; break;
@@ -550,7 +558,16 @@ const Tools = (() => {
                     Canvas.render();
                     break;
                 }
-                // groundVertex case removed - handled by areaVertex
+                case 'rectDraw': {
+                    const x1 = drag.x1, y1 = drag.y1;
+                    const x2 = snapped.x, y2 = snapped.y;
+                    Canvas.groundPreview = [
+                        { x: x1, y: y1 }, { x: x2, y: y1 },
+                        { x: x2, y: y2 }, { x: x1, y: y2 }
+                    ];
+                    Canvas.render();
+                    break;
+                }
                 case 'areaVertex': {
                     const obj = site.objects.find(o => o.id === drag.objId);
                     if (obj && obj.points && obj.points[drag.vertexIndex]) {
@@ -704,6 +721,31 @@ const Tools = (() => {
                     }
                 }
                 Canvas.measureLine = null;
+            }
+            if (drag.type === 'rectDraw') {
+                const x1 = Math.min(drag.x1, snapped.x), y1 = Math.min(drag.y1, snapped.y);
+                const x2 = Math.max(drag.x1, snapped.x), y2 = Math.max(drag.y1, snapped.y);
+                if (Math.abs(x2 - x1) > 0.1 && Math.abs(y2 - y1) > 0.1) {
+                    const pts = [{ x: x1, y: y1 }, { x: x2, y: y1 }, { x: x2, y: y2 }, { x: x1, y: y2 }];
+                    const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+                    if (drag.tool === 'ground') {
+                        const obj = State.addObject({
+                            type: 'ground', name: I18n.t('tool.ground'),
+                            width: 0, height: 0, guyRopeDistance: 0,
+                            color: '#22c55e', shape: 'rect', points: pts,
+                        }, cx, cy);
+                        if (obj) obj.points = pts;
+                    } else {
+                        const name = prompt(I18n.t('msg.nameArea'), I18n.t('msg.defaultArea')) || I18n.t('msg.defaultArea');
+                        const obj = State.addObject({
+                            type: 'area', name: name, width: 0, height: 0,
+                            guyRopeDistance: 0, color: '#d4a574', shape: 'rect', points: pts,
+                        }, cx, cy);
+                        if (obj) obj.points = pts;
+                    }
+                }
+                Canvas.groundPreview = [];
+                setTool('select');
             }
             if (drag.type === 'rectSelect') {
                 const site = State.activeSite;
