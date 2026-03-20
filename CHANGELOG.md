@@ -1,5 +1,23 @@
 # Changelog
 
+## [5.2.0] - 2026-03-20
+
+### Added
+- **Non-rotating labels**: Object names stay horizontal when objects are rotated
+- **Label offset**: Adjustable Label X/Y offset in display section to position names
+- **Permanent distance display**: Checkbox in settings + B key to show all distances permanently
+- **Compass rotation**: Slider in settings (0-360°) to align compass with actual north
+- **Alt+Drag rectangle**: Hold Alt while using Ground (G) or Area (A) tool to drag a rectangle with live width/height/area display
+- **Decagon (10-sided)** and **Dodecagon (12-sided)** shapes with Yurt templates
+- **Lock for all objects**: Lock/freeze available for all object types (was only ground/bgimage)
+- **Paint all objects**: Paint tool works on all object types (was only tent/ground)
+
+### Fixed
+- Labels on ground areas and area objects now support offset
+- ctx.measureText crash when obj.name is null
+- z was zoom function (not number) in drawGround label offset
+- Ctrl+drag failed (Ctrl+click = right-click on Mac), changed to Alt+drag
+
 ## [5.1.0] - 2026-03-19
 
 ### Added
