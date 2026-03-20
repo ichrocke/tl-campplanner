@@ -723,8 +723,10 @@ const Tools = (() => {
                 Canvas.measureLine = null;
             }
             if (drag.type === 'rectDraw') {
-                const x1 = Math.min(drag.x1, snapped.x), y1 = Math.min(drag.y1, snapped.y);
-                const x2 = Math.max(drag.x1, snapped.x), y2 = Math.max(drag.y1, snapped.y);
+                const world = getMouseWorld(e);
+                const snap = snapWorld(world);
+                const x1 = Math.min(drag.x1, snap.x), y1 = Math.min(drag.y1, snap.y);
+                const x2 = Math.max(drag.x1, snap.x), y2 = Math.max(drag.y1, snap.y);
                 if (Math.abs(x2 - x1) > 0.1 && Math.abs(y2 - y1) > 0.1) {
                     const pts = [{ x: x1, y: y1 }, { x: x2, y: y1 }, { x: x2, y: y2 }, { x: x1, y: y2 }];
                     const cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
