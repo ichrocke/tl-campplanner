@@ -50,6 +50,7 @@ const IO = (() => {
         const showGrid = document.getElementById('print-grid').checked;
         const showDistances = document.getElementById('print-distances').checked;
         const showObjList = document.getElementById('print-objlist').checked;
+        const blackWhite = document.getElementById('print-bw').checked;
         const treasureMap = document.getElementById('print-treasure').checked;
         const title = document.getElementById('print-title').value;
         const format = overrideFormat || 'print';
@@ -61,14 +62,14 @@ const IO = (() => {
             // Temporarily swap objects for filtered printing
             const origObjects = site.objects;
             site.objects = filter.objects;
-            printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, title, format);
+            printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, blackWhite, title, format);
             site.objects = origObjects;
         } else {
-            printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, title, format);
+            printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, blackWhite, title, format);
         }
     }
 
-    async function printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, title, format) {
+    async function printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, blackWhite, title, format) {
         const papers = { a4: { w: 297, h: 210 }, a3: { w: 420, h: 297 }, a2: { w: 594, h: 420 } };
         let paper = papers[paperSel] || papers.a4;
         if (orientation === 'portrait') paper = { w: paper.h, h: paper.w };
@@ -117,10 +118,19 @@ const IO = (() => {
             pctx.fillText(title, treasureMap ? 20 : 8, treasureMap ? 12 : 6);
         }
 
-        // Treasure map effect (post-processing on full physical canvas)
-        pctx.setTransform(1, 0, 0, 1, 0, 0); // reset scale for pixel-level effect
+        // Post-processing effects
+        pctx.setTransform(1, 0, 0, 1, 0, 0);
         if (treasureMap) {
             applyTreasureMapEffect(pctx, mapCanvas.width, mapCanvas.height);
+        }
+        if (blackWhite) {
+            const bwData = pctx.getImageData(0, 0, mapCanvas.width, mapCanvas.height);
+            const d = bwData.data;
+            for (let i = 0; i < d.length; i += 4) {
+                const gray = d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114;
+                d[i] = d[i+1] = d[i+2] = gray;
+            }
+            pctx.putImageData(bwData, 0, 0);
         }
 
         // Object list (page 2)
