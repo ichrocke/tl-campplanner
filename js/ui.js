@@ -1012,6 +1012,11 @@ const UI = (() => {
             State.showDistances = e.target.checked;
             Canvas.render();
         });
+        document.getElementById('minimap-toggle').addEventListener('change', (e) => {
+            Canvas.minimapEnabled = e.target.checked;
+            State._minimapEnabled = e.target.checked;
+            Canvas.render();
+        });
         document.getElementById('compass-rotation').addEventListener('input', (e) => {
             const site = State.activeSite;
             if (site) { site.compassRotation = parseInt(e.target.value); Canvas.render(); }
@@ -1035,6 +1040,7 @@ const UI = (() => {
         document.getElementById('lang-select').value = I18n.lang;
         document.getElementById('autosave-toggle').checked = localStorage.getItem('zeltplaner_autosave_enabled') !== '0';
         document.getElementById('show-distances-toggle').checked = State.showDistances;
+        document.getElementById('minimap-toggle').checked = Canvas.minimapEnabled;
         // Sync color palette from state (after import)
         if (State._colorPalette && State._colorPalette.colors) {
             _savedColors = State._colorPalette.colors;

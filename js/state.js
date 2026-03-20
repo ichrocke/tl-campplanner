@@ -95,6 +95,7 @@ const State = (() => {
         get minDistance() { return _minDistance; },
         set minDistance(v) { _minDistance = v; },
         showDistances: false,
+        _minimapEnabled: true,
         get displaySettings() { return _displaySettings; },
 
         onChange(fn) { _listeners.push(fn); },
@@ -316,6 +317,7 @@ const State = (() => {
                 minDistance: _minDistance,
                 displaySettings: _displaySettings,
                 showDistances: this.showDistances,
+                minimapEnabled: this._minimapEnabled !== undefined ? this._minimapEnabled : true,
                 colorPalette: this._colorPalette || null,
             }, null, 2);
         },
@@ -387,6 +389,7 @@ const State = (() => {
             _minDistance = data.minDistance || 2;
             if (data.displaySettings) Object.assign(_displaySettings, data.displaySettings);
             if (data.showDistances !== undefined) this.showDistances = data.showDistances;
+            if (data.minimapEnabled !== undefined) { this._minimapEnabled = data.minimapEnabled; if (typeof Canvas !== 'undefined') Canvas.minimapEnabled = data.minimapEnabled; }
             if (data.colorPalette) this._colorPalette = data.colorPalette;
             _activeSiteIndex = 0;
             notify();
