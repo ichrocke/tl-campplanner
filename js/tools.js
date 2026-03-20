@@ -148,12 +148,14 @@ const Tools = (() => {
             case 'select': onSelectDown(e, world, snapped, site); break;
             case 'pan': drag = { type: 'pan', lastX: e.clientX, lastY: e.clientY }; break;
             case 'ground':
-                if (e.ctrlKey || e.metaKey) {
+                if (e.altKey) {
+                    e.preventDefault();
                     drag = { type: 'rectDraw', tool: 'ground', x1: snapped.x, y1: snapped.y };
                 } else { onGroundClick(snapped, site); }
                 break;
             case 'area':
-                if (e.ctrlKey || e.metaKey) {
+                if (e.altKey) {
+                    e.preventDefault();
                     drag = { type: 'rectDraw', tool: 'area', x1: snapped.x, y1: snapped.y };
                 } else { onAreaClick(snapped, site); }
                 break;
