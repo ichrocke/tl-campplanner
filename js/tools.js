@@ -144,9 +144,11 @@ const Tools = (() => {
 
         if (e.button !== 0) return;
 
-        // Minimap click
+        // Minimap drag or click
         const rect = Canvas.canvas.getBoundingClientRect();
-        if (Canvas.minimapClick(e.clientX - rect.left, e.clientY - rect.top)) return;
+        const sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+        if (Canvas.minimapStartDrag(sx, sy)) { drag = { type: 'minimapDrag' }; return; }
+        if (Canvas.minimapClick(sx, sy)) return;
 
         switch (activeTool) {
             case 'select': onSelectDown(e, world, snapped, site); break;
@@ -448,6 +450,11 @@ const Tools = (() => {
 
         if (drag) {
             switch (drag.type) {
+                case 'minimapDrag': {
+                    const rr = Canvas.canvas.getBoundingClientRect();
+                    Canvas.minimapMoveDrag(e.clientX - rr.left, e.clientY - rr.top);
+                    break;
+                }
                 case 'pan': {
                     const dx = e.clientX - drag.lastX;
                     const dy = e.clientY - drag.lastY;
@@ -736,6 +743,11 @@ const Tools = (() => {
     }
 
     function onMouseUp(e) {
+        if (drag && drag.type === 'minimapDrag') {
+            Canvas.minimapEndDrag();
+            drag = null;
+            return;
+        }
         if (drag) {
             if (drag.type === 'move' && drag.moved) {
                 State.notifyChange();

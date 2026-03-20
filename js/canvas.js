@@ -161,14 +161,15 @@ const Canvas = (() => {
     // --- Minimap ---
     let _minimapEnabled = true;
     const MINIMAP_W = 160, MINIMAP_H = 110, MINIMAP_PAD = 8;
+    let _minimapX = -1, _minimapY = -1; // -1 = default position
 
     function drawMinimap(site) {
         if (!_minimapEnabled) return;
         const bounds = State.getSiteContentBounds(site);
         if (!bounds) return;
 
-        const mx = canvas.width - MINIMAP_W - MINIMAP_PAD;
-        const my = MINIMAP_PAD;
+        const mx = _minimapX >= 0 ? _minimapX : canvas.width - MINIMAP_W - MINIMAP_PAD;
+        const my = _minimapY >= 0 ? _minimapY : MINIMAP_PAD;
 
         // Background
         ctx.fillStyle = 'rgba(255,255,255,0.85)';
@@ -176,6 +177,12 @@ const Canvas = (() => {
         ctx.lineWidth = 1;
         ctx.fillRect(mx, my, MINIMAP_W, MINIMAP_H);
         ctx.strokeRect(mx, my, MINIMAP_W, MINIMAP_H);
+        // Drag handle bar
+        ctx.fillStyle = '#e2e6ea';
+        ctx.fillRect(mx, my, MINIMAP_W, 10);
+        ctx.fillStyle = '#aaa';
+        ctx.fillRect(mx + MINIMAP_W/2 - 12, my + 3, 24, 2);
+        ctx.fillRect(mx + MINIMAP_W/2 - 12, my + 6, 24, 2);
 
         // Scale to fit content
         const pad = 5;
@@ -206,9 +213,25 @@ const Canvas = (() => {
             }
         });
 
-        // Draw objects as dots
+        // Draw areas as filled polygons
         site.objects.forEach(obj => {
-            if (obj.type === 'bgimage' || obj.type === 'guideline' || obj.type === 'ground') return;
+            if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
+                ctx.beginPath();
+                const ap0 = mp(obj.points[0].x, obj.points[0].y);
+                ctx.moveTo(ap0.x, ap0.y);
+                obj.points.forEach((pt, i) => { if (i > 0) { const p = mp(pt.x, pt.y); ctx.lineTo(p.x, p.y); } });
+                ctx.closePath();
+                ctx.fillStyle = (obj.color || '#d4a574') + '30';
+                ctx.fill();
+                ctx.strokeStyle = obj.color || '#d4a574';
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
+        });
+
+        // Draw other objects as dots
+        site.objects.forEach(obj => {
+            if (obj.type === 'bgimage' || obj.type === 'guideline' || obj.type === 'ground' || obj.type === 'area') return;
             const p = mp(obj.x, obj.y);
             const r = Math.max(1.5, Math.min(4, (obj.width || 1) * sc * 0.4));
             ctx.fillStyle = obj.color || '#666';
@@ -230,11 +253,46 @@ const Canvas = (() => {
         );
     }
 
+    // Minimap drag state
+    let _minimapDrag = null;
+
+    function minimapHit(screenX, screenY) {
+        const mx = _minimapX >= 0 ? _minimapX : canvas.width - MINIMAP_W - MINIMAP_PAD;
+        const my = _minimapY >= 0 ? _minimapY : MINIMAP_PAD;
+        return screenX >= mx && screenX <= mx + MINIMAP_W && screenY >= my && screenY <= my + MINIMAP_H;
+    }
+
+    function minimapStartDrag(screenX, screenY) {
+        if (!_minimapEnabled) return false;
+        const mx = _minimapX >= 0 ? _minimapX : canvas.width - MINIMAP_W - MINIMAP_PAD;
+        const my = _minimapY >= 0 ? _minimapY : MINIMAP_PAD;
+        // Check if clicking the top 12px (title bar area) for dragging
+        if (screenX >= mx && screenX <= mx + MINIMAP_W && screenY >= my && screenY <= my + 12) {
+            _minimapDrag = { offX: screenX - mx, offY: screenY - my };
+            return true;
+        }
+        return false;
+    }
+
+    function minimapMoveDrag(screenX, screenY) {
+        if (!_minimapDrag) return false;
+        _minimapX = Math.max(0, Math.min(canvas.width - MINIMAP_W, screenX - _minimapDrag.offX));
+        _minimapY = Math.max(0, Math.min(canvas.height - MINIMAP_H, screenY - _minimapDrag.offY));
+        render();
+        return true;
+    }
+
+    function minimapEndDrag() {
+        if (_minimapDrag) { _minimapDrag = null; return true; }
+        return false;
+    }
+
     // Minimap click handler - called from tools.js
     function minimapClick(screenX, screenY) {
         if (!_minimapEnabled) return false;
-        const mx = canvas.width - MINIMAP_W - MINIMAP_PAD;
-        const my = MINIMAP_PAD;
+        if (_minimapDrag) return false;
+        const mx = _minimapX >= 0 ? _minimapX : canvas.width - MINIMAP_W - MINIMAP_PAD;
+        const my = _minimapY >= 0 ? _minimapY : MINIMAP_PAD;
         if (screenX < mx || screenX > mx + MINIMAP_W || screenY < my || screenY > my + MINIMAP_H) return false;
 
         const site = State.activeSite;
@@ -2052,7 +2110,7 @@ const Canvas = (() => {
         get pathPreview() { return pathPreview; },
         set pathPreview(p) { pathPreview = p; },
         renderOffscreen,
-        minimapClick,
+        minimapClick, minimapHit, minimapStartDrag, minimapMoveDrag, minimapEndDrag,
         get minimapEnabled() { return _minimapEnabled; },
         set minimapEnabled(v) { _minimapEnabled = v; },
         polygonArea,

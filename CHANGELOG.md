@@ -3,7 +3,7 @@
 ## [5.4.0] - 2026-03-20
 
 ### Added
-- **Minimap**: Overview map in top-right corner showing all objects and ground areas. Blue rectangle indicates current viewport. Click on minimap to navigate. Automatically hidden in print/export output. Toggle in settings, state saved in export
+- **Minimap**: Overview map in top-right corner showing ground areas as polygons, areas as filled shapes, objects as dots. Blue rectangle indicates current viewport. Click to navigate, drag handle bar to move minimap. Toggle in settings, state saved in export. Hidden in print
 
 ## [5.3.0] - 2026-03-20
 
