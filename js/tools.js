@@ -462,14 +462,37 @@ const Tools = (() => {
                         const obj = site.objects.find(o => Canvas.isSelected(o.id));
                         const orig = obj ? drag.origPositions[obj.id] : null;
                         if (obj && orig) {
-                            const target = Canvas.snapObjToGrid(obj, orig.x + rawDx, orig.y + rawDy, site.gridSize);
-                            const dx = target.x - orig.x;
-                            const dy = target.y - orig.y;
+                            let dx, dy;
+                            if (obj.points && orig.points && orig.points.length > 0) {
+                                // For points-based objects (ground, area, fence):
+                                // snap the bounding box edges to grid
+                                const gs = site.gridSize;
+                                const newCx = orig.x + rawDx, newCy = orig.y + rawDy;
+                                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                                orig.points.forEach(p => {
+                                    const px = p.x + (rawDx), py = p.y + (rawDy);
+                                    if (px < minX) minX = px; if (px > maxX) maxX = px;
+                                    if (py < minY) minY = py; if (py > maxY) maxY = py;
+                                });
+                                // Snap nearest edge
+                                const snapMinX = Math.round(minX / gs) * gs;
+                                const snapMaxX = Math.round(maxX / gs) * gs;
+                                const snapMinY = Math.round(minY / gs) * gs;
+                                const snapMaxY = Math.round(maxY / gs) * gs;
+                                const sdx = Math.abs(snapMinX - minX) <= Math.abs(snapMaxX - maxX) ? snapMinX - minX : snapMaxX - maxX;
+                                const sdy = Math.abs(snapMinY - minY) <= Math.abs(snapMaxY - maxY) ? snapMinY - minY : snapMaxY - maxY;
+                                dx = rawDx + sdx;
+                                dy = rawDy + sdy;
+                            } else {
+                                const target = Canvas.snapObjToGrid(obj, orig.x + rawDx, orig.y + rawDy, site.gridSize);
+                                dx = target.x - orig.x;
+                                dy = target.y - orig.y;
+                            }
                             if (obj.points && orig.points) {
                                 obj.points.forEach((p, i) => { p.x = orig.points[i].x + dx; p.y = orig.points[i].y + dy; });
                             }
-                            obj.x = target.x;
-                            obj.y = target.y;
+                            obj.x = orig.x + dx;
+                            obj.y = orig.y + dy;
                         }
                     } else {
                     // Multi-selection or no snap: use delta
