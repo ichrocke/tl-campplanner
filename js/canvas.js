@@ -155,6 +155,105 @@ const Canvas = (() => {
         drawSiteLabel(activeSite);
         drawScaleBar(activeSite);
         drawCompass();
+        drawMinimap(activeSite);
+    }
+
+    // --- Minimap ---
+    let _minimapEnabled = true;
+    const MINIMAP_W = 160, MINIMAP_H = 110, MINIMAP_PAD = 8;
+
+    function drawMinimap(site) {
+        if (!_minimapEnabled) return;
+        const bounds = State.getSiteContentBounds(site);
+        if (!bounds) return;
+
+        const mx = canvas.width - MINIMAP_W - MINIMAP_PAD;
+        const my = MINIMAP_PAD;
+
+        // Background
+        ctx.fillStyle = 'rgba(255,255,255,0.85)';
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1;
+        ctx.fillRect(mx, my, MINIMAP_W, MINIMAP_H);
+        ctx.strokeRect(mx, my, MINIMAP_W, MINIMAP_H);
+
+        // Scale to fit content
+        const pad = 5;
+        const scaleX = (MINIMAP_W - pad * 2) / bounds.width;
+        const scaleY = (MINIMAP_H - pad * 2) / bounds.height;
+        const sc = Math.min(scaleX, scaleY);
+
+        function mp(wx, wy) {
+            return {
+                x: mx + pad + (wx - bounds.minX) * sc,
+                y: my + pad + (wy - bounds.minY) * sc
+            };
+        }
+
+        // Draw ground areas
+        site.objects.forEach(obj => {
+            if (obj.type === 'ground' && obj.points && obj.points.length >= 3) {
+                ctx.beginPath();
+                const p0 = mp(obj.points[0].x, obj.points[0].y);
+                ctx.moveTo(p0.x, p0.y);
+                obj.points.forEach((pt, i) => { if (i > 0) { const p = mp(pt.x, pt.y); ctx.lineTo(p.x, p.y); } });
+                ctx.closePath();
+                ctx.fillStyle = 'rgba(34,197,94,0.15)';
+                ctx.fill();
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 0.5;
+                ctx.stroke();
+            }
+        });
+
+        // Draw objects as dots
+        site.objects.forEach(obj => {
+            if (obj.type === 'bgimage' || obj.type === 'guideline' || obj.type === 'ground') return;
+            const p = mp(obj.x, obj.y);
+            const r = Math.max(1.5, Math.min(4, (obj.width || 1) * sc * 0.4));
+            ctx.fillStyle = obj.color || '#666';
+            ctx.globalAlpha = 0.7;
+            ctx.fillRect(p.x - r, p.y - r, r * 2, r * 2);
+        });
+        ctx.globalAlpha = 1;
+
+        // Draw viewport rectangle
+        const tl = s2w(0, 0);
+        const br = s2w(canvas.width, canvas.height);
+        const vtl = mp(tl.x, tl.y);
+        const vbr = mp(br.x, br.y);
+        ctx.strokeStyle = '#2563eb';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(
+            Math.max(mx, vtl.x), Math.max(my, vtl.y),
+            Math.min(MINIMAP_W, vbr.x - vtl.x), Math.min(MINIMAP_H, vbr.y - vtl.y)
+        );
+    }
+
+    // Minimap click handler - called from tools.js
+    function minimapClick(screenX, screenY) {
+        if (!_minimapEnabled) return false;
+        const mx = canvas.width - MINIMAP_W - MINIMAP_PAD;
+        const my = MINIMAP_PAD;
+        if (screenX < mx || screenX > mx + MINIMAP_W || screenY < my || screenY > my + MINIMAP_H) return false;
+
+        const site = State.activeSite;
+        if (!site) return false;
+        const bounds = State.getSiteContentBounds(site);
+        if (!bounds) return false;
+
+        const pad = 5;
+        const scaleX = (MINIMAP_W - pad * 2) / bounds.width;
+        const scaleY = (MINIMAP_H - pad * 2) / bounds.height;
+        const sc = Math.min(scaleX, scaleY);
+
+        const worldX = bounds.minX + (screenX - mx - pad) / sc;
+        const worldY = bounds.minY + (screenY - my - pad) / sc;
+
+        site.view.panX = -worldX;
+        site.view.panY = -worldY;
+        render();
+        return true;
     }
 
     function drawSiteLabel(site) {
@@ -1827,6 +1926,8 @@ const Canvas = (() => {
 
         const dpiScale = (options && options.dpiScale) || 1;
         const origTreasure = _treasureMode;
+        const origMinimap = _minimapEnabled;
+        _minimapEnabled = false; // no minimap in print
         _treasureMode = !!(options && options.treasureMap);
 
         // Save state
@@ -1910,6 +2011,7 @@ const Canvas = (() => {
         origSel.forEach(id => selectedIds.add(id));
         hoveredId = origHov;
         _treasureMode = origTreasure;
+        _minimapEnabled = origMinimap;
 
         return oc;
     }
@@ -1950,6 +2052,9 @@ const Canvas = (() => {
         get pathPreview() { return pathPreview; },
         set pathPreview(p) { pathPreview = p; },
         renderOffscreen,
+        minimapClick,
+        get minimapEnabled() { return _minimapEnabled; },
+        set minimapEnabled(v) { _minimapEnabled = v; },
         polygonArea,
         SYMBOLS,
         pointInPolygonCheck: pointInPolygon,

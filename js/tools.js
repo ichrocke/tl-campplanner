@@ -144,6 +144,10 @@ const Tools = (() => {
 
         if (e.button !== 0) return;
 
+        // Minimap click
+        const rect = Canvas.canvas.getBoundingClientRect();
+        if (Canvas.minimapClick(e.clientX - rect.left, e.clientY - rect.top)) return;
+
         switch (activeTool) {
             case 'select': onSelectDown(e, world, snapped, site); break;
             case 'pan': drag = { type: 'pan', lastX: e.clientX, lastY: e.clientY }; break;
