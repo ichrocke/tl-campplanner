@@ -850,7 +850,8 @@ const Canvas = (() => {
         // Name/description rendered AFTER ctx.restore() so they don't rotate
         // Store values needed for post-restore rendering
         const _labelFs = Math.max(9, Math.min(13, z * 0.4)) * fs;
-        const _labelFitsInside = ctx.measureText(obj.name).width < (w - 4) && _labelFs < h * 0.5;
+        const _labelName = obj.name || '';
+        const _labelFitsInside = _labelName ? (ctx.measureText(_labelName).width < (w - 4) && _labelFs < h * 0.5) : true;
 
         // Selection / hover
         if (isSel) {
