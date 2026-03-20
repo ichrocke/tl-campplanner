@@ -1203,8 +1203,8 @@ const UI = (() => {
             </div>`;
         }
 
-        // --- Lock (ground + bgimage) ---
-        if (obj.type === 'ground' || obj.type === 'bgimage') {
+        // --- Lock (all object types) ---
+        if (obj.type !== 'guideline') {
             html += `<div class="prop-section">
                 <label style="flex-direction:row !important;align-items:center !important;gap:6px !important;cursor:pointer">
                     <input type="checkbox" id="prop-locked" ${obj.locked ? 'checked' : ''} style="width:auto">
