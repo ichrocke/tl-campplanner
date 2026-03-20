@@ -474,13 +474,15 @@ const Canvas = (() => {
             if (pts.length >= 3) {
                 const center = polygonCentroid(pts);
                 const cp = w2s(center.x, center.y);
+                const glox = (obj.labelOffsetX || 0) * z;
+                const gloy = (obj.labelOffsetY || 0) * z;
                 if (_treasureMode) {
                     if (obj.name) {
                         ctx.font = "14px 'PirateFont', 'Georgia', serif";
                         ctx.fillStyle = '#2a1a0a';
                         ctx.textAlign = 'center';
                         ctx.textBaseline = 'middle';
-                        ctx.fillText(obj.name, cp.x, cp.y);
+                        ctx.fillText(obj.name, cp.x + glox, cp.y + gloy);
                     }
                 } else {
                     const area = polygonArea(pts);
@@ -489,10 +491,10 @@ const Canvas = (() => {
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     const lockIcon = obj.locked ? ' \u{1F512}' : '';
-                    ctx.fillText(area.toFixed(1) + ' m\u00b2' + lockIcon, cp.x, cp.y);
+                    ctx.fillText(area.toFixed(1) + ' m\u00b2' + lockIcon, cp.x + glox, cp.y + gloy);
                     if (obj.name) {
                         ctx.font = '10px sans-serif';
-                        ctx.fillText(obj.name, cp.x, cp.y + 14);
+                        ctx.fillText(obj.name, cp.x + glox, cp.y + gloy + 14);
                     }
                 }
             }
@@ -1071,14 +1073,16 @@ const Canvas = (() => {
             });
         }
 
-        // Label at centroid
+        // Label at centroid (with offset)
         const center = polygonCentroid(obj.points);
         const cp = w2s(center.x, center.y);
+        const alox = (obj.labelOffsetX || 0) * z;
+        const aloy = (obj.labelOffsetY || 0) * z;
         ctx.font = 'bold 11px sans-serif';
         ctx.fillStyle = color;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(obj.name || I18n.t('msg.defaultArea'), cp.x, cp.y);
+        ctx.fillText(obj.name || I18n.t('msg.defaultArea'), cp.x + alox, cp.y + aloy);
     }
 
     function drawTextField(obj, z, isSel, isHov) {
