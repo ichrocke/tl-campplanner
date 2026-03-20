@@ -474,8 +474,8 @@ const Canvas = (() => {
             if (pts.length >= 3) {
                 const center = polygonCentroid(pts);
                 const cp = w2s(center.x, center.y);
-                const glox = (obj.labelOffsetX || 0) * z;
-                const gloy = (obj.labelOffsetY || 0) * z;
+                const glox = (obj.labelOffsetX || 0) * zoom();
+                const gloy = (obj.labelOffsetY || 0) * zoom();
                 if (_treasureMode) {
                     if (obj.name) {
                         ctx.font = "14px 'PirateFont', 'Georgia', serif";
@@ -1077,8 +1077,8 @@ const Canvas = (() => {
         // Label at centroid (with offset)
         const center = polygonCentroid(obj.points);
         const cp = w2s(center.x, center.y);
-        const alox = (obj.labelOffsetX || 0) * z;
-        const aloy = (obj.labelOffsetY || 0) * z;
+        const alox = (obj.labelOffsetX || 0) * (typeof z === 'number' ? z : zoom());
+        const aloy = (obj.labelOffsetY || 0) * (typeof z === 'number' ? z : zoom());
         ctx.font = 'bold 11px sans-serif';
         ctx.fillStyle = color;
         ctx.textAlign = 'center';
