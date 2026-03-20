@@ -410,7 +410,7 @@ const Tools = (() => {
             }
             return true;
         });
-        if (hit && (hit.type === 'tent' || hit.type === 'ground')) {
+        if (hit && (hit.type === 'tent' || hit.type === 'ground' || hit.type === 'area')) {
             const color = UI.getActiveColor();
             if (color) {
                 State.updateObject(hit.id, { color: color });
