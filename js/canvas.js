@@ -123,6 +123,27 @@ const Canvas = (() => {
         drawGround(activeSite);
         drawObjects(activeSite);
 
+        // Permanent distances
+        if (State.showDistances) {
+            activeSite.objects.forEach(obj => {
+                if (obj.type === 'ground' || obj.type === 'bgimage' || obj.type === 'guideline' || obj.type === 'symbol') return;
+                computeDistancesForObj(obj.id).forEach(d => {
+                    const p1 = w2s(d.x1, d.y1), p2 = w2s(d.x2, d.y2);
+                    ctx.strokeStyle = d.color; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+                    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                    ctx.setLineDash([]);
+                    const text = d.dist.toFixed(1) + ' m';
+                    ctx.font = 'bold 10px sans-serif';
+                    const tw = ctx.measureText(text).width;
+                    const mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2;
+                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                    ctx.fillRect(mx-tw/2-2, my-7, tw+4, 14);
+                    ctx.fillStyle = d.color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                    ctx.fillText(text, mx, my);
+                });
+            });
+        }
+
         // Active site overlays
         drawGroundPreview();
         drawPlacementPreview();
@@ -824,66 +845,10 @@ const Canvas = (() => {
             ctx.stroke();
         }
 
-        // Name label
-        if (_treasureMode) {
-            // Treasure: pirate font with slight wobble
-            const tfs = Math.max(10, Math.min(16, z * 0.5)) * fs;
-            ctx.font = `${tfs}px 'PirateFont', 'Georgia', serif`;
-            ctx.fillStyle = '#2a1a0a';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            const nameLines = (obj.name || '').split('\n');
-            let ny = -(nameLines.length - 1) * tfs * 0.55;
-            nameLines.forEach(line => {
-                ctx.save();
-                ctx.translate(0, ny);
-                ctx.rotate(Math.sin(obj.x * 0.5 + obj.y * 0.3) * 0.04);
-                ctx.fillText(line, 0, 0);
-                ctx.restore();
-                ny += tfs * 1.3;
-            });
-        } else {
-        const fontSize = Math.max(9, Math.min(13, z * 0.4)) * fs;
-        ctx.font = `600 ${fontSize}px sans-serif`;
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#1e293b';
-        const nameW = ctx.measureText(obj.name).width;
-        const fitsInside = nameW < (w - 4) && fontSize < h * 0.5;
-
-        const nameLines = (obj.name || '').split('\n');
-        if (fitsInside) {
-            ctx.textBaseline = 'middle';
-            const nlh = fontSize * 1.1;
-            let ny = -fontSize * 0.35 - (nameLines.length - 1) * nlh / 2;
-            nameLines.forEach(line => { ctx.fillText(line, 0, ny); ny += nlh; });
-            ctx.font = `${Math.max(8, fontSize - 2)}px sans-serif`;
-            ctx.fillStyle = '#64748b';
-            ctx.fillText(`${obj.width}\u00d7${obj.height}m`, 0, ny - nlh / 2 + fontSize * 0.6);
-        } else {
-            ctx.textBaseline = 'bottom';
-            let ny = -h / 2 - 4 - (nameLines.length - 1) * fontSize * 1.1;
-            nameLines.forEach(line => { ctx.fillText(line, 0, ny); ny += fontSize * 1.1; });
-            ctx.font = `${Math.max(8, fontSize - 2)}px sans-serif`;
-            ctx.fillStyle = '#64748b';
-            ctx.textBaseline = 'top';
-            ctx.fillText(`${obj.width}\u00d7${obj.height}m`, 0, h / 2 + 3);
-        }
-        }
-
-        // Description (skip in treasure mode)
-        if (obj.description && !_treasureMode) {
-            const descFs = obj.descSize ? Math.max(6, obj.descSize * z * 0.4) : Math.max(7, fontSize - 2);
-            ctx.font = `italic ${descFs}px sans-serif`;
-            ctx.fillStyle = obj.descColor || '#94a3b8';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'top';
-            let descY = fitsInside ? fontSize * 0.55 + descFs + 1 : h / 2 + 3 + descFs + 2;
-            const lines = obj.description.split('\n');
-            lines.forEach(line => {
-                ctx.fillText(line, 0, descY - descFs);
-                descY += descFs + 1;
-            });
-        }
+        // Name/description rendered AFTER ctx.restore() so they don't rotate
+        // Store values needed for post-restore rendering
+        const _labelFs = Math.max(9, Math.min(13, z * 0.4)) * fs;
+        const _labelFitsInside = ctx.measureText(obj.name).width < (w - 4) && _labelFs < h * 0.5;
 
         // Selection / hover
         if (isSel) {
@@ -916,6 +881,58 @@ const Canvas = (() => {
 
         ctx.restore();
         ctx.globalAlpha = 1;
+
+        // Name label (rendered after restore = always horizontal)
+        const lox = (obj.labelOffsetX || 0) * z;
+        const loy = (obj.labelOffsetY || 0) * z;
+        if (_treasureMode) {
+            const tfs = Math.max(10, Math.min(16, z * 0.5)) * fs;
+            ctx.font = `${tfs}px 'PirateFont', 'Georgia', serif`;
+            ctx.fillStyle = '#2a1a0a';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            const nameLines = (obj.name || '').split('\n');
+            let ny = pos.y + loy - (nameLines.length - 1) * tfs * 0.55;
+            nameLines.forEach(line => { ctx.fillText(line, pos.x + lox, ny); ny += tfs * 1.3; });
+        } else {
+            const fontSize = _labelFs;
+            ctx.font = `600 ${fontSize}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#1e293b';
+            const nameLines = (obj.name || '').split('\n');
+            if (_labelFitsInside) {
+                ctx.textBaseline = 'middle';
+                const nlh = fontSize * 1.1;
+                let ny = pos.y + loy - fontSize * 0.35 - (nameLines.length - 1) * nlh / 2;
+                nameLines.forEach(line => { ctx.fillText(line, pos.x + lox, ny); ny += nlh; });
+                ctx.font = `${Math.max(8, fontSize - 2)}px sans-serif`;
+                ctx.fillStyle = '#64748b';
+                ctx.fillText(`${obj.width}\u00d7${obj.height}m`, pos.x + lox, ny - nlh / 2 + fontSize * 0.6);
+            } else {
+                ctx.textBaseline = 'bottom';
+                let ny = pos.y + loy - h / 2 - 4 - (nameLines.length - 1) * fontSize * 1.1;
+                nameLines.forEach(line => { ctx.fillText(line, pos.x + lox, ny); ny += fontSize * 1.1; });
+                ctx.font = `${Math.max(8, fontSize - 2)}px sans-serif`;
+                ctx.fillStyle = '#64748b';
+                ctx.textBaseline = 'top';
+                ctx.fillText(`${obj.width}\u00d7${obj.height}m`, pos.x + lox, pos.y + loy + h / 2 + 3);
+            }
+        }
+
+        // Description (after restore, horizontal)
+        if (obj.description && !_treasureMode) {
+            const fontSize = _labelFs;
+            const descFs = obj.descSize ? Math.max(6, obj.descSize * z * 0.4) : Math.max(7, fontSize - 2);
+            ctx.font = `italic ${descFs}px sans-serif`;
+            ctx.fillStyle = obj.descColor || '#94a3b8';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            let descY = _labelFitsInside ? pos.y + loy + fontSize * 0.55 + descFs + 1 : pos.y + loy + h / 2 + 3 + descFs + 2;
+            obj.description.split('\n').forEach(line => {
+                ctx.fillText(line, pos.x + lox, descY - descFs);
+                descY += descFs + 1;
+            });
+        }
     }
 
     // --- Area texture patterns ---

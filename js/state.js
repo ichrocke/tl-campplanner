@@ -94,6 +94,7 @@ const State = (() => {
         get defaultTemplates() { return defaultTemplates(); },
         get minDistance() { return _minDistance; },
         set minDistance(v) { _minDistance = v; },
+        showDistances: false,
         get displaySettings() { return _displaySettings; },
 
         onChange(fn) { _listeners.push(fn); },

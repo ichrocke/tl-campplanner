@@ -996,6 +996,11 @@ const UI = (() => {
             localStorage.setItem('zeltplaner_autosave_enabled', e.target.checked ? '1' : '0');
         });
 
+        document.getElementById('show-distances-toggle').addEventListener('change', (e) => {
+            State.showDistances = e.target.checked;
+            Canvas.render();
+        });
+
         // (Background image controls moved to floating toolbar)
     }
 
@@ -1012,6 +1017,7 @@ const UI = (() => {
         document.getElementById('set-hatchscale').value = ds.hatchScale;
         document.getElementById('lang-select').value = I18n.lang;
         document.getElementById('autosave-toggle').checked = localStorage.getItem('zeltplaner_autosave_enabled') !== '0';
+        document.getElementById('show-distances-toggle').checked = State.showDistances;
     }
 
     // --- Properties Panel ---
@@ -1190,6 +1196,8 @@ const UI = (() => {
                 ${obj.type !== 'text' && obj.type !== 'fence' ? `<div class="prop-grid">
                     <label>${I18n.t('props.labelSize')} <input type="number" id="prop-labelsize" value="${obj.labelSize || 0}" min="0" max="3" step="0.1" placeholder="auto"></label>
                     <label>${I18n.t('props.lineWidth')} <input type="number" id="prop-linewidth" value="${obj.lineWidth || 0}" min="0" max="3" step="0.1" placeholder="auto"></label>
+                    <label>Label X <input type="number" id="prop-labeloffx" value="${obj.labelOffsetX || 0}" step="0.5"></label>
+                    <label>Label Y <input type="number" id="prop-labeloffy" value="${obj.labelOffsetY || 0}" step="0.5"></label>
                 </div>` : ''}
                 <label>${I18n.t('props.opacity')} <input type="range" id="prop-obj-opacity" min="0.05" max="1" step="0.05" value="${opVal}" style="width:100%"></label>
             </div>`;
@@ -1361,6 +1369,8 @@ const UI = (() => {
         }
         bind('prop-labelsize', 'labelSize', parseFloat);
         bind('prop-linewidth', 'lineWidth', parseFloat);
+        bind('prop-labeloffx', 'labelOffsetX', parseFloat);
+        bind('prop-labeloffy', 'labelOffsetY', parseFloat);
         bind('prop-ropewidth', 'ropeWidth', parseFloat);
         bind('prop-x', 'x', parseFloat);
         bind('prop-y', 'y', parseFloat);
