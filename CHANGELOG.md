@@ -1,5 +1,21 @@
 # Changelog
 
+## [5.3.0] - 2026-03-20
+
+### Added
+- **Black & white print**: Checkbox in export dialog to convert output to grayscale
+- **Multi-object export/import**: Export button in multi-selection panel saves all selected objects. Import via right-click recognizes multi-object files and places them centered on click
+- **Color palette persistence**: Saved colors included in auto-save and JSON export/import
+- **Show distances persistence**: Toggle state saved in export
+
+### Changed
+- Label size now affects ground area and area object names (was hardcoded)
+- Clear all resets color palette to defaults and showDistances to off
+- Post-it toolbar icon uses outline style matching other icons
+
+### Fixed
+- Description size, label size, line width, rope width fields show empty with "auto" placeholder instead of "0"
+
 ## [5.2.1] - 2026-03-20
 
 ### Changed
