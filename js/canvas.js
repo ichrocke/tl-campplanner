@@ -486,15 +486,16 @@ const Canvas = (() => {
                     }
                 } else {
                     const area = polygonArea(pts);
-                    ctx.font = 'bold 12px sans-serif';
+                    const gfs = obj.labelSize ? Math.round(12 * obj.labelSize) : 12;
+                    ctx.font = `bold ${gfs}px sans-serif`;
                     ctx.fillStyle = darkColor;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     const lockIcon = obj.locked ? ' \u{1F512}' : '';
                     ctx.fillText(area.toFixed(1) + ' m\u00b2' + lockIcon, cp.x + glox, cp.y + gloy);
                     if (obj.name) {
-                        ctx.font = '10px sans-serif';
-                        ctx.fillText(obj.name, cp.x + glox, cp.y + gloy + 14);
+                        ctx.font = `${Math.round(gfs * 0.8)}px sans-serif`;
+                        ctx.fillText(obj.name, cp.x + glox, cp.y + gloy + gfs + 2);
                     }
                 }
             }
@@ -1079,7 +1080,8 @@ const Canvas = (() => {
         const cp = w2s(center.x, center.y);
         const alox = (obj.labelOffsetX || 0) * (typeof z === 'number' ? z : zoom());
         const aloy = (obj.labelOffsetY || 0) * (typeof z === 'number' ? z : zoom());
-        ctx.font = 'bold 11px sans-serif';
+        const afs = obj.labelSize ? Math.round(11 * obj.labelSize) : 11;
+        ctx.font = `bold ${afs}px sans-serif`;
         ctx.fillStyle = color;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';

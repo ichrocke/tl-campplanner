@@ -1064,7 +1064,7 @@ const UI = (() => {
                    <label>${I18n.t('props.description')} <textarea id="prop-desc" rows="2" placeholder="${I18n.t('props.descPlaceholder')}" style="resize:vertical;font-family:var(--font);font-size:12px">${descVal}</textarea></label>
                    <div class="prop-grid">
                        <label>${I18n.t('props.descColor')} <input type="color" id="prop-desc-color" value="${obj.descColor || '#94a3b8'}"></label>
-                       <label>${I18n.t('props.descSize')} <input type="number" id="prop-desc-size" value="${obj.descSize || 0}" min="0" max="5" step="0.1" placeholder="auto"></label>
+                       <label>${I18n.t('props.descSize')} <input type="number" id="prop-desc-size" value="${obj.descSize || ''}" min="0" max="5" step="0.1" placeholder="auto"></label>
                    </div>`
             }`;
         if (obj.type === 'text') {
@@ -1533,6 +1533,7 @@ const UI = (() => {
                 <button class="btn-duplicate" id="prop-multi-ungroup">${I18n.t('ctx.ungroup')}</button>
             </div>
             <div class="prop-actions">
+                <button class="btn-duplicate" id="prop-multi-export">${I18n.t('btn.export')}</button>
                 <button class="btn-duplicate" id="prop-multi-dup">${I18n.t('props.duplicateAll')}</button>
                 <button class="btn-danger" id="prop-multi-del">${I18n.t('props.deleteAll')}</button>
             </div>`;
@@ -1640,6 +1641,16 @@ const UI = (() => {
             Canvas.render();
             buildPlacedList();
         });
+        document.getElementById('prop-multi-export').addEventListener('click', () => {
+            const objs = selObjs.map(o => JSON.parse(JSON.stringify(o)));
+            const data = { type: 'objects_export', version: 1, objects: objs };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'objects_export.json'; a.click();
+            URL.revokeObjectURL(url);
+        });
+
         document.getElementById('prop-multi-dup').addEventListener('click', () => {
             const newIds = [];
             [...Canvas.selectedIds].forEach(id => {
@@ -1833,6 +1844,21 @@ const UI = (() => {
                                 o.id = State.generateId();
                                 o.layerId = site.activeLayerId;
                                 site.objects.push(o);
+                                State.notifyChange();
+                                Canvas.render();
+                            } else if (data.type === 'objects_export' && data.objects && site) {
+                                // Multi-object import - center on click position
+                                let cx = 0, cy = 0;
+                                data.objects.forEach(o => { cx += o.x; cy += o.y; });
+                                cx /= data.objects.length; cy /= data.objects.length;
+                                const dx = worldPos.x - cx, dy = worldPos.y - cy;
+                                data.objects.forEach(o => {
+                                    o.x += dx; o.y += dy;
+                                    if (o.points) o.points.forEach(p => { p.x += dx; p.y += dy; });
+                                    o.id = State.generateId();
+                                    o.layerId = site.activeLayerId;
+                                    site.objects.push(o);
+                                });
                                 State.notifyChange();
                                 Canvas.render();
                             } else {
