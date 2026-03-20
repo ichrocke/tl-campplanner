@@ -315,8 +315,13 @@ const State = (() => {
                 sites: _sites,
                 minDistance: _minDistance,
                 displaySettings: _displaySettings,
+                showDistances: this.showDistances,
+                colorPalette: this._colorPalette || null,
             }, null, 2);
         },
+
+        // Color palette storage (set by UI)
+        _colorPalette: null,
 
         importJSON(json) {
             const data = JSON.parse(json);
@@ -381,6 +386,8 @@ const State = (() => {
             });
             _minDistance = data.minDistance || 2;
             if (data.displaySettings) Object.assign(_displaySettings, data.displaySettings);
+            if (data.showDistances !== undefined) this.showDistances = data.showDistances;
+            if (data.colorPalette) this._colorPalette = data.colorPalette;
             _activeSiteIndex = 0;
             notify();
         },

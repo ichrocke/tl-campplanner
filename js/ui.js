@@ -8,6 +8,16 @@ const UI = (() => {
     let _savedColors = ['#4a90d9', '#ea580c', '#22c55e', '#9333ea', '#ef4444', '#f59e0b'];
     let _activeColorIdx = 0;
 
+    function syncColorsToState() {
+        State._colorPalette = { colors: [..._savedColors], active: _activeColorIdx };
+    }
+    function syncColorsFromState() {
+        if (State._colorPalette && State._colorPalette.colors) {
+            _savedColors = State._colorPalette.colors;
+            _activeColorIdx = State._colorPalette.active || 0;
+        }
+    }
+
     function init() {
         buildPalette();
         buildTabs();
@@ -19,6 +29,7 @@ const UI = (() => {
         bindPaletteToggle();
         bindFloatingTools();
         bindLangFlags();
+        syncColorsFromState();
         buildColorSwatches();
         bindSidebarDivider();
         bindLayers();
@@ -242,6 +253,7 @@ const UI = (() => {
     }
 
     function buildColorSwatches() {
+        syncColorsToState();
         const container = document.getElementById('color-swatches');
         container.innerHTML = '';
         _savedColors.forEach((color, i) => {
@@ -1023,6 +1035,12 @@ const UI = (() => {
         document.getElementById('lang-select').value = I18n.lang;
         document.getElementById('autosave-toggle').checked = localStorage.getItem('zeltplaner_autosave_enabled') !== '0';
         document.getElementById('show-distances-toggle').checked = State.showDistances;
+        // Sync color palette from state (after import)
+        if (State._colorPalette && State._colorPalette.colors) {
+            _savedColors = State._colorPalette.colors;
+            _activeColorIdx = State._colorPalette.active || 0;
+            buildColorSwatches();
+        }
         const cr = (site && site.compassRotation) || 0;
         document.getElementById('compass-rotation').value = cr;
         document.getElementById('compass-rot-val').textContent = cr;
