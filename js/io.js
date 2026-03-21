@@ -802,7 +802,10 @@ const IO = (() => {
           }
         });
 
-        console.log('[DXF] DXF size:', dxf.length, 'chars');
+        // Count entities in the DXF
+        const entityTypes = (dxf.match(/^0\n(LWPOLYLINE|CIRCLE|MTEXT|POINT|TEXT)/gm) || []);
+        console.log('[DXF] Entities:', entityTypes.length, 'Size:', dxf.length);
+        console.log('[DXF] Entity breakdown:', entityTypes.reduce((m,e) => { const t = e.split('\n')[1]; m[t] = (m[t]||0)+1; return m; }, {}));
         dxf += '0\nENDSEC\n0\nEOF\n';
         const blob = new Blob([dxf], { type: 'application/dxf' });
         const url = URL.createObjectURL(blob);
