@@ -746,12 +746,11 @@ const IO = (() => {
                 }
                 // Rope lines from body to outer
                 const ropeColor = '#d1d5db';
+                const rad = (rot || 0) * Math.PI / 180;
+                const cos = Math.cos(rad), sin = Math.sin(rad);
+                const rotP = (dx,dy) => ({ x: obj.x + dx*cos - dy*sin, y: obj.y + dx*sin + dy*cos });
                 if (shape === 'rect') {
                     const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
-                    const rad = (rot || 0) * Math.PI / 180;
-                    const cos = Math.cos(rad), sin = Math.sin(rad);
-                    const rotP = (dx,dy) => ({ x: obj.x + dx*cos - dy*sin, y: obj.y + dx*sin + dy*cos });
-                    // Corner ropes
                     [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([sx,sy]) => {
                         const sideH = sy < 0 ? 'top' : 'bottom', sideV = sx < 0 ? 'left' : 'right';
                         if (sides[sideH] || sides[sideV]) {
@@ -759,11 +758,21 @@ const IO = (() => {
                             els += `<line x1="${(from.x*s).toFixed(1)}" y1="${(from.y*s).toFixed(1)}" x2="${(to.x*s).toFixed(1)}" y2="${(to.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`;
                         }
                     });
-                    // Mid-edge ropes
                     if (sides.top) { const f = rotP(0,-hh), t = rotP(0,-hh-gd); els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`; }
                     if (sides.bottom) { const f = rotP(0,hh), t = rotP(0,hh+gd); els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`; }
                     if (sides.left) { const f = rotP(-hw,0), t = rotP(-hw-gd,0); els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`; }
                     if (sides.right) { const f = rotP(hw,0), t = rotP(hw+gd,0); els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`; }
+                } else {
+                    // Radial ropes for circle/polygon shapes
+                    const n = shape === 'circle' ? 8 : shape === 'triangle' ? 3 : shape === 'hexagon' ? 6 : shape === 'octagon' ? 8 : shape === 'decagon' ? 10 : shape === 'dodecagon' ? 12 : 8;
+                    const r = Math.max(hw, hh);
+                    for (let i = 0; i < n; i++) {
+                        const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+                        const fx = Math.cos(a) * r, fy = Math.sin(a) * r;
+                        const tx = Math.cos(a) * (r + gd), ty = Math.sin(a) * (r + gd);
+                        const from = rotP(fx, fy), to = rotP(tx, ty);
+                        els += `<line x1="${(from.x*s).toFixed(1)}" y1="${(from.y*s).toFixed(1)}" x2="${(to.x*s).toFixed(1)}" y2="${(to.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`;
+                    }
                 }
             }
 
