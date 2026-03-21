@@ -580,7 +580,10 @@ const Tools = (() => {
                         }
                         obj.rotation = newRot;
                         Canvas.render();
-                        UI.showProperties(obj);
+                        const ri = document.getElementById('prop-rotation');
+                        const rs = document.getElementById('prop-rotation-slider');
+                        if (ri) ri.value = Math.round(newRot);
+                        if (rs) rs.value = Math.round(newRot);
                     }
                     break;
                 }
