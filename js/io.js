@@ -618,6 +618,25 @@ const IO = (() => {
 
         let els = '';
 
+        // Grid (if enabled in print settings)
+        const showGrid = document.getElementById('print-grid').checked;
+        if (showGrid) {
+            const gridSize = site.gridSize || 1;
+            const gridS = gridSize * s;
+            const startX = Math.ceil((bounds.minX - pad) / gridSize) * gridSize;
+            const startY = Math.ceil((bounds.minY - pad) / gridSize) * gridSize;
+            const endX = bounds.maxX + pad;
+            const endY = bounds.maxY + pad;
+            els += `<g stroke="#e2e8f0" stroke-width="0.5">\n`;
+            for (let gx = startX; gx <= endX; gx += gridSize) {
+                els += `<line x1="${(gx*s).toFixed(1)}" y1="${(vbY).toFixed(1)}" x2="${(gx*s).toFixed(1)}" y2="${(vbY+vbH).toFixed(1)}"/>\n`;
+            }
+            for (let gy = startY; gy <= endY; gy += gridSize) {
+                els += `<line x1="${(vbX).toFixed(1)}" y1="${(gy*s).toFixed(1)}" x2="${(vbX+vbW).toFixed(1)}" y2="${(gy*s).toFixed(1)}"/>\n`;
+            }
+            els += `</g>\n`;
+        }
+
         // Ground areas
         site.objects.forEach(obj => {
             if (obj.type !== 'ground' || !obj.points || obj.points.length < 3) return;
@@ -818,6 +837,16 @@ const IO = (() => {
                 els += `<text x="${(obj.x*s).toFixed(1)}" y="${(obj.y*s + 11).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="7" fill="#64748b">${obj.width}\u00d7${obj.height}m</text>\n`;
             }
         });
+
+        // Scale bar (bottom-right)
+        const barMeters = bounds.width > 50 ? 10 : bounds.width > 20 ? 5 : bounds.width > 5 ? 2 : 1;
+        const barPx = barMeters * s;
+        const barX = vbX + vbW - 20 - barPx;
+        const barY = vbY + vbH - 16;
+        els += `<line x1="${barX.toFixed(1)}" y1="${(barY-4).toFixed(1)}" x2="${barX.toFixed(1)}" y2="${barY.toFixed(1)}" stroke="#64748b" stroke-width="2"/>\n`;
+        els += `<line x1="${barX.toFixed(1)}" y1="${barY.toFixed(1)}" x2="${(barX+barPx).toFixed(1)}" y2="${barY.toFixed(1)}" stroke="#64748b" stroke-width="2"/>\n`;
+        els += `<line x1="${(barX+barPx).toFixed(1)}" y1="${(barY-4).toFixed(1)}" x2="${(barX+barPx).toFixed(1)}" y2="${barY.toFixed(1)}" stroke="#64748b" stroke-width="2"/>\n`;
+        els += `<text x="${(barX+barPx/2).toFixed(1)}" y="${(barY-6).toFixed(1)}" text-anchor="middle" font-size="10" fill="#64748b">${barMeters} m</text>\n`;
 
         const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${(vbW/s*10).toFixed(0)}mm" height="${(vbH/s*10).toFixed(0)}mm" viewBox="${vbX.toFixed(1)} ${vbY.toFixed(1)} ${vbW.toFixed(1)} ${vbH.toFixed(1)}" style="background:#fff">
