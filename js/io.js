@@ -734,7 +734,7 @@ const IO = (() => {
                     dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-(obj.y + r + 0.3)).toFixed(4)}\n40\n0.2\n71\n1\n1\n${dxfText(obj.name)}\n`;
                 }
 
-            } else if (obj.width && obj.height && obj.type !== 'bgimage') {
+            } else if ((obj.width || obj.height) && obj.type !== 'bgimage') {
                 const hw = obj.width / 2, hh = obj.height / 2;
                 const rad = (obj.rotation || 0) * Math.PI / 180;
                 const shape = obj.shape || 'rect';
@@ -786,6 +786,13 @@ const IO = (() => {
                 // Label
                 if (obj.name) {
                     dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n0.25\n71\n1\n1\n${dxfText(obj.name)}\\P${obj.width}x${obj.height}m\n`;
+                }
+            } else if (obj.type !== 'bgimage') {
+                // Catch-all: export as point with label
+                console.log('[DXF] Unhandled object:', obj.type, obj.name, 'w:', obj.width, 'h:', obj.height);
+                dxf += `0\nPOINT\n8\nObjects\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n`;
+                if (obj.name) {
+                    dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n0.2\n71\n1\n1\n${dxfText(obj.name)}\n`;
                 }
             }
         });
