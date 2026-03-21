@@ -707,27 +707,62 @@ const IO = (() => {
                     dxf += `0\nMTEXT\n8\nLabels\n62\n2\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n0.2\n71\n1\n1\n${obj.text.replace(/\n/g, '\\P')}\n`;
                 }
 
-            } else if (obj.width && obj.height && obj.type !== 'bgimage' && obj.type !== 'symbol') {
-                // Rotated rectangle
+            } else if (obj.type === 'symbol') {
+                // Symbol as circle with label
+                const r = Math.max(obj.width || 1, obj.height || 1) / 2;
+                dxf += `0\nCIRCLE\n8\nObjects\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n${r.toFixed(4)}\n`;
+                if (obj.name) {
+                    dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-(obj.y + r + 0.3)).toFixed(4)}\n40\n0.2\n71\n1\n1\n${obj.name}\n`;
+                }
+
+            } else if (obj.width && obj.height && obj.type !== 'bgimage') {
                 const hw = obj.width / 2, hh = obj.height / 2;
                 const rad = (obj.rotation || 0) * Math.PI / 180;
-                const corners = [
-                    rotPt(obj.x, obj.y, obj.x - hw, obj.y - hh, rad),
-                    rotPt(obj.x, obj.y, obj.x + hw, obj.y - hh, rad),
-                    rotPt(obj.x, obj.y, obj.x + hw, obj.y + hh, rad),
-                    rotPt(obj.x, obj.y, obj.x - hw, obj.y + hh, rad),
-                ];
-                dxf += lwPoly('Objects', aci, true, corners);
-                // Guy ropes as dashed rectangle
-                if (obj.guyRopeDistance > 0) {
-                    const gd = obj.guyRopeDistance;
-                    const gCorners = [
-                        rotPt(obj.x, obj.y, obj.x - hw - gd, obj.y - hh - gd, rad),
-                        rotPt(obj.x, obj.y, obj.x + hw + gd, obj.y - hh - gd, rad),
-                        rotPt(obj.x, obj.y, obj.x + hw + gd, obj.y + hh + gd, rad),
-                        rotPt(obj.x, obj.y, obj.x - hw - gd, obj.y + hh + gd, rad),
+                const shape = obj.shape || 'rect';
+                const layer = obj.type === 'tent' ? 'Objects' : 'Objects';
+
+                if (shape === 'circle') {
+                    // Circle
+                    const r = Math.max(hw, hh);
+                    dxf += `0\nCIRCLE\n8\n${layer}\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n${r.toFixed(4)}\n`;
+                    if (obj.guyRopeDistance > 0) {
+                        dxf += `0\nCIRCLE\n8\n${layer}\n62\n8\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n${(r + obj.guyRopeDistance).toFixed(4)}\n`;
+                    }
+                } else if (shape === 'triangle') {
+                    const pts = [
+                        rotPt(obj.x, obj.y, obj.x, obj.y - hh, rad),
+                        rotPt(obj.x, obj.y, obj.x + hw, obj.y + hh, rad),
+                        rotPt(obj.x, obj.y, obj.x - hw, obj.y + hh, rad),
                     ];
-                    dxf += lwPoly('Objects', 8, true, gCorners);
+                    dxf += lwPoly(layer, aci, true, pts);
+                } else if (shape === 'hexagon' || shape === 'octagon' || shape === 'decagon' || shape === 'dodecagon') {
+                    const sides = shape === 'hexagon' ? 6 : shape === 'octagon' ? 8 : shape === 'decagon' ? 10 : 12;
+                    const r = Math.max(hw, hh);
+                    const pts = [];
+                    for (let i = 0; i < sides; i++) {
+                        const a = (i / sides) * Math.PI * 2 - Math.PI / 2;
+                        pts.push(rotPt(obj.x, obj.y, obj.x + r * Math.cos(a), obj.y + r * Math.sin(a), rad));
+                    }
+                    dxf += lwPoly(layer, aci, true, pts);
+                } else {
+                    // Rectangle (default)
+                    const corners = [
+                        rotPt(obj.x, obj.y, obj.x - hw, obj.y - hh, rad),
+                        rotPt(obj.x, obj.y, obj.x + hw, obj.y - hh, rad),
+                        rotPt(obj.x, obj.y, obj.x + hw, obj.y + hh, rad),
+                        rotPt(obj.x, obj.y, obj.x - hw, obj.y + hh, rad),
+                    ];
+                    dxf += lwPoly(layer, aci, true, corners);
+                    if (obj.guyRopeDistance > 0) {
+                        const gd = obj.guyRopeDistance;
+                        const gCorners = [
+                            rotPt(obj.x, obj.y, obj.x - hw - gd, obj.y - hh - gd, rad),
+                            rotPt(obj.x, obj.y, obj.x + hw + gd, obj.y - hh - gd, rad),
+                            rotPt(obj.x, obj.y, obj.x + hw + gd, obj.y + hh + gd, rad),
+                            rotPt(obj.x, obj.y, obj.x - hw - gd, obj.y + hh + gd, rad),
+                        ];
+                        dxf += lwPoly(layer, 8, true, gCorners);
+                    }
                 }
                 // Label
                 if (obj.name) {
