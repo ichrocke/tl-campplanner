@@ -584,22 +584,178 @@ const IO = (() => {
         if (!site) return;
         const bounds = getContentBounds(site);
         if (!bounds) return;
+
         const pad = 2;
-        const ppm = 30;
-        const w = bounds.width * ppm + pad * 2 * ppm;
-        const h = bounds.height * ppm + pad * 2 * ppm;
-        // Render to canvas then convert
-        const mapCanvas = Canvas.renderOffscreen(
-            Math.round(w), Math.round(h), bounds,
-            { showGrid: false, showDistances: false, margin: pad * ppm, dpiScale: 2 }
-        );
-        if (!mapCanvas) return;
-        const dataUrl = mapCanvas.toDataURL('image/png');
+        const s = 30; // pixels per meter
+        const vbX = (bounds.minX - pad) * s;
+        const vbY = (bounds.minY - pad) * s;
+        const vbW = (bounds.width + pad * 2) * s;
+        const vbH = (bounds.height + pad * 2) * s;
+        const esc = str => (str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+        function polyPoints(pts) { return pts.map(p => `${(p.x*s).toFixed(1)},${(p.y*s).toFixed(1)}`).join(' '); }
+        function regPoly(cx, cy, hw, hh, sides, rot) {
+            const pts = [];
+            const rad = (rot || 0) * Math.PI / 180;
+            for (let i = 0; i < sides; i++) {
+                const a = (i / sides) * Math.PI * 2 - Math.PI / 2;
+                const px = Math.cos(a) * hw, py = Math.sin(a) * hh;
+                const rx = px * Math.cos(rad) - py * Math.sin(rad);
+                const ry = px * Math.sin(rad) + py * Math.cos(rad);
+                pts.push({ x: (cx * s + rx * s), y: (cy * s + ry * s) });
+            }
+            return pts.map(p => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ');
+        }
+        function rotRect(cx, cy, hw, hh, rot) {
+            const rad = (rot || 0) * Math.PI / 180;
+            const cos = Math.cos(rad), sin = Math.sin(rad);
+            const corners = [[-hw,-hh],[hw,-hh],[hw,hh],[-hw,hh]];
+            return corners.map(([dx,dy]) => {
+                const rx = dx * cos - dy * sin, ry = dx * sin + dy * cos;
+                return `${(cx * s + rx * s).toFixed(1)},${(cy * s + ry * s).toFixed(1)}`;
+            }).join(' ');
+        }
+
+        let els = '';
+
+        // Ground areas
+        site.objects.forEach(obj => {
+            if (obj.type !== 'ground' || !obj.points || obj.points.length < 3) return;
+            const fill = obj.color || '#22c55e';
+            els += `<polygon points="${polyPoints(obj.points)}" fill="${fill}" fill-opacity="0.08" stroke="${fill}" stroke-width="2"/>\n`;
+            const cx = obj.points.reduce((a,p) => a + p.x, 0) / obj.points.length;
+            const cy = obj.points.reduce((a,p) => a + p.y, 0) / obj.points.length;
+            if (obj.name) els += `<text x="${(cx*s).toFixed(1)}" y="${(cy*s).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="10" font-weight="bold" fill="${fill}">${esc(obj.name)}</text>\n`;
+        });
+
+        // Areas
+        site.objects.forEach(obj => {
+            if (obj.type !== 'area' || !obj.points || obj.points.length < 3) return;
+            const fill = obj.color || '#d4a574';
+            els += `<polygon points="${polyPoints(obj.points)}" fill="${fill}" fill-opacity="0.15" stroke="${fill}" stroke-width="1.5" stroke-dasharray="6,4"/>\n`;
+            const cx = obj.points.reduce((a,p) => a + p.x, 0) / obj.points.length;
+            const cy = obj.points.reduce((a,p) => a + p.y, 0) / obj.points.length;
+            if (obj.name) els += `<text x="${(cx*s).toFixed(1)}" y="${(cy*s).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="bold" fill="${fill}">${esc(obj.name)}</text>\n`;
+        });
+
+        // Fences/Pipes
+        site.objects.forEach(obj => {
+            if (obj.type !== 'fence' || !obj.points || obj.points.length < 2) return;
+            const color = obj.color || '#8B4513';
+            const thick = obj.lineThickness || 4;
+            const pts = obj.points.map(p => `${(p.x*s).toFixed(1)},${(p.y*s).toFixed(1)}`).join(' ');
+            els += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="${thick}" stroke-linecap="round" stroke-linejoin="round"/>\n`;
+            obj.points.forEach(p => {
+                const r = (obj.vertexSize || 0) + thick / 2;
+                if (r > 0) els += `<circle cx="${(p.x*s).toFixed(1)}" cy="${(p.y*s).toFixed(1)}" r="${r}" fill="${color}"/>\n`;
+            });
+            if (obj.name) {
+                const mx = obj.points.reduce((a,p) => a + p.x, 0) / obj.points.length;
+                const my = obj.points.reduce((a,p) => a + p.y, 0) / obj.points.length;
+                els += `<text x="${(mx*s).toFixed(1)}" y="${(my*s - 6).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="bold" fill="${color}">${esc(obj.name)}</text>\n`;
+            }
+        });
+
+        // Guidelines
+        site.objects.forEach(obj => {
+            if (obj.type !== 'guideline' || !obj.points || obj.points.length !== 2) return;
+            const color = obj.color || '#6366f1';
+            const a = obj.points[0], b = obj.points[1];
+            const dist = Math.sqrt((b.x-a.x)**2 + (b.y-a.y)**2);
+            els += `<line x1="${(a.x*s).toFixed(1)}" y1="${(a.y*s).toFixed(1)}" x2="${(b.x*s).toFixed(1)}" y2="${(b.y*s).toFixed(1)}" stroke="${color}" stroke-width="1.5" stroke-dasharray="8,4"/>\n`;
+            // Ticks
+            const len = Math.sqrt((b.x-a.x)**2 + (b.y-a.y)**2) * s;
+            if (len > 0) {
+                const nx = -(b.y-a.y)/dist * 0.2, ny = (b.x-a.x)/dist * 0.2;
+                [a, b].forEach(p => {
+                    els += `<line x1="${((p.x+nx)*s).toFixed(1)}" y1="${((p.y+ny)*s).toFixed(1)}" x2="${((p.x-nx)*s).toFixed(1)}" y2="${((p.y-ny)*s).toFixed(1)}" stroke="${color}" stroke-width="1.5"/>\n`;
+                });
+            }
+            const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+            els += `<rect x="${(mx*s - 25).toFixed(1)}" y="${(my*s - 8).toFixed(1)}" width="50" height="16" rx="2" fill="white" fill-opacity="0.9" stroke="${color}" stroke-width="0.5"/>\n`;
+            els += `<text x="${(mx*s).toFixed(1)}" y="${(my*s).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="bold" fill="${color}">${dist.toFixed(2)} m</text>\n`;
+        });
+
+        // Post-its
+        site.objects.forEach(obj => {
+            if (obj.type !== 'postit') return;
+            const w = (obj.width || 3), h = (obj.height || 3);
+            const color = obj.color || '#fef08a';
+            els += `<polygon points="${rotRect(obj.x, obj.y, w/2, h/2, obj.rotation)}" fill="${color}" stroke="#d4d400" stroke-width="0.5"/>\n`;
+            if (obj.text) els += `<text x="${(obj.x*s).toFixed(1)}" y="${(obj.y*s).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="8" fill="#333">${esc(obj.text.split('\n')[0])}</text>\n`;
+        });
+
+        // Text objects
+        site.objects.forEach(obj => {
+            if (obj.type !== 'text') return;
+            const fs = (obj.fontSize || 1) * 10;
+            const color = obj.color || '#1a1a2e';
+            els += `<text x="${(obj.x*s).toFixed(1)}" y="${(obj.y*s).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${fs}" font-weight="bold" fill="${color}"${obj.rotation ? ` transform="rotate(${obj.rotation},${(obj.x*s).toFixed(1)},${(obj.y*s).toFixed(1)})"` : ''}>${esc(obj.text || obj.name || '')}</text>\n`;
+        });
+
+        // Symbols
+        site.objects.forEach(obj => {
+            if (obj.type !== 'symbol') return;
+            const r = Math.max(obj.width || 1, obj.height || 1) / 2 * s;
+            els += `<circle cx="${(obj.x*s).toFixed(1)}" cy="${(obj.y*s).toFixed(1)}" r="${r.toFixed(1)}" fill="#e5e7eb" stroke="#333" stroke-width="1"/>\n`;
+            if (obj.name) els += `<text x="${(obj.x*s).toFixed(1)}" y="${(obj.y*s + r + 10).toFixed(1)}" text-anchor="middle" font-size="7" fill="#333">${esc(obj.name)}</text>\n`;
+        });
+
+        // Tents & other objects (rect, circle, polygon shapes)
+        site.objects.forEach(obj => {
+            if (!obj.width && !obj.height) return;
+            if (['ground','area','fence','guideline','postit','text','symbol','bgimage'].includes(obj.type)) return;
+            const color = obj.color || '#4a90d9';
+            const hw = obj.width / 2, hh = obj.height / 2;
+            const shape = obj.shape || 'rect';
+            const rot = obj.rotation || 0;
+
+            // Guy ropes
+            if (obj.guyRopeDistance > 0 && shape === 'rect') {
+                const gd = obj.guyRopeDistance;
+                els += `<polygon points="${rotRect(obj.x, obj.y, hw + gd, hh + gd, rot)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
+            }
+            if (obj.guyRopeDistance > 0 && shape === 'circle') {
+                els += `<circle cx="${(obj.x*s).toFixed(1)}" cy="${(obj.y*s).toFixed(1)}" r="${((Math.max(hw,hh) + obj.guyRopeDistance)*s).toFixed(1)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
+            }
+
+            // Body
+            if (shape === 'circle') {
+                els += `<ellipse cx="${(obj.x*s).toFixed(1)}" cy="${(obj.y*s).toFixed(1)}" rx="${(hw*s).toFixed(1)}" ry="${(hh*s).toFixed(1)}" fill="${color}" fill-opacity="0.6" stroke="${color}" stroke-width="1.5"/>\n`;
+            } else if (shape === 'triangle') {
+                els += `<polygon points="${regPoly(obj.x, obj.y, hw, hh, 3, rot)}" fill="${color}" fill-opacity="0.6" stroke="${color}" stroke-width="1.5"/>\n`;
+            } else if (['hexagon','octagon','decagon','dodecagon'].includes(shape)) {
+                const sides = shape === 'hexagon' ? 6 : shape === 'octagon' ? 8 : shape === 'decagon' ? 10 : 12;
+                els += `<polygon points="${regPoly(obj.x, obj.y, hw, hh, sides, rot)}" fill="${color}" fill-opacity="0.6" stroke="${color}" stroke-width="1.5"/>\n`;
+            } else {
+                els += `<polygon points="${rotRect(obj.x, obj.y, hw, hh, rot)}" fill="${color}" fill-opacity="0.6" stroke="${color}" stroke-width="1.5"/>\n`;
+            }
+
+            // Entrance marker
+            if (obj.entranceSide && obj.entranceSide !== 'none') {
+                const rad = rot * Math.PI / 180;
+                const cos = Math.cos(rad), sin = Math.sin(rad);
+                let ex = 0, ey = 0, tw = Math.min(hw, hh) * 0.4, th = 0.15;
+                if (obj.entranceSide === 'top') { ey = -hh - th; }
+                else if (obj.entranceSide === 'bottom') { ey = hh + th; }
+                else if (obj.entranceSide === 'left') { ex = -hw - th; }
+                else if (obj.entranceSide === 'right') { ex = hw + th; }
+                const rx = ex * cos - ey * sin, ry = ex * sin + ey * cos;
+                els += `<circle cx="${((obj.x + rx)*s).toFixed(1)}" cy="${((obj.y + ry)*s).toFixed(1)}" r="${(tw*s*0.3).toFixed(1)}" fill="#16a34a"/>\n`;
+            }
+
+            // Label
+            if (obj.name) {
+                els += `<text x="${(obj.x*s).toFixed(1)}" y="${(obj.y*s).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="600" fill="#1e293b">${esc(obj.name)}</text>\n`;
+                els += `<text x="${(obj.x*s).toFixed(1)}" y="${(obj.y*s + 11).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="7" fill="#64748b">${obj.width}\u00d7${obj.height}m</text>\n`;
+            }
+        });
+
         const svg = `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
-     width="${w}mm" height="${h}mm" viewBox="0 0 ${mapCanvas.width} ${mapCanvas.height}">
-  <image width="${mapCanvas.width}" height="${mapCanvas.height}" href="${dataUrl}"/>
-</svg>`;
+<svg xmlns="http://www.w3.org/2000/svg" width="${(vbW/s*10).toFixed(0)}mm" height="${(vbH/s*10).toFixed(0)}mm" viewBox="${vbX.toFixed(1)} ${vbY.toFixed(1)} ${vbW.toFixed(1)} ${vbH.toFixed(1)}" style="background:#fff">
+<style>text { font-family: sans-serif; }</style>
+${els}</svg>`;
+
         const blob = new Blob([svg], { type: 'image/svg+xml' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
