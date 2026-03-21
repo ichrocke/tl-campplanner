@@ -5,6 +5,13 @@
 ### Added
 - **Recycling symbol**: Muelltrennung-Station with 3 colored bins (yellow/blue/green) in symbol picker
 - **Multi-page PDF export**: Checkbox to split large plans across multiple pages at fixed scale. Each page gets page number, scale indicator, and overview mini-map showing current tile position
+- **True vector SVG export**: Complete rewrite as native SVG elements (polygon, ellipse, polyline, text). Includes grid (optional), scale bar, guy ropes with rope lines for all shapes, entrance markers, original symbol SVG files embedded, labels with dimensions
+
+### Changed
+- SVG export no longer embeds a raster image but generates real scalable vector graphics
+
+### Removed
+- DXF export (CAD format)
 
 ## [5.4.1] - 2026-03-21
 
