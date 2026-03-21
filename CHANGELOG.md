@@ -2,9 +2,14 @@
 
 ## [5.4.1] - 2026-03-21
 
+### Added
+- **Impressum & Datenschutz**: Links in der Statusbar, minimaler Inhalt für private Seite, inkl. PayPal-Hinweis
+- **Live-Rotation in Properties**: Rotation wird bei manuellem Drehen (Drag-Handle) live im Properties-Panel angezeigt, sowohl für Einzelobjekte als auch Gruppen
+
 ### Fixed
 - Group rotation via slider/buttons now rotates polygon points (ground areas, areas, pipes) around group center, matching drag handle behavior
-- Locked objects are excluded from group rotation (both drag handle and properties slider/buttons)
+- Properties panel refreshes after drag-based group rotation (slider/origStates stay in sync)
+- Locked objects are excluded from rotation (single + group, drag + properties)
 - Locked single objects have disabled rotation controls in properties panel
 - Area objects now show lock icon next to name on canvas (was only shown for ground areas)
 
