@@ -1260,7 +1260,8 @@ const Canvas = (() => {
         ctx.fillStyle = color;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(obj.name || I18n.t('msg.defaultArea'), cp.x + alox, cp.y + aloy);
+        const areaLockIcon = obj.locked ? ' \u{1F512}' : '';
+        ctx.fillText((obj.name || I18n.t('msg.defaultArea')) + areaLockIcon, cp.x + alox, cp.y + aloy);
     }
 
     function drawTextField(obj, z, isSel, isHov) {

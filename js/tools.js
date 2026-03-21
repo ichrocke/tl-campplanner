@@ -592,7 +592,7 @@ const Tools = (() => {
                     const cos = Math.cos(rad), sin = Math.sin(rad);
                     drag.origStates.forEach(orig => {
                         const obj = site.objects.find(o => o.id === orig.id);
-                        if (!obj) return;
+                        if (!obj || obj.locked) return;
                         // Rotate position around group center
                         const dx = orig.x - drag.centerX;
                         const dy = orig.y - drag.centerY;
@@ -781,6 +781,7 @@ const Tools = (() => {
             }
             if (drag.type === 'groupRotate') {
                 State.notifyChange();
+                UI.showMultiProperties();
             }
             if (drag.type === 'rotate' || drag.type === 'resize') {
                 State.notifyChange();

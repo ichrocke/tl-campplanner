@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.4.1] - 2026-03-21
+
+### Fixed
+- Group rotation via slider/buttons now rotates polygon points (ground areas, areas, pipes) around group center, matching drag handle behavior
+- Locked objects are excluded from group rotation (both drag handle and properties slider/buttons)
+- Locked single objects have disabled rotation controls in properties panel
+- Area objects now show lock icon next to name on canvas (was only shown for ground areas)
+
 ## [5.4.0] - 2026-03-20
 
 ### Added

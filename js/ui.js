@@ -1,7 +1,6 @@
 /* ========================================
    UI – DOM-Interaktionen, Panels, Dialoge
    ======================================== */
-
 const UI = (() => {
     let contextMenuEl = null;
 
@@ -1177,17 +1176,18 @@ const UI = (() => {
 
         // --- Section: Rotation ---
         if (obj.type !== 'text' && obj.type !== 'guideline') {
-            html += `<div class="prop-section">
+            const rotDisabled = obj.locked ? 'disabled' : '';
+            html += `<div class="prop-section"${obj.locked ? ' style="opacity:0.5;pointer-events:none"' : ''}>
                 <div class="prop-section-title">${I18n.t('props.rotation')}</div>
                 <div class="prop-row">
-                    <input type="number" id="prop-rotation" value="${Math.round(obj.rotation)}" step="15" class="prop-rot-input">&deg;
+                    <input type="number" id="prop-rotation" value="${Math.round(obj.rotation)}" step="15" class="prop-rot-input" ${rotDisabled}>&deg;
                 </div>
-                <input type="range" id="prop-rotation-slider" min="0" max="360" step="1" value="${Math.round(obj.rotation)}" class="rotation-slider">
+                <input type="range" id="prop-rotation-slider" min="0" max="360" step="1" value="${Math.round(obj.rotation)}" class="rotation-slider" ${rotDisabled}>
                 <div class="rotation-presets">
-                    <button class="rot-preset" data-rot="0">0&deg;</button>
-                    <button class="rot-preset" data-rot="90">90&deg;</button>
-                    <button class="rot-preset" data-rot="180">180&deg;</button>
-                    <button class="rot-preset" data-rot="270">270&deg;</button>
+                    <button class="rot-preset" data-rot="0" ${rotDisabled}>0&deg;</button>
+                    <button class="rot-preset" data-rot="90" ${rotDisabled}>90&deg;</button>
+                    <button class="rot-preset" data-rot="180" ${rotDisabled}>180&deg;</button>
+                    <button class="rot-preset" data-rot="270" ${rotDisabled}>270&deg;</button>
                 </div>
             </div>`;
         }
@@ -1613,7 +1613,7 @@ const UI = (() => {
         }
 
         // Group rotation handler
-        const origStates = selObjs.map(o => ({ id: o.id, x: o.x, y: o.y, rotation: o.rotation }));
+        const origStates = selObjs.map(o => ({ id: o.id, x: o.x, y: o.y, rotation: o.rotation, points: o.points ? o.points.map(p => ({x: p.x, y: p.y})) : null }));
         let cx = 0, cy = 0;
         selObjs.forEach(o => { cx += o.x; cy += o.y; });
         cx /= selObjs.length; cy /= selObjs.length;
@@ -1623,11 +1623,18 @@ const UI = (() => {
             const cos = Math.cos(rad), sin = Math.sin(rad);
             origStates.forEach(orig => {
                 const obj = site.objects.find(o => o.id === orig.id);
-                if (!obj) return;
+                if (!obj || obj.locked) return;
                 const dx = orig.x - cx, dy = orig.y - cy;
                 obj.x = cx + dx * cos - dy * sin;
                 obj.y = cy + dx * sin + dy * cos;
                 obj.rotation = ((orig.rotation + deg) % 360 + 360) % 360;
+                if (orig.points && obj.points) {
+                    orig.points.forEach((op, i) => {
+                        const px = op.x - cx, py = op.y - cy;
+                        obj.points[i].x = cx + px * cos - py * sin;
+                        obj.points[i].y = cy + px * sin + py * cos;
+                    });
+                }
             });
             State.notifyChange();
             Canvas.render();
