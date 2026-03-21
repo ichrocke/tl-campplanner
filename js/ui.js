@@ -1794,7 +1794,6 @@ const UI = (() => {
         // Format buttons
         function doExport(fmt) {
             if (fmt === 'svg') { IO.exportSVG(); return; }
-            if (fmt === 'dxf') { IO.exportDXF(); return; }
             // For png, jpeg, pdf: set format and call print
             const fmtMap = { png: 'png', jpeg: 'jpeg', pdf: 'print' };
             document.getElementById('print-format') && (document.getElementById('print-format').value = fmtMap[fmt] || 'print');
