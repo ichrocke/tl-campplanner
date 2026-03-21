@@ -671,6 +671,7 @@ const IO = (() => {
         // Entities
         dxf += '0\nSECTION\n2\nENTITIES\n';
 
+        console.log('[DXF] Total objects:', site.objects.length, site.objects.map(o => `${o.type}:${o.name}:w${o.width}:h${o.height}:s${o.shape}`));
         site.objects.forEach(obj => {
             const aci = hexToACI(obj.color);
 
