@@ -1017,10 +1017,17 @@ const UI = (() => {
             State._minimapEnabled = e.target.checked;
             Canvas.render();
         });
-        document.getElementById('compass-rotation').addEventListener('input', (e) => {
+        const compSlider = document.getElementById('compass-rotation');
+        const compNum = document.getElementById('compass-rot-num');
+        compSlider.addEventListener('input', (e) => {
             const site = State.activeSite;
             if (site) { site.compassRotation = parseInt(e.target.value); Canvas.render(); }
-            document.getElementById('compass-rot-val').textContent = e.target.value;
+            compNum.value = e.target.value;
+        });
+        compNum.addEventListener('change', (e) => {
+            const site = State.activeSite;
+            if (site) { site.compassRotation = parseInt(e.target.value); Canvas.render(); }
+            compSlider.value = e.target.value;
         });
 
         // (Background image controls moved to floating toolbar)
@@ -1049,7 +1056,7 @@ const UI = (() => {
         }
         const cr = (site && site.compassRotation) || 0;
         document.getElementById('compass-rotation').value = cr;
-        document.getElementById('compass-rot-val').textContent = cr;
+        document.getElementById('compass-rot-num').value = cr;
     }
 
     // --- Properties Panel ---
@@ -1418,32 +1425,70 @@ const UI = (() => {
             });
         }
         bind('prop-height', 'height', parseFloat);
-        bind('prop-rotation', 'rotation', parseFloat);
+        // Rotation helper for points-based objects
+        function applyRotation(newRot) {
+            if (!Canvas.isSelected(obj.id)) return;
+            if (obj.points && obj.points.length >= 2) {
+                // Rotate points around centroid by delta
+                const oldRot = obj.rotation || 0;
+                const delta = (newRot - oldRot) * Math.PI / 180;
+                const cos = Math.cos(delta), sin = Math.sin(delta);
+                let cx = 0, cy = 0;
+                obj.points.forEach(p => { cx += p.x; cy += p.y; });
+                cx /= obj.points.length; cy /= obj.points.length;
+                obj.points.forEach(p => {
+                    const dx = p.x - cx, dy = p.y - cy;
+                    p.x = cx + dx * cos - dy * sin;
+                    p.y = cy + dx * sin + dy * cos;
+                });
+            }
+            State.updateObject(obj.id, { rotation: newRot });
+            Canvas.render();
+        }
 
-        // Rotation slider sync
-        const rotSlider = document.getElementById('prop-rotation-slider');
-        const rotInput = document.getElementById('prop-rotation');
-        if (rotSlider && rotInput) {
-            rotSlider.addEventListener('input', () => {
-                if (!Canvas.isSelected(obj.id)) return;
-                rotInput.value = rotSlider.value;
-                State.updateObject(obj.id, { rotation: parseFloat(rotSlider.value) });
-                Canvas.render();
+        if (obj.points && obj.points.length >= 2) {
+            // Points-based: use applyRotation
+            const rotInput = document.getElementById('prop-rotation');
+            const rotSlider = document.getElementById('prop-rotation-slider');
+            if (rotInput) rotInput.addEventListener('change', () => applyRotation(parseFloat(rotInput.value)));
+            if (rotSlider) {
+                rotSlider.addEventListener('input', () => {
+                    if (rotInput) rotInput.value = rotSlider.value;
+                    applyRotation(parseFloat(rotSlider.value));
+                });
+            }
+            document.querySelectorAll('.rot-preset').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const rot = parseFloat(btn.dataset.rot);
+                    if (rotInput) rotInput.value = rot;
+                    if (rotSlider) rotSlider.value = rot;
+                    applyRotation(rot);
+                });
             });
-            rotInput.addEventListener('change', () => {
-                rotSlider.value = rotInput.value;
+        } else {
+            bind('prop-rotation', 'rotation', parseFloat);
+            const rotSlider = document.getElementById('prop-rotation-slider');
+            const rotInput = document.getElementById('prop-rotation');
+            if (rotSlider && rotInput) {
+                rotSlider.addEventListener('input', () => {
+                    if (!Canvas.isSelected(obj.id)) return;
+                    rotInput.value = rotSlider.value;
+                    State.updateObject(obj.id, { rotation: parseFloat(rotSlider.value) });
+                    Canvas.render();
+                });
+                rotInput.addEventListener('change', () => { rotSlider.value = rotInput.value; });
+            }
+            document.querySelectorAll('.rot-preset').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (!Canvas.isSelected(obj.id)) return;
+                    const rot = parseFloat(btn.dataset.rot);
+                    State.updateObject(obj.id, { rotation: rot });
+                    if (rotInput) rotInput.value = rot;
+                    if (rotSlider) rotSlider.value = rot;
+                    Canvas.render();
+                });
             });
         }
-        document.querySelectorAll('.rot-preset').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (!Canvas.isSelected(obj.id)) return;
-                const rot = parseFloat(btn.dataset.rot);
-                State.updateObject(obj.id, { rotation: rot });
-                if (rotInput) rotInput.value = rot;
-                if (rotSlider) rotSlider.value = rot;
-                Canvas.render();
-            });
-        });
         bind('prop-guyrope', 'guyRopeDistance', parseFloat);
         bind('prop-color', 'color');
         bind('prop-shape', 'shape');

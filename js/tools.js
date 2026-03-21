@@ -185,7 +185,8 @@ const Tools = (() => {
                 drag = {
                     type: 'rotate', objId: sel.id,
                     startAngle: Math.atan2(world.x - sel.x, -(world.y - sel.y)) * 180 / Math.PI,
-                    origRotation: sel.rotation,
+                    origRotation: sel.rotation || 0,
+                    origPoints: sel.points ? sel.points.map(p => ({...p})) : null,
                 };
                 return;
             }
@@ -563,7 +564,21 @@ const Tools = (() => {
                         const angle = Math.atan2(world.x - obj.x, -(world.y - obj.y)) * 180 / Math.PI;
                         let newRot = drag.origRotation + (angle - drag.startAngle);
                         if (e.shiftKey) newRot = Math.round(newRot / 15) * 15;
-                        obj.rotation = ((newRot % 360) + 360) % 360;
+                        newRot = ((newRot % 360) + 360) % 360;
+                        // For polygon objects: rotate points around centroid
+                        if (drag.origPoints && obj.points) {
+                            const delta = (newRot - drag.origRotation) * Math.PI / 180;
+                            const cos = Math.cos(delta), sin = Math.sin(delta);
+                            let cx = 0, cy = 0;
+                            drag.origPoints.forEach(p => { cx += p.x; cy += p.y; });
+                            cx /= drag.origPoints.length; cy /= drag.origPoints.length;
+                            obj.points.forEach((p, i) => {
+                                const dx = drag.origPoints[i].x - cx, dy = drag.origPoints[i].y - cy;
+                                p.x = cx + dx * cos - dy * sin;
+                                p.y = cy + dx * sin + dy * cos;
+                            });
+                        }
+                        obj.rotation = newRot;
                         Canvas.render();
                         UI.showProperties(obj);
                     }

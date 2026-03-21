@@ -588,7 +588,7 @@ const Canvas = (() => {
             ctx.stroke();
             if (isSel) { ctx.setLineDash([]); }
 
-            // Vertices (when selected)
+            // Vertices + rotation handle (when selected)
             if (isSel) {
                 pts.forEach(pt => {
                     const p = w2s(pt.x, pt.y);
@@ -600,6 +600,15 @@ const Canvas = (() => {
                     ctx.lineWidth = 1.5;
                     ctx.stroke();
                 });
+                // Rotation handle above topmost point
+                let minYpt = screenPts[0];
+                screenPts.forEach(p => { if (p.y < minYpt.y) minYpt = p; });
+                const rhY = minYpt.y - 28;
+                ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.moveTo(minYpt.x, minYpt.y - 4); ctx.lineTo(minYpt.x, rhY); ctx.stroke();
+                ctx.beginPath(); ctx.arc(minYpt.x, rhY, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#2563eb'; ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
             } else if (isHov) {
                 ctx.strokeStyle = '#2563eb55';
                 ctx.lineWidth = 2;
@@ -1218,8 +1227,9 @@ const Canvas = (() => {
             ctx.setLineDash([]);
         }
 
-        // Vertex handles when selected
+        // Vertex handles + rotation handle when selected
         if (isSel) {
+            let minYs = Infinity, minYx = 0;
             obj.points.forEach(pt => {
                 const p = w2s(pt.x, pt.y);
                 ctx.beginPath();
@@ -1229,7 +1239,15 @@ const Canvas = (() => {
                 ctx.strokeStyle = '#fff';
                 ctx.lineWidth = 1.5;
                 ctx.stroke();
+                if (p.y < minYs) { minYs = p.y; minYx = p.x; }
             });
+            // Rotation handle
+            const rhY = minYs - 28;
+            ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(minYx, minYs - 4); ctx.lineTo(minYx, rhY); ctx.stroke();
+            ctx.beginPath(); ctx.arc(minYx, rhY, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#2563eb'; ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
         }
 
         // Label at centroid (with offset)
@@ -1840,10 +1858,17 @@ const Canvas = (() => {
 
     function pointOnRotHandle(px, py, obj) {
         const z = zoom();
-        // Handle is at local (0, -h/2 - 28px) → convert 28px to meters
+        // For polygon objects (ground, area, fence): handle above topmost point
+        if (obj.points && obj.points.length >= 2 && (obj.type === 'ground' || obj.type === 'area')) {
+            let minY = Infinity, minX = 0;
+            obj.points.forEach(p => { if (p.y < minY) { minY = p.y; minX = p.x; } });
+            const handleY = minY - 28 / z;
+            const d = Math.sqrt((px - minX) ** 2 + (py - handleY) ** 2);
+            return d < 10 / z;
+        }
+        // Regular objects: handle above center
         const localY = -(obj.height / 2 + 28 / z);
-        const rad = obj.rotation * Math.PI / 180;
-        // Rotate local point (0, localY) to world
+        const rad = (obj.rotation || 0) * Math.PI / 180;
         const hx = obj.x + 0 * Math.cos(rad) - localY * Math.sin(rad);
         const hy = obj.y + 0 * Math.sin(rad) + localY * Math.cos(rad);
         const d = Math.sqrt((px - hx) ** 2 + (py - hy) ** 2);
