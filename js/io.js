@@ -693,12 +693,33 @@ const IO = (() => {
             els += `<text x="${(obj.x*s).toFixed(1)}" y="${(obj.y*s).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${fs}" font-weight="bold" fill="${color}"${obj.rotation ? ` transform="rotate(${obj.rotation},${(obj.x*s).toFixed(1)},${(obj.y*s).toFixed(1)})"` : ''}>${esc(obj.text || obj.name || '')}</text>\n`;
         });
 
-        // Symbols
+        // Symbols - render as inline SVG
+        const symSvgMap = {
+            firstaid: `<rect fill="#008855" x="5" y="5" width="190" height="190"/><rect fill="#fff" x="75" y="25" width="50" height="150"/><rect fill="#fff" x="25" y="75" width="150" height="50"/>`,
+            fire_ext: `<rect fill="#cc0000" x="5" y="5" width="190" height="190" rx="10"/><text x="100" y="115" text-anchor="middle" font-size="90" font-weight="bold" fill="#fff">F</text>`,
+            gas: `<rect fill="#f59e0b" x="5" y="5" width="190" height="190" rx="10"/><ellipse cx="100" cy="120" rx="35" ry="55" fill="#fff"/><rect fill="#fff" x="85" y="40" width="30" height="30"/>`,
+            electric: `<rect fill="#eab308" x="5" y="5" width="190" height="190" rx="10"/><polygon fill="#000" points="115,20 75,95 105,95 85,180 145,90 110,90"/>`,
+            exit: `<rect fill="#008855" x="5" y="5" width="190" height="190" rx="10"/><rect fill="#fff" x="110" y="40" width="50" height="120"/><circle fill="#fff" cx="80" cy="50" r="15"/><rect fill="#fff" x="65" y="65" width="30" height="50"/><polygon fill="#fff" points="60,100 100,100 80,140"/>`,
+            assembly: `<rect fill="#008855" x="5" y="5" width="190" height="190" rx="10"/><circle fill="#fff" cx="100" cy="40" r="12"/><rect fill="#fff" x="90" y="55" width="20" height="40"/><circle fill="#fff" cx="55" cy="50" r="10"/><rect fill="#fff" x="47" y="63" width="16" height="35"/><circle fill="#fff" cx="145" cy="50" r="10"/><rect fill="#fff" x="137" y="63" width="16" height="35"/><polygon fill="#fff" points="50,130 150,130 130,180 70,180"/>`,
+            water: `<rect fill="#0ea5e9" x="5" y="5" width="190" height="190" rx="80"/><path fill="#fff" d="M100,30 C70,80 70,140 100,160 C130,140 130,80 100,30Z"/>`,
+            wc: `<rect fill="#2563eb" x="5" y="5" width="190" height="190" rx="15"/><text x="100" y="120" text-anchor="middle" font-size="100" font-weight="bold" fill="#fff" font-family="sans-serif">WC</text>`,
+            parking: `<rect fill="#2563eb" x="5" y="5" width="190" height="190" rx="15"/><text x="100" y="125" text-anchor="middle" font-size="130" font-weight="bold" fill="#fff" font-family="sans-serif">P</text>`,
+            info: `<rect fill="#2563eb" x="5" y="5" width="190" height="190" rx="15"/><text x="100" y="130" text-anchor="middle" font-size="140" font-weight="bold" fill="#fff" font-family="serif">i</text>`,
+            no_fire: `<circle cx="100" cy="100" r="85" fill="#fff" stroke="#ef4444" stroke-width="12"/><line x1="40" y1="40" x2="160" y2="160" stroke="#ef4444" stroke-width="12"/>`,
+            trash: `<rect fill="#6b7280" x="5" y="5" width="190" height="190" rx="15"/><rect fill="#fff" x="55" y="60" width="90" height="100" rx="5"/><rect fill="#fff" x="45" y="45" width="110" height="20" rx="5"/><rect fill="#fff" x="80" y="25" width="40" height="25" rx="5"/>`,
+            recycling: `<rect fill="#f0f0f0" x="5" y="5" width="190" height="190" rx="15"/><rect fill="#eab308" x="20" y="70" width="45" height="90" rx="3"/><rect fill="#2563eb" x="77" y="70" width="45" height="90" rx="3"/><rect fill="#22c55e" x="134" y="70" width="45" height="90" rx="3"/><rect fill="#555" x="35" y="35" width="8" height="30"/><rect fill="#555" x="92" y="35" width="8" height="30"/><rect fill="#555" x="149" y="35" width="8" height="30"/>`,
+        };
         site.objects.forEach(obj => {
             if (obj.type !== 'symbol') return;
-            const r = Math.max(obj.width || 1, obj.height || 1) / 2 * s;
-            els += `<circle cx="${(obj.x*s).toFixed(1)}" cy="${(obj.y*s).toFixed(1)}" r="${r.toFixed(1)}" fill="#e5e7eb" stroke="#333" stroke-width="1"/>\n`;
-            if (obj.name) els += `<text x="${(obj.x*s).toFixed(1)}" y="${(obj.y*s + r + 10).toFixed(1)}" text-anchor="middle" font-size="7" fill="#333">${esc(obj.name)}</text>\n`;
+            const sz = Math.max(obj.width || 1, obj.height || 1) * s;
+            const sx = obj.x * s - sz / 2, sy = obj.y * s - sz / 2;
+            const symContent = symSvgMap[obj.symbolId];
+            if (symContent) {
+                els += `<svg x="${sx.toFixed(1)}" y="${sy.toFixed(1)}" width="${sz.toFixed(1)}" height="${sz.toFixed(1)}" viewBox="0 0 200 200">${symContent}</svg>\n`;
+            } else {
+                els += `<rect x="${sx.toFixed(1)}" y="${sy.toFixed(1)}" width="${sz.toFixed(1)}" height="${sz.toFixed(1)}" fill="#e5e7eb" stroke="#333" stroke-width="1" rx="3"/>\n`;
+            }
+            if (obj.name) els += `<text x="${(obj.x*s).toFixed(1)}" y="${(sy + sz + 10).toFixed(1)}" text-anchor="middle" font-size="7" fill="#333">${esc(obj.name)}</text>\n`;
         });
 
         // Tents & other objects (rect, circle, polygon shapes)
@@ -711,12 +732,39 @@ const IO = (() => {
             const rot = obj.rotation || 0;
 
             // Guy ropes
-            if (obj.guyRopeDistance > 0 && shape === 'rect') {
+            if (obj.guyRopeDistance > 0) {
                 const gd = obj.guyRopeDistance;
-                els += `<polygon points="${rotRect(obj.x, obj.y, hw + gd, hh + gd, rot)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
-            }
-            if (obj.guyRopeDistance > 0 && shape === 'circle') {
-                els += `<circle cx="${(obj.x*s).toFixed(1)}" cy="${(obj.y*s).toFixed(1)}" r="${((Math.max(hw,hh) + obj.guyRopeDistance)*s).toFixed(1)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
+                if (shape === 'circle') {
+                    els += `<ellipse cx="${(obj.x*s).toFixed(1)}" cy="${(obj.y*s).toFixed(1)}" rx="${((hw + gd)*s).toFixed(1)}" ry="${((hh + gd)*s).toFixed(1)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
+                } else if (shape === 'triangle') {
+                    els += `<polygon points="${regPoly(obj.x, obj.y, hw + gd, hh + gd, 3, rot)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
+                } else if (['hexagon','octagon','decagon','dodecagon'].includes(shape)) {
+                    const sides = shape === 'hexagon' ? 6 : shape === 'octagon' ? 8 : shape === 'decagon' ? 10 : 12;
+                    els += `<polygon points="${regPoly(obj.x, obj.y, hw + gd, hh + gd, sides, rot)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
+                } else {
+                    els += `<polygon points="${rotRect(obj.x, obj.y, hw + gd, hh + gd, rot)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
+                }
+                // Rope lines from body to outer
+                const ropeColor = '#d1d5db';
+                if (shape === 'rect') {
+                    const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
+                    const rad = (rot || 0) * Math.PI / 180;
+                    const cos = Math.cos(rad), sin = Math.sin(rad);
+                    const rotP = (dx,dy) => ({ x: obj.x + dx*cos - dy*sin, y: obj.y + dx*sin + dy*cos });
+                    // Corner ropes
+                    [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([sx,sy]) => {
+                        const sideH = sy < 0 ? 'top' : 'bottom', sideV = sx < 0 ? 'left' : 'right';
+                        if (sides[sideH] || sides[sideV]) {
+                            const from = rotP(sx*hw, sy*hh), to = rotP(sx*(hw+gd), sy*(hh+gd));
+                            els += `<line x1="${(from.x*s).toFixed(1)}" y1="${(from.y*s).toFixed(1)}" x2="${(to.x*s).toFixed(1)}" y2="${(to.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`;
+                        }
+                    });
+                    // Mid-edge ropes
+                    if (sides.top) { const f = rotP(0,-hh), t = rotP(0,-hh-gd); els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`; }
+                    if (sides.bottom) { const f = rotP(0,hh), t = rotP(0,hh+gd); els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`; }
+                    if (sides.left) { const f = rotP(-hw,0), t = rotP(-hw-gd,0); els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`; }
+                    if (sides.right) { const f = rotP(hw,0), t = rotP(hw+gd,0); els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`; }
+                }
             }
 
             // Body
