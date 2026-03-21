@@ -232,7 +232,7 @@ const Tools = (() => {
                     type: 'groupRotate',
                     centerX: cx, centerY: cy,
                     startAngle: Math.atan2(world.x - cx, -(world.y - cy)) * 180 / Math.PI,
-                    origStates: selObjs.map(o => ({ id: o.id, x: o.x, y: o.y, rotation: o.rotation })),
+                    origStates: selObjs.map(o => ({ id: o.id, x: o.x, y: o.y, rotation: o.rotation || 0, points: o.points ? o.points.map(p => ({...p})) : null })),
                 };
                 return;
             }
@@ -598,6 +598,14 @@ const Tools = (() => {
                         const dy = orig.y - drag.centerY;
                         obj.x = drag.centerX + dx * cos - dy * sin;
                         obj.y = drag.centerY + dx * sin + dy * cos;
+                        // Rotate points for polygon objects
+                        if (orig.points && obj.points) {
+                            orig.points.forEach((op, i) => {
+                                const px = op.x - drag.centerX, py = op.y - drag.centerY;
+                                obj.points[i].x = drag.centerX + px * cos - py * sin;
+                                obj.points[i].y = drag.centerY + px * sin + py * cos;
+                            });
+                        }
                         // Add rotation delta to original rotation
                         obj.rotation = ((orig.rotation + deltaRot) % 360 + 360) % 360;
                     });

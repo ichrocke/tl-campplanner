@@ -1419,6 +1419,7 @@ const Canvas = (() => {
             ctx.setLineDash([]);
 
             if (isSel) {
+                let fMinY = Infinity, fMinX = 0;
                 obj.points.forEach(pt => {
                     const p = w2s(pt.x, pt.y);
                     ctx.beginPath();
@@ -1428,7 +1429,15 @@ const Canvas = (() => {
                     ctx.strokeStyle = '#fff';
                     ctx.lineWidth = 1.5;
                     ctx.stroke();
+                    if (p.y < fMinY) { fMinY = p.y; fMinX = p.x; }
                 });
+                // Rotation handle
+                const frhY = fMinY - 28;
+                ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.moveTo(fMinX, fMinY - 4); ctx.lineTo(fMinX, frhY); ctx.stroke();
+                ctx.beginPath(); ctx.arc(fMinX, frhY, 5, 0, Math.PI * 2);
+                ctx.fillStyle = '#2563eb'; ctx.fill();
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
             }
         }
 
@@ -1859,7 +1868,7 @@ const Canvas = (() => {
     function pointOnRotHandle(px, py, obj) {
         const z = zoom();
         // For polygon objects (ground, area, fence): handle above topmost point
-        if (obj.points && obj.points.length >= 2 && (obj.type === 'ground' || obj.type === 'area')) {
+        if (obj.points && obj.points.length >= 2 && (obj.type === 'ground' || obj.type === 'area' || obj.type === 'fence')) {
             let minY = Infinity, minX = 0;
             obj.points.forEach(p => { if (p.y < minY) { minY = p.y; minX = p.x; } });
             const handleY = minY - 28 / z;
