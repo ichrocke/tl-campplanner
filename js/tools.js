@@ -613,6 +613,11 @@ const Tools = (() => {
                         obj.rotation = ((orig.rotation + deltaRot) % 360 + 360) % 360;
                     });
                     Canvas.render();
+                    const gri = document.getElementById('prop-group-rot');
+                    const grs = document.getElementById('prop-group-rot-slider');
+                    const drnd = Math.round(((deltaRot % 360) + 360) % 360);
+                    if (gri) gri.value = drnd;
+                    if (grs) grs.value = Math.min(180, Math.max(-180, drnd > 180 ? drnd - 360 : drnd));
                     break;
                 }
                 case 'rectSelect': {
