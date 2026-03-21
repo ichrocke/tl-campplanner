@@ -1169,7 +1169,7 @@ const UI = (() => {
         }
 
         // --- Section: Rotation ---
-        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'guideline') {
+        if (obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'guideline') {
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.rotation')}</div>
                 <div class="prop-row">
