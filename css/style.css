@@ -1294,6 +1294,9 @@ body {
 #statusbar span { white-space: nowrap; }
 #status-tool { font-weight: 600; color: var(--primary); }
 #status-grid { color: var(--text-secondary); font-size: 10px; padding: 1px 6px; background: var(--bg); border-radius: 3px; }
+.status-legal { margin-left: auto; font-size: 10px; }
+.status-legal a { color: var(--text-secondary); text-decoration: none; }
+.status-legal a:hover { color: var(--primary); text-decoration: underline; }
 
 .donate-link {
     display: inline-flex;

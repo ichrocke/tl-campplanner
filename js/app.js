@@ -102,6 +102,33 @@
         }
     });
 
+    // Legal modal (Impressum / Datenschutz)
+    const legalOverlay = document.getElementById('modal-overlay');
+    const legalModal = document.getElementById('modal-legal');
+    const legalTitle = document.getElementById('legal-title');
+    const legalBody = document.getElementById('legal-body');
+    function showLegal(type) {
+        if (type === 'impressum') {
+            legalTitle.textContent = 'Impressum';
+            legalBody.innerHTML = '<p><strong>Angaben gem. \u00a7 5 TMG</strong></p>' +
+                '<p>Marc Sch\u00fc\u00dfler<br>E-Mail: marc@tyra-lorena.de</p>' +
+                '<p>Private, nicht-kommerzielle Webseite.</p>';
+        } else {
+            legalTitle.textContent = 'Datenschutz';
+            legalBody.innerHTML = '<p><strong>Datenschutzerkl\u00e4rung</strong></p>' +
+                '<p>Diese Webseite wird rein privat und nicht-kommerziell betrieben.</p>' +
+                '<p><strong>Keine Datenerhebung:</strong> Es werden keine personenbezogenen Daten erhoben, gespeichert oder an Dritte weitergegeben. Es gibt keine Registrierung, kein Tracking, keine Analyse-Tools und keine Cookies.</p>' +
+                '<p><strong>Lokale Speicherung:</strong> Die Anwendung nutzt ausschlie\u00dflich den lokalen Speicher Ihres Browsers (localStorage), um Ihre Arbeit zwischenzuspeichern. Diese Daten verlassen Ihren Browser nicht.</p>' +
+                '<p><strong>Hosting:</strong> Die Webseite wird bei einem deutschen Hoster betrieben. Beim Zugriff werden technisch bedingt Server-Logfiles erfasst (IP-Adresse, Zeitpunkt, aufgerufene Seite). Diese dienen ausschlie\u00dflich der technischen Sicherstellung des Betriebs.</p>' +
+                '<p><strong>Kontakt:</strong> Marc Sch\u00fc\u00dfler, marc@tyra-lorena.de</p>';
+        }
+        legalModal.classList.remove('hidden');
+        legalOverlay.classList.remove('hidden');
+    }
+    document.getElementById('link-impressum').addEventListener('click', (e) => { e.preventDefault(); showLegal('impressum'); });
+    document.getElementById('link-datenschutz').addEventListener('click', (e) => { e.preventDefault(); showLegal('datenschutz'); });
+    document.getElementById('legal-close').addEventListener('click', () => { legalModal.classList.add('hidden'); legalOverlay.classList.add('hidden'); });
+
     // Initial render
     Canvas.render();
 
