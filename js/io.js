@@ -614,29 +614,128 @@ const IO = (() => {
         if (!site) return;
         const bounds = getContentBounds(site);
         if (!bounds) return;
-        let dxf = '0\nSECTION\n2\nENTITIES\n';
+
+        // Helper: rotate point around center
+        function rotPt(cx, cy, x, y, rad) {
+            const cos = Math.cos(rad), sin = Math.sin(rad);
+            const dx = x - cx, dy = y - cy;
+            return { x: cx + dx * cos - dy * sin, y: cy + dx * sin + dy * cos };
+        }
+
+        // Helper: write LWPOLYLINE
+        function lwPoly(layer, color, closed, pts) {
+            let s = `0\nLWPOLYLINE\n8\n${layer}\n62\n${color}\n90\n${pts.length}\n70\n${closed ? 1 : 0}\n`;
+            pts.forEach(p => { s += `10\n${p.x.toFixed(4)}\n20\n${(-p.y).toFixed(4)}\n`; });
+            return s;
+        }
+
+        // Helper: hex color to nearest ACI color
+        function hexToACI(hex) {
+            if (!hex) return 7; // white
+            const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+            if (r > 200 && g < 80 && b < 80) return 1;   // red
+            if (r > 200 && g > 200 && b < 80) return 2;   // yellow
+            if (r < 80 && g > 200 && b < 80) return 3;    // green
+            if (r < 80 && g > 200 && b > 200) return 4;   // cyan
+            if (r < 80 && g < 80 && b > 200) return 5;    // blue
+            if (r > 200 && g < 80 && b > 200) return 6;   // magenta
+            if (r > 150 && g > 100 && b < 50) return 40;  // brown
+            if (r > 100 && g > 100 && b > 100) return 8;  // gray
+            return 7; // white/default
+        }
+
+        // DXF Header
+        let dxf = '999\nDXF exported by Zeltplatzplaner\n';
+        dxf += '0\nSECTION\n2\nHEADER\n';
+        dxf += '9\n$ACADVER\n1\nAC1015\n';
+        dxf += '9\n$INSUNITS\n70\n6\n'; // meters
+        dxf += '0\nENDSEC\n';
+
+        // Tables section (layers)
+        dxf += '0\nSECTION\n2\nTABLES\n0\nTABLE\n2\nLAYER\n70\n6\n';
+        [['Ground',3],['Areas',4],['Objects',7],['Pipes',5],['Labels',7],['Guidelines',6]].forEach(([name,col]) => {
+            dxf += `0\nLAYER\n2\n${name}\n70\n0\n62\n${col}\n6\nCONTINUOUS\n`;
+        });
+        dxf += '0\nENDTAB\n0\nENDSEC\n';
+
+        // Entities
+        dxf += '0\nSECTION\n2\nENTITIES\n';
+
         site.objects.forEach(obj => {
+            const aci = hexToACI(obj.color);
+
             if (obj.type === 'ground' && obj.points && obj.points.length >= 3) {
-                // Polyline for ground
-                dxf += '0\nLWPOLYLINE\n8\nGround\n70\n1\n';
-                obj.points.forEach(p => { dxf += `10\n${p.x.toFixed(3)}\n20\n${(-p.y).toFixed(3)}\n`; });
+                dxf += lwPoly('Ground', aci, true, obj.points);
+                // Label
+                const cx = obj.points.reduce((s,p) => s + p.x, 0) / obj.points.length;
+                const cy = obj.points.reduce((s,p) => s + p.y, 0) / obj.points.length;
+                if (obj.name) {
+                    dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${cx.toFixed(4)}\n20\n${(-cy).toFixed(4)}\n40\n0.3\n71\n1\n1\n${obj.name}\n`;
+                }
+
             } else if (obj.type === 'fence' && obj.points && obj.points.length >= 2) {
-                dxf += '0\nLWPOLYLINE\n8\nPipes\n70\n0\n';
-                obj.points.forEach(p => { dxf += `10\n${p.x.toFixed(3)}\n20\n${(-p.y).toFixed(3)}\n`; });
+                dxf += lwPoly('Pipes', aci, false, obj.points);
+
             } else if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
-                dxf += '0\nLWPOLYLINE\n8\nAreas\n70\n1\n';
-                obj.points.forEach(p => { dxf += `10\n${p.x.toFixed(3)}\n20\n${(-p.y).toFixed(3)}\n`; });
-            } else if (obj.width && obj.height && obj.type !== 'bgimage' && obj.type !== 'guideline' && obj.type !== 'symbol') {
-                // Rectangle as insert point + text
+                dxf += lwPoly('Areas', aci, true, obj.points);
+                const cx = obj.points.reduce((s,p) => s + p.x, 0) / obj.points.length;
+                const cy = obj.points.reduce((s,p) => s + p.y, 0) / obj.points.length;
+                if (obj.name) {
+                    dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${cx.toFixed(4)}\n20\n${(-cy).toFixed(4)}\n40\n0.2\n71\n1\n1\n${obj.name}\n`;
+                }
+
+            } else if (obj.type === 'guideline' && obj.points && obj.points.length === 2) {
+                dxf += lwPoly('Guidelines', 6, false, obj.points);
+                const dx = obj.points[1].x - obj.points[0].x, dy = obj.points[1].y - obj.points[0].y;
+                const dist = Math.sqrt(dx*dx + dy*dy);
+                const mx = (obj.points[0].x + obj.points[1].x) / 2;
+                const my = (obj.points[0].y + obj.points[1].y) / 2;
+                dxf += `0\nMTEXT\n8\nLabels\n62\n6\n10\n${mx.toFixed(4)}\n20\n${(-my).toFixed(4)}\n40\n0.2\n71\n1\n1\n${dist.toFixed(2)}m\n`;
+
+            } else if (obj.type === 'postit') {
+                // Post-it as rectangle
+                const hw = (obj.width || 3) / 2, hh = (obj.height || 3) / 2;
+                const rad = (obj.rotation || 0) * Math.PI / 180;
+                const corners = [
+                    rotPt(obj.x, obj.y, obj.x - hw, obj.y - hh, rad),
+                    rotPt(obj.x, obj.y, obj.x + hw, obj.y - hh, rad),
+                    rotPt(obj.x, obj.y, obj.x + hw, obj.y + hh, rad),
+                    rotPt(obj.x, obj.y, obj.x - hw, obj.y + hh, rad),
+                ];
+                dxf += lwPoly('Objects', 2, true, corners);
+                if (obj.text) {
+                    dxf += `0\nMTEXT\n8\nLabels\n62\n2\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n0.2\n71\n1\n1\n${obj.text.replace(/\n/g, '\\P')}\n`;
+                }
+
+            } else if (obj.width && obj.height && obj.type !== 'bgimage' && obj.type !== 'symbol') {
+                // Rotated rectangle
                 const hw = obj.width / 2, hh = obj.height / 2;
-                dxf += `0\nLWPOLYLINE\n8\nObjects\n70\n1\n`;
-                dxf += `10\n${(obj.x-hw).toFixed(3)}\n20\n${(-(obj.y-hh)).toFixed(3)}\n`;
-                dxf += `10\n${(obj.x+hw).toFixed(3)}\n20\n${(-(obj.y-hh)).toFixed(3)}\n`;
-                dxf += `10\n${(obj.x+hw).toFixed(3)}\n20\n${(-(obj.y+hh)).toFixed(3)}\n`;
-                dxf += `10\n${(obj.x-hw).toFixed(3)}\n20\n${(-(obj.y+hh)).toFixed(3)}\n`;
-                dxf += `0\nTEXT\n8\nLabels\n10\n${obj.x.toFixed(3)}\n20\n${(-obj.y).toFixed(3)}\n40\n0.3\n1\n${obj.name}\n`;
+                const rad = (obj.rotation || 0) * Math.PI / 180;
+                const corners = [
+                    rotPt(obj.x, obj.y, obj.x - hw, obj.y - hh, rad),
+                    rotPt(obj.x, obj.y, obj.x + hw, obj.y - hh, rad),
+                    rotPt(obj.x, obj.y, obj.x + hw, obj.y + hh, rad),
+                    rotPt(obj.x, obj.y, obj.x - hw, obj.y + hh, rad),
+                ];
+                dxf += lwPoly('Objects', aci, true, corners);
+                // Guy ropes as dashed rectangle
+                if (obj.guyRopeDistance > 0) {
+                    const gd = obj.guyRopeDistance;
+                    const gCorners = [
+                        rotPt(obj.x, obj.y, obj.x - hw - gd, obj.y - hh - gd, rad),
+                        rotPt(obj.x, obj.y, obj.x + hw + gd, obj.y - hh - gd, rad),
+                        rotPt(obj.x, obj.y, obj.x + hw + gd, obj.y + hh + gd, rad),
+                        rotPt(obj.x, obj.y, obj.x - hw - gd, obj.y + hh + gd, rad),
+                    ];
+                    dxf += lwPoly('Objects', 8, true, gCorners);
+                }
+                // Label
+                if (obj.name) {
+                    dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n0.25\n71\n1\n1\n${obj.name}\\P${obj.width}x${obj.height}m\n`;
+                }
             }
         });
+
         dxf += '0\nENDSEC\n0\nEOF\n';
         const blob = new Blob([dxf], { type: 'application/dxf' });
         const url = URL.createObjectURL(blob);
