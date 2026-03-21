@@ -629,6 +629,15 @@ const IO = (() => {
             return s;
         }
 
+        // Helper: escape non-ASCII chars for DXF MTEXT
+        function dxfText(str) {
+            if (!str) return '';
+            return str.replace(/[^\x00-\x7F]/g, ch => {
+                const code = ch.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0');
+                return '\\U+' + code;
+            });
+        }
+
         // Helper: hex color to nearest ACI color
         function hexToACI(hex) {
             if (!hex) return 7; // white
@@ -648,6 +657,7 @@ const IO = (() => {
         let dxf = '999\nDXF exported by Zeltplatzplaner\n';
         dxf += '0\nSECTION\n2\nHEADER\n';
         dxf += '9\n$ACADVER\n1\nAC1015\n';
+        dxf += '9\n$DWGCODEPAGE\n3\nANSI_1252\n';
         dxf += '9\n$INSUNITS\n70\n6\n'; // meters
         dxf += '0\nENDSEC\n';
 
@@ -670,18 +680,23 @@ const IO = (() => {
                 const cx = obj.points.reduce((s,p) => s + p.x, 0) / obj.points.length;
                 const cy = obj.points.reduce((s,p) => s + p.y, 0) / obj.points.length;
                 if (obj.name) {
-                    dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${cx.toFixed(4)}\n20\n${(-cy).toFixed(4)}\n40\n0.3\n71\n1\n1\n${obj.name}\n`;
+                    dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${cx.toFixed(4)}\n20\n${(-cy).toFixed(4)}\n40\n0.3\n71\n1\n1\n${dxfText(obj.name)}\n`;
                 }
 
             } else if (obj.type === 'fence' && obj.points && obj.points.length >= 2) {
                 dxf += lwPoly('Pipes', aci, false, obj.points);
+                if (obj.name) {
+                    const mx = obj.points.reduce((s,p) => s + p.x, 0) / obj.points.length;
+                    const my = obj.points.reduce((s,p) => s + p.y, 0) / obj.points.length;
+                    dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${mx.toFixed(4)}\n20\n${(-my).toFixed(4)}\n40\n0.2\n71\n1\n1\n${dxfText(obj.name)}\n`;
+                }
 
             } else if (obj.type === 'area' && obj.points && obj.points.length >= 3) {
                 dxf += lwPoly('Areas', aci, true, obj.points);
                 const cx = obj.points.reduce((s,p) => s + p.x, 0) / obj.points.length;
                 const cy = obj.points.reduce((s,p) => s + p.y, 0) / obj.points.length;
                 if (obj.name) {
-                    dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${cx.toFixed(4)}\n20\n${(-cy).toFixed(4)}\n40\n0.2\n71\n1\n1\n${obj.name}\n`;
+                    dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${cx.toFixed(4)}\n20\n${(-cy).toFixed(4)}\n40\n0.2\n71\n1\n1\n${dxfText(obj.name)}\n`;
                 }
 
             } else if (obj.type === 'guideline' && obj.points && obj.points.length === 2) {
@@ -704,15 +719,19 @@ const IO = (() => {
                 ];
                 dxf += lwPoly('Objects', 2, true, corners);
                 if (obj.text) {
-                    dxf += `0\nMTEXT\n8\nLabels\n62\n2\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n0.2\n71\n1\n1\n${obj.text.replace(/\n/g, '\\P')}\n`;
+                    dxf += `0\nMTEXT\n8\nLabels\n62\n2\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n0.2\n71\n1\n1\n${dxfText(obj.text).replace(/\n/g, '\\P')}\n`;
                 }
+
+            } else if (obj.type === 'text') {
+                const fs = obj.fontSize || 1;
+                dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n${(fs * 0.3).toFixed(2)}\n71\n1\n1\n${dxfText(obj.text || obj.name || '')}\n`;
 
             } else if (obj.type === 'symbol') {
                 // Symbol as circle with label
                 const r = Math.max(obj.width || 1, obj.height || 1) / 2;
                 dxf += `0\nCIRCLE\n8\nObjects\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n${r.toFixed(4)}\n`;
                 if (obj.name) {
-                    dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-(obj.y + r + 0.3)).toFixed(4)}\n40\n0.2\n71\n1\n1\n${obj.name}\n`;
+                    dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-(obj.y + r + 0.3)).toFixed(4)}\n40\n0.2\n71\n1\n1\n${dxfText(obj.name)}\n`;
                 }
 
             } else if (obj.width && obj.height && obj.type !== 'bgimage') {
@@ -766,7 +785,7 @@ const IO = (() => {
                 }
                 // Label
                 if (obj.name) {
-                    dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n0.25\n71\n1\n1\n${obj.name}\\P${obj.width}x${obj.height}m\n`;
+                    dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n0.25\n71\n1\n1\n${dxfText(obj.name)}\\P${obj.width}x${obj.height}m\n`;
                 }
             }
         });
