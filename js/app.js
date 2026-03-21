@@ -120,6 +120,7 @@
                 '<p><strong>Keine Datenerhebung:</strong> Es werden keine personenbezogenen Daten erhoben, gespeichert oder an Dritte weitergegeben. Es gibt keine Registrierung, kein Tracking, keine Analyse-Tools und keine Cookies.</p>' +
                 '<p><strong>Lokale Speicherung:</strong> Die Anwendung nutzt ausschlie\u00dflich den lokalen Speicher Ihres Browsers (localStorage), um Ihre Arbeit zwischenzuspeichern. Diese Daten verlassen Ihren Browser nicht.</p>' +
                 '<p><strong>Hosting:</strong> Die Webseite wird bei einem deutschen Hoster betrieben. Beim Zugriff werden technisch bedingt Server-Logfiles erfasst (IP-Adresse, Zeitpunkt, aufgerufene Seite). Diese dienen ausschlie\u00dflich der technischen Sicherstellung des Betriebs.</p>' +
+                '<p><strong>PayPal-Spende:</strong> Diese Seite enth\u00e4lt einen freiwilligen Spenden-Link zu PayPal. Erst beim Klick auf diesen Link werden Sie zu PayPal (PayPal (Europe) S.\u00e0 r.l. et Cie, S.C.A., Luxemburg) weitergeleitet. Die Datenverarbeitung erfolgt dann durch PayPal gem\u00e4\u00df deren <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full" target="_blank" style="color:var(--primary)">Datenschutzerkl\u00e4rung</a>. Von dieser Webseite werden dabei keine Daten an PayPal \u00fcbermittelt.</p>' +
                 '<p><strong>Kontakt:</strong> Marc Sch\u00fc\u00dfler, marc@tyra-lorena.de</p>';
         }
         legalModal.classList.remove('hidden');
