@@ -285,7 +285,7 @@ const IO = (() => {
                 a.click();
             } else {
                 const a = document.createElement('a');
-                a.href = mapCanvas.toDataURL(mimeType, 0.95);
+                a.href = allPages[0].toDataURL(mimeType, 0.95);
                 a.download = `${site.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.${ext}`;
                 a.click();
             }
