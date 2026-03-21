@@ -92,9 +92,25 @@ const IO = (() => {
 
         // Multi-page: split large plans into page tiles
         const allPages = [];
-        if (multiPage && scaleOption !== 'auto' && !treasureMap) {
-            const scale = parseInt(scaleOption);
-            // Meters per mm at given scale
+        if (multiPage && !treasureMap) {
+            // Determine scale: use fixed scale or calculate from content
+            let scale;
+            if (scaleOption === 'auto') {
+                // Calculate scale that gives ~1:100 feel, or fit longest side to 2 pages
+                const printW = paper.w - 30;
+                const printH = paper.h - 40;
+                const scaleFromW = Math.ceil((bounds.width * 1000) / (printW * 2));
+                const scaleFromH = Math.ceil((bounds.height * 1000) / (printH * 2));
+                scale = Math.max(scaleFromW, scaleFromH);
+                // Round to nice number
+                if (scale <= 50) scale = 50;
+                else if (scale <= 100) scale = 100;
+                else if (scale <= 200) scale = 200;
+                else if (scale <= 500) scale = 500;
+                else scale = Math.ceil(scale / 100) * 100;
+            } else {
+                scale = parseInt(scaleOption);
+            }
             const mPerMm = scale / 1000;
             // Printable area in mm (minus margins)
             const printW = paper.w - 30; // 15mm margin each side
@@ -272,13 +288,15 @@ const IO = (() => {
             const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
             const ext = format;
             if (allPages.length > 1) {
+                const pw = allPages[0].width, ph = allPages[0].height;
+                const gap = 20 * dpiScale;
                 const combined = document.createElement('canvas');
-                combined.width = canvasW;
-                combined.height = canvasH * allPages.length + (allPages.length - 1) * 20;
+                combined.width = pw;
+                combined.height = ph * allPages.length + (allPages.length - 1) * gap;
                 const cc = combined.getContext('2d');
                 cc.fillStyle = '#fff';
                 cc.fillRect(0, 0, combined.width, combined.height);
-                allPages.forEach((p, i) => cc.drawImage(p, 0, i * (canvasH + 20)));
+                allPages.forEach((p, i) => cc.drawImage(p, 0, i * (ph + gap)));
                 const a = document.createElement('a');
                 a.href = combined.toDataURL(mimeType, 0.95);
                 a.download = `${site.name.replace(/[^a-zA-Z0-9_-]/g, '_')}.${ext}`;
