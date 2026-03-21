@@ -1,5 +1,11 @@
 # Changelog
 
+## [5.5.0] - 2026-03-21
+
+### Added
+- **Recycling symbol**: Muelltrennung-Station with 3 colored bins (yellow/blue/green) in symbol picker
+- **Multi-page PDF export**: Checkbox to split large plans across multiple pages at fixed scale. Each page gets page number, scale indicator, and overview mini-map showing current tile position
+
 ## [5.4.1] - 2026-03-21
 
 ### Added

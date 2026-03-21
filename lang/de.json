@@ -210,6 +210,7 @@
   "props.shape.triangle": "Dreieck",
   "props.opacity": "Deckkraft",
   "modal.print.objList": "Objektliste drucken",
+  "modal.print.multipage": "Mehrseitig (grosse Plaetze)",
   "btn.offline": "Offline-Version (experimentell)",
   "btn.offlineDownload": "Offline-Version herunterladen (experimentell)",
   "btn.newFolder": "Neuer Ordner",

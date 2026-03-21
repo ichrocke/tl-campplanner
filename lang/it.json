@@ -210,6 +210,7 @@
   "props.shape.triangle": "Triangolo",
   "props.opacity": "Opacità",
   "modal.print.objList": "Stampa lista oggetti",
+  "modal.print.multipage": "Multipagina (siti grandi)",
   "btn.offline": "Versione offline (sperimentale)",
   "btn.offlineDownload": "Scarica versione offline (sperimentale)",
   "btn.newFolder": "Nuova cartella",

@@ -4,38 +4,62 @@ Zukuenftige Feature-Ideen
 ## Darstellung
 - Dunkler Modus
 - Bodentexturen (Gras, Kies, Sand)
-- 3D-Vorschau
-- Nachtmodus mit Beleuchtung
+- 3D-Vorschau (isometrisch)
+- Nachtmodus mit Beleuchtung/Lampenradius
 - Heatmap (Zeltdichte)
+- Legende automatisch generieren (verwendete Symbole/Farben)
+- Schattenwurf-Simulation (Sonnenstand + Baumhoehe)
+- [x] Minimap zur Navigation (5.4.0)
 
 ## Planung
-- An Objektkanten einrasten
-- Objekte spiegeln
-- Auto-Nummerierung
-- Minimap zur Navigation
-- Personenkapazitaet berechnen
-- Sonnenstand-Overlay
+- An Objektkanten einrasten (magnetische Hilfslinien)
+- Objekte spiegeln (horizontal/vertikal)
+- Auto-Nummerierung (Zelte 1, 2, 3...)
+- Personenkapazitaet berechnen (Personen pro Zelt eingeben)
+- Gesamtkapazitaet des Platzes anzeigen
 - Durchfahrtsbreiten pruefen
+- Objekte entlang eines Pfades verteilen (z.B. Zelte im Kreis)
+- Objekt-Suche/Filter (nach Name, Typ)
+- Hoehenlinien / Gelaendeneigung
+- Aufbauphasen planen (Tag 1, Tag 2... als Zeitraffer)
+
+## Objekte & Vorlagen
+- Baeume / Buesche / Hecken mit verschiedenen Groessen
+- Fahrzeuge (Auto, Transporter, Anhaenger)
+- Lagerfeuerkreis mit Sitzplaetzen
+- Wetterschutz / Tarp als Polygon mit Abspannungen
+- Tische & Baenke (Bierzeltgarnitur)
+- Kuechen-/Kochbereich
+- Wasserquellen, Brunnen, Bachlaeufe
+- Zelt-Bibliothek mit echten Modellen (Hilleberg, Vaude, etc.)
+- Fertige Platzvorlagen (Pfadfinder-Lager, Festival, Familientreffen)
+- Community-Vorlagen teilen
 
 ## Infrastruktur
-- Stromkapazitaeten (16A/32A)
-- Beleuchtungsradius
+- Stromkapazitaeten (16A/32A) pro Verteiler
+- Strom-/Wasserverteiler als platzierbare Objekte
+- Beleuchtungsradius anzeigen
 - WLAN-Reichweiten
 - Stromverteilungsplan
+- [x] Muelltrennung-Station als Symbol (5.5.0)
 
 ## Zusammenarbeit
-- Plan per Link teilen
-- QR-Code zum Teilen
+- Plan per Link teilen (komprimierter URL-Parameter)
+- QR-Code auf Export drucken
 - Versionshistorie
+- Kommentar-Funktion (Notizen an bestimmten Stellen)
 
 ## Import/Export
 - KML fuer Google Earth
-- GPX-Import
-- CSV-Inventarliste
+- GPX-Import (Gelaendedaten)
+- CSV-Inventarliste / Materialliste automatisch generieren
+- [x] PDF-Export mit Seitennummerierung fuer grosse Plaetze (5.5.0)
+- Foto-Overlay: Drohnenfoto als Hintergrund
+- Kostenrechner (Preis pro Objekt hinterlegen)
 
 ## Mobil
-- GPS-Positionierung
-- PWA mit Service Worker
+- GPS-Positionierung (Standort auf Plan markieren)
+- PWA mit Service Worker (echte Offline-App)
 
 ## Verwaltung
 - Buchungssystem-Anbindung
@@ -43,8 +67,14 @@ Zukuenftige Feature-Ideen
 - PDF-Bericht mit Checkliste
 - Kapazitaetsgrenzen pro Flaeche
 
+## Bedienung
+- Tastenkuerzel frei belegbar
+- Mehrere Undo-Aeste (Undo-Baum)
+- [x] Lineal mit permanenter Bemassung (bereits vorhanden: Measure Tool M)
+- Raster an Objekt ausrichten (nicht nur global)
+
 ## Technik
-- Web Worker fuer Export
-- IndexedDB-Speicher
+- Web Worker fuer Export (kein UI-Freeze)
+- IndexedDB statt localStorage (groessere Plaene)
 - Plugin-System
 - Redo-Historie anzeigen

@@ -1479,6 +1479,15 @@ const Canvas = (() => {
         info:        { name: 'Info',          bg: '#2563eb', fg: '#fff', draw: (c,s) => { c.font=`bold ${s*0.55}px serif`; c.textAlign='center'; c.textBaseline='middle'; c.fillText('i',0,0); }},
         no_fire:     { name: 'No Fire',       bg: '#fff', fg: '#ef4444', draw: (c,s) => { c.beginPath(); c.arc(0,0,s*0.35,0,Math.PI*2); c.stroke(); c.beginPath(); c.moveTo(-s*0.25,-s*0.25); c.lineTo(s*0.25,s*0.25); c.stroke(); }},
         trash:       { name: 'Waste',         bg: '#6b7280', fg: '#fff', draw: (c,s) => { c.fillRect(-s*0.2,-s*0.15,s*0.4,s*0.4); c.fillRect(-s*0.25,-s*0.2,s*0.5,s*0.08); c.fillRect(-s*0.06,-s*0.28,s*0.12,s*0.1); }},
+        recycling:   { name: 'Recycling',     bg: '#f0f0f0', fg: '#333', draw: (c,s) => {
+            const bw = s*0.22, bh = s*0.38, by = s*0.05, lr = s*0.04;
+            [['#eab308',-s*0.28], ['#2563eb',0], ['#22c55e',s*0.28]].forEach(([col,bx]) => {
+                c.fillStyle = col; c.beginPath();
+                c.moveTo(bx-bw/2, by+bh); c.lineTo(bx-bw*0.4, by); c.lineTo(bx+bw*0.4, by); c.lineTo(bx+bw/2, by+bh); c.closePath(); c.fill();
+                c.fillRect(bx-bw*0.35, by-s*0.06, bw*0.7, s*0.06);
+                c.fillStyle = '#555'; c.fillRect(bx-s*0.02, by-s*0.14, s*0.04, s*0.09);
+            });
+        }},
     };
 
     function drawSymbol(obj, z, isSel, isHov) {

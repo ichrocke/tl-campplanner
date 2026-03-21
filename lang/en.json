@@ -210,6 +210,7 @@
   "props.shape.triangle": "Triangle",
   "props.opacity": "Opacity",
   "modal.print.objList": "Print object list",
+  "modal.print.multipage": "Multi-page (large sites)",
   "btn.offline": "Offline Version (experimental)",
   "btn.offlineDownload": "Download offline version (experimental)",
   "btn.newFolder": "New folder",

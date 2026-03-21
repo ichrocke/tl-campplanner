@@ -51,6 +51,7 @@ const IO = (() => {
         const showDistances = document.getElementById('print-distances').checked;
         const showObjList = document.getElementById('print-objlist').checked;
         const blackWhite = document.getElementById('print-bw').checked;
+        const multiPage = document.getElementById('print-multipage').checked;
         const treasureMap = document.getElementById('print-treasure').checked;
         const title = document.getElementById('print-title').value;
         const format = overrideFormat || 'print';
@@ -59,17 +60,16 @@ const IO = (() => {
         const filter = State._printFilter;
         if (filter) {
             State._printFilter = null;
-            // Temporarily swap objects for filtered printing
             const origObjects = site.objects;
             site.objects = filter.objects;
-            printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, blackWhite, title, format);
+            printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, blackWhite, multiPage, title, format);
             site.objects = origObjects;
         } else {
-            printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, blackWhite, title, format);
+            printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, blackWhite, multiPage, title, format);
         }
     }
 
-    async function printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, blackWhite, title, format) {
+    async function printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, blackWhite, multiPage, title, format) {
         const papers = { a4: { w: 297, h: 210 }, a3: { w: 420, h: 297 }, a2: { w: 594, h: 420 } };
         let paper = papers[paperSel] || papers.a4;
         if (orientation === 'portrait') paper = { w: paper.h, h: paper.w };
@@ -77,14 +77,12 @@ const IO = (() => {
         const bounds = getContentBounds(site);
         if (!bounds) { alert(I18n.t('msg.noPrintContent')); return; }
 
-        // Always use 96 DPI logical dimensions, scale up for image export
         const basePxPerMm = 3.78; // 96 DPI
-        const dpiScale = (format === 'png' || format === 'jpeg') ? 3 : 1; // 3x = ~300 DPI
+        const dpiScale = (format === 'png' || format === 'jpeg') ? 3 : 1;
         const canvasW = Math.round(paper.w * basePxPerMm);
         const canvasH = Math.round(paper.h * basePxPerMm);
         const marginPx = Math.round(15 * basePxPerMm);
 
-        // Preload pirate font for treasure map
         if (treasureMap) {
             try {
                 await document.fonts.load("20px 'PirateFont'");
@@ -92,51 +90,138 @@ const IO = (() => {
             } catch(e) {}
         }
 
-        // Use Canvas.renderOffscreen - same rendering as on screen, scaled up for DPI
-        const mapCanvas = Canvas.renderOffscreen(canvasW, canvasH, bounds, {
-            showGrid: treasureMap ? false : showGrid,
-            showDistances: treasureMap ? false : showDistances,
-            margin: marginPx,
-            dpiScale: dpiScale,
-            treasureMap: treasureMap,
-        });
+        // Multi-page: split large plans into page tiles
+        const allPages = [];
+        if (multiPage && scaleOption !== 'auto' && !treasureMap) {
+            const scale = parseInt(scaleOption);
+            // Meters per mm at given scale
+            const mPerMm = scale / 1000;
+            // Printable area in mm (minus margins)
+            const printW = paper.w - 30; // 15mm margin each side
+            const printH = paper.h - 40; // extra for header/footer
+            // Printable area in meters
+            const viewW = printW * mPerMm;
+            const viewH = printH * mPerMm;
+            // How many pages needed
+            const cols = Math.max(1, Math.ceil(bounds.width / viewW));
+            const rows = Math.max(1, Math.ceil(bounds.height / viewH));
+            const totalPages = cols * rows;
 
-        if (!mapCanvas) return;
-        const pctx = mapCanvas.getContext('2d');
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < cols; col++) {
+                    const pageIdx = row * cols + col + 1;
+                    const tileBounds = {
+                        minX: bounds.minX + col * viewW,
+                        minY: bounds.minY + row * viewH,
+                        maxX: bounds.minX + (col + 1) * viewW,
+                        maxY: bounds.minY + (row + 1) * viewH,
+                        width: viewW,
+                        height: viewH,
+                    };
+                    const tileCanvas = Canvas.renderOffscreen(canvasW, canvasH, tileBounds, {
+                        showGrid: showGrid,
+                        showDistances: showDistances,
+                        margin: marginPx,
+                        dpiScale: dpiScale,
+                    });
+                    if (!tileCanvas) continue;
+                    const tc = tileCanvas.getContext('2d');
+                    tc.scale(dpiScale, dpiScale);
 
-        // Re-apply scale for post-processing (title, treasure map)
-        pctx.scale(dpiScale, dpiScale);
+                    // Title top-left
+                    if (title) {
+                        tc.font = '600 8px sans-serif';
+                        tc.fillStyle = '#64748b';
+                        tc.textAlign = 'left';
+                        tc.textBaseline = 'top';
+                        tc.fillText(title, 8, 6);
+                    }
 
-        // Title (small, top-left)
-        if (title) {
-            pctx.font = treasureMap
-                ? "18px 'PirateFont', 'Georgia', serif"
-                : '600 8px sans-serif';
-            pctx.fillStyle = treasureMap ? '#2a1a0a' : '#64748b';
-            pctx.textAlign = 'left';
-            pctx.textBaseline = 'top';
-            pctx.fillText(title, treasureMap ? 20 : 8, treasureMap ? 12 : 6);
-        }
+                    // Page number + scale bottom-right
+                    tc.font = '600 8px sans-serif';
+                    tc.fillStyle = '#94a3b8';
+                    tc.textAlign = 'right';
+                    tc.textBaseline = 'bottom';
+                    tc.fillText(`${I18n.t('modal.print.paper')} ${pageIdx}/${totalPages}  \u2014  1:${scale}`, canvasW - 8, canvasH - 6);
 
-        // Post-processing effects
-        pctx.setTransform(1, 0, 0, 1, 0, 0);
-        if (treasureMap) {
-            applyTreasureMapEffect(pctx, mapCanvas.width, mapCanvas.height);
-        }
-        if (blackWhite) {
-            const bwData = pctx.getImageData(0, 0, mapCanvas.width, mapCanvas.height);
-            const d = bwData.data;
-            for (let i = 0; i < d.length; i += 4) {
-                const gray = d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114;
-                d[i] = d[i+1] = d[i+2] = gray;
+                    // Overview mini-map bottom-left
+                    if (totalPages > 1) {
+                        const ovW = 60, ovH = ovW * (bounds.height / bounds.width) || 40;
+                        const ovX = 8, ovY = canvasH - ovH - 8;
+                        tc.fillStyle = 'rgba(255,255,255,0.9)';
+                        tc.fillRect(ovX, ovY, ovW, ovH);
+                        tc.strokeStyle = '#cbd5e1';
+                        tc.lineWidth = 0.5;
+                        tc.strokeRect(ovX, ovY, ovW, ovH);
+                        // Grid lines
+                        for (let c = 1; c < cols; c++) {
+                            const lx = ovX + (c / cols) * ovW;
+                            tc.beginPath(); tc.moveTo(lx, ovY); tc.lineTo(lx, ovY + ovH); tc.stroke();
+                        }
+                        for (let r = 1; r < rows; r++) {
+                            const ly = ovY + (r / rows) * ovH;
+                            tc.beginPath(); tc.moveTo(ovX, ly); tc.lineTo(ovX + ovW, ly); tc.stroke();
+                        }
+                        // Highlight current tile
+                        const hx = ovX + (col / cols) * ovW;
+                        const hy = ovY + (row / rows) * ovH;
+                        const hw = ovW / cols, hh = ovH / rows;
+                        tc.fillStyle = 'rgba(37, 99, 235, 0.25)';
+                        tc.fillRect(hx, hy, hw, hh);
+                        tc.strokeStyle = '#2563eb';
+                        tc.lineWidth = 1;
+                        tc.strokeRect(hx, hy, hw, hh);
+                    }
+
+                    tc.setTransform(1, 0, 0, 1, 0, 0);
+                    if (blackWhite) {
+                        const bwData = tc.getImageData(0, 0, tileCanvas.width, tileCanvas.height);
+                        const d = bwData.data;
+                        for (let i = 0; i < d.length; i += 4) {
+                            const gray = d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114;
+                            d[i] = d[i+1] = d[i+2] = gray;
+                        }
+                        tc.putImageData(bwData, 0, 0);
+                    }
+                    allPages.push(tileCanvas);
+                }
             }
-            pctx.putImageData(bwData, 0, 0);
+        } else {
+            // Single page (original behavior)
+            const mapCanvas = Canvas.renderOffscreen(canvasW, canvasH, bounds, {
+                showGrid: treasureMap ? false : showGrid,
+                showDistances: treasureMap ? false : showDistances,
+                margin: marginPx,
+                dpiScale: dpiScale,
+                treasureMap: treasureMap,
+            });
+            if (!mapCanvas) return;
+            const pctx = mapCanvas.getContext('2d');
+            pctx.scale(dpiScale, dpiScale);
+            if (title) {
+                pctx.font = treasureMap ? "18px 'PirateFont', 'Georgia', serif" : '600 8px sans-serif';
+                pctx.fillStyle = treasureMap ? '#2a1a0a' : '#64748b';
+                pctx.textAlign = 'left';
+                pctx.textBaseline = 'top';
+                pctx.fillText(title, treasureMap ? 20 : 8, treasureMap ? 12 : 6);
+            }
+            pctx.setTransform(1, 0, 0, 1, 0, 0);
+            if (treasureMap) applyTreasureMapEffect(pctx, mapCanvas.width, mapCanvas.height);
+            if (blackWhite) {
+                const bwData = pctx.getImageData(0, 0, mapCanvas.width, mapCanvas.height);
+                const d = bwData.data;
+                for (let i = 0; i < d.length; i += 4) {
+                    const gray = d[i] * 0.299 + d[i+1] * 0.587 + d[i+2] * 0.114;
+                    d[i] = d[i+1] = d[i+2] = gray;
+                }
+                pctx.putImageData(bwData, 0, 0);
+            }
+            allPages.push(mapCanvas);
         }
 
-        // Object list (page 2)
-        let page2 = null;
+        // Object list page
         if (showObjList && site.objects.length > 0) {
-            page2 = document.createElement('canvas');
+            const page2 = document.createElement('canvas');
             page2.width = Math.round(canvasW * dpiScale);
             page2.height = Math.round(canvasH * dpiScale);
             const p2 = page2.getContext('2d');
@@ -180,11 +265,8 @@ const IO = (() => {
                 cx = tx;
                 vals.forEach((v, i) => { p2.fillText(v, cx + (i === 0 ? Math.round(16) : 4), rowY + rowH / 2, colW[i] - 8); cx += colW[i]; });
             });
+            allPages.push(page2);
         }
-
-        // Output
-        const allPages = [mapCanvas];
-        if (page2) allPages.push(page2);
 
         if (format === 'png' || format === 'jpeg') {
             const mimeType = format === 'png' ? 'image/png' : 'image/jpeg';
