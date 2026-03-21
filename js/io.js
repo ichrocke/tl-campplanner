@@ -942,5 +942,82 @@ ${els}</svg>`;
         a.click();
     }
 
-    return { exportFile, importFile, print, exportSVG, exportDXF, downloadOffline };
+    function importCSV(csvText) {
+        const site = State.activeSite;
+        if (!site) return;
+        const lines = csvText.trim().split('\n');
+        if (lines.length < 2) { alert('CSV leer oder ungueltig'); return; }
+
+        // Parse header
+        const header = lines[0].split(';').map(h => h.trim().toLowerCase().replace(/"/g, ''));
+        const iName = header.indexOf('name');
+        const iBreite = header.indexOf('breite');
+        const iTiefe = header.indexOf('tiefe');
+        const iAbspann = header.indexOf('abspann');
+        if (iName < 0 || iBreite < 0 || iTiefe < 0) {
+            alert('CSV-Header muss enthalten: name;breite;tiefe;abspann');
+            return;
+        }
+
+        // Parse rows
+        const items = [];
+        for (let i = 1; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (!line) continue;
+            // Simple CSV parse with semicolon and optional quotes
+            const parts = [];
+            let cur = '', inQ = false;
+            for (let c = 0; c < line.length; c++) {
+                const ch = line[c];
+                if (ch === '"') { inQ = !inQ; }
+                else if (ch === ';' && !inQ) { parts.push(cur.trim()); cur = ''; }
+                else { cur += ch; }
+            }
+            parts.push(cur.trim());
+            const name = parts[iName] || '';
+            const breite = parseFloat(parts[iBreite]) || 1;
+            const tiefe = parseFloat(parts[iTiefe]) || 1;
+            const abspann = iAbspann >= 0 ? (parseFloat(parts[iAbspann]) || 0) : 0;
+            items.push({ name, breite, tiefe, abspann });
+        }
+
+        if (items.length === 0) { alert('Keine Daten in CSV'); return; }
+
+        // Place objects in a grid layout
+        const cols = Math.ceil(Math.sqrt(items.length));
+        const spacing = 2; // meters between objects
+        let col = 0, rowY = 0, rowH = 0, cx = 0;
+
+        items.forEach((item, idx) => {
+            const maxDim = Math.max(item.breite, item.tiefe) + item.abspann * 2;
+            if (col >= cols) {
+                col = 0;
+                rowY += rowH + spacing;
+                rowH = 0;
+                cx = 0;
+            }
+            const x = cx + item.breite / 2 + item.abspann;
+            const y = rowY + item.tiefe / 2 + item.abspann;
+
+            State.addObject({
+                type: 'tent',
+                name: item.name,
+                width: item.breite,
+                height: item.tiefe,
+                guyRopeDistance: item.abspann,
+                color: '#4a90d9',
+                shape: 'rect',
+            }, x, y);
+
+            cx += maxDim + spacing;
+            rowH = Math.max(rowH, maxDim);
+            col++;
+        });
+
+        State.notifyChange();
+        Canvas.render();
+        alert(items.length + ' Objekte importiert');
+    }
+
+    return { exportFile, importFile, print, exportSVG, exportDXF, downloadOffline, importCSV };
 })();

@@ -1818,6 +1818,18 @@ const UI = (() => {
         document.getElementById('btn-import').addEventListener('click', () => IO.importFile());
         document.getElementById('btn-export').addEventListener('click', () => IO.exportFile());
 
+        // CSV import
+        const csvInput = document.getElementById('file-csv-import');
+        document.getElementById('btn-csv-import').addEventListener('click', () => csvInput.click());
+        csvInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => { IO.importCSV(reader.result); closeModal(); };
+            reader.readAsText(file);
+            csvInput.value = '';
+        });
+
         document.getElementById('btn-settings').addEventListener('click', () => {
             syncSettings();
             openModal('modal-settings');
