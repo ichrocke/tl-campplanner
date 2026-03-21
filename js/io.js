@@ -671,8 +671,9 @@ const IO = (() => {
         // Entities
         dxf += '0\nSECTION\n2\nENTITIES\n';
 
-        console.log('[DXF] Total objects:', site.objects.length, site.objects.map(o => `${o.type}:${o.name}:w${o.width}:h${o.height}:s${o.shape}`));
-        site.objects.forEach(obj => {
+        console.log('[DXF] Total objects:', site.objects.length);
+        site.objects.forEach((obj, idx) => {
+          try {
             const aci = hexToACI(obj.color);
 
             if (obj.type === 'ground' && obj.points && obj.points.length >= 3) {
@@ -796,8 +797,12 @@ const IO = (() => {
                     dxf += `0\nMTEXT\n8\nLabels\n62\n${aci}\n10\n${obj.x.toFixed(4)}\n20\n${(-obj.y).toFixed(4)}\n40\n0.2\n71\n1\n1\n${dxfText(obj.name)}\n`;
                 }
             }
+          } catch(e) {
+            console.error('[DXF] Error exporting object', idx, obj.type, obj.name, e);
+          }
         });
 
+        console.log('[DXF] DXF size:', dxf.length, 'chars');
         dxf += '0\nENDSEC\n0\nEOF\n';
         const blob = new Blob([dxf], { type: 'application/dxf' });
         const url = URL.createObjectURL(blob);
