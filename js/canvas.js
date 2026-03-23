@@ -1745,7 +1745,9 @@ const Canvas = (() => {
         if (!_compassImg || !_compassImg.complete) return;
 
         const site = State.activeSite;
-        const rot = (site && site.compassRotation) || 0;
+        // Use map rotation if map layer is active, otherwise manual compass rotation
+        const mapRot = (site && site.mapLayer && site.mapLayer.enabled && site.mapLayer.rotation) || 0;
+        const rot = mapRot || ((site && site.compassRotation) || 0);
         ctx.globalAlpha = 0.7;
         ctx.save();
         ctx.translate(cx + size / 2, cy + size / 2);

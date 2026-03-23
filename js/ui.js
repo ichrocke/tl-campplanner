@@ -390,10 +390,7 @@ const UI = (() => {
                         sym.draw(c, 24);
                         btn.appendChild(cvs);
                     }
-                    const label = document.createElement('span');
-                    label.className = 'symbol-btn-label';
-                    label.textContent = sym.name;
-                    btn.appendChild(label);
+                    btn.title = sym.name;
                     btn.addEventListener('click', () => {
                         picker.classList.add('hidden');
                         Tools.setPendingTemplate({
@@ -473,11 +470,17 @@ const UI = (() => {
             document.getElementById('map-opacity').value = ml.opacity != null ? ml.opacity : 0.5;
             document.getElementById('map-opacity-val').textContent = Math.round((ml.opacity != null ? ml.opacity : 0.5) * 100) + '%';
             document.getElementById('map-enabled').checked = !!ml.enabled;
+            document.getElementById('map-rotation').value = ml.rotation || 0;
+            document.getElementById('map-rotation-val').textContent = (ml.rotation || 0) + '\u00B0';
             openModal('modal-maptiles');
         });
 
         document.getElementById('map-opacity').addEventListener('input', (e) => {
             document.getElementById('map-opacity-val').textContent = Math.round(e.target.value * 100) + '%';
+        });
+
+        document.getElementById('map-rotation').addEventListener('input', (e) => {
+            document.getElementById('map-rotation-val').textContent = e.target.value + '\u00B0';
         });
 
         document.getElementById('map-ok').addEventListener('click', () => {
@@ -488,6 +491,7 @@ const UI = (() => {
             site.mapLayer.lng = parseFloat(document.getElementById('map-lng').value) || null;
             site.mapLayer.source = document.getElementById('map-source').value;
             site.mapLayer.opacity = parseFloat(document.getElementById('map-opacity').value);
+            site.mapLayer.rotation = parseInt(document.getElementById('map-rotation').value) || 0;
             site.mapLayer.enabled = document.getElementById('map-enabled').checked;
             if (site.mapLayer.anchorWorldX == null) site.mapLayer.anchorWorldX = 0;
             if (site.mapLayer.anchorWorldY == null) site.mapLayer.anchorWorldY = 0;

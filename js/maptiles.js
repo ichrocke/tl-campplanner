@@ -127,21 +127,58 @@ const MapTiles = (() => {
 
         const source = ml.source || 'osm';
         const opacity = ml.opacity != null ? ml.opacity : 0.5;
+        const rotDeg = ml.rotation || 0;
+        const rotRad = rotDeg * Math.PI / 180;
 
         // Current scale: meters per screen pixel
         const PPM = 30;
         const siteZoom = site.view.zoom || 1;
         const mPerScreenPx = 1 / (PPM * siteZoom);
 
-        // Visible world bounds
-        const topLeft = s2w(0, 0);
-        const bottomRight = s2w(canvasEl.width, canvasEl.height);
+        // Anchor point in screen coords (rotation pivot)
+        const anchorScreen = w2s(anchor.worldX, anchor.worldY);
+
+        // When map is rotated, we need to cover a larger area.
+        // Calculate the visible world bounds with extra margin for rotation.
+        const cw = canvasEl.width;
+        const ch = canvasEl.height;
+        // Diagonal of canvas = max extent needed
+        const diag = Math.sqrt(cw * cw + ch * ch);
+        const cx = cw / 2;
+        const cy = ch / 2;
+        const topLeft = s2w(cx - diag / 2, cy - diag / 2);
+        const bottomRight = s2w(cx + diag / 2, cy + diag / 2);
+
+        // Unrotate the visible bounds to get lat/lng in map-north space
+        function unrotateWorld(wx, wy) {
+            const dx = wx - anchor.worldX;
+            const dy = wy - anchor.worldY;
+            const cos = Math.cos(-rotRad);
+            const sin = Math.sin(-rotRad);
+            return {
+                x: anchor.worldX + dx * cos - dy * sin,
+                y: anchor.worldY + dx * sin + dy * cos,
+            };
+        }
+
+        // Get corners of the visible area in unrotated (north-up) world space
+        const corners = [
+            unrotateWorld(topLeft.x, topLeft.y),
+            unrotateWorld(bottomRight.x, topLeft.y),
+            unrotateWorld(topLeft.x, bottomRight.y),
+            unrotateWorld(bottomRight.x, bottomRight.y),
+        ];
+        let minWx = Infinity, maxWx = -Infinity, minWy = Infinity, maxWy = -Infinity;
+        corners.forEach(c => {
+            minWx = Math.min(minWx, c.x); maxWx = Math.max(maxWx, c.x);
+            minWy = Math.min(minWy, c.y); maxWy = Math.max(maxWy, c.y);
+        });
 
         // Convert to lat/lng
-        const nwLat = worldYToLat(topLeft.y, anchor);
-        const nwLng = worldXToLng(topLeft.x, anchor);
-        const seLat = worldYToLat(bottomRight.y, anchor);
-        const seLng = worldXToLng(bottomRight.x, anchor);
+        const nwLat = worldYToLat(minWy, anchor);
+        const nwLng = worldXToLng(minWx, anchor);
+        const seLat = worldYToLat(maxWy, anchor);
+        const seLng = worldXToLng(maxWx, anchor);
 
         // Best tile zoom, reduce if too many tiles would be needed
         let z = Math.min(19, Math.max(1, bestZoom(anchor.lat, mPerScreenPx)));
@@ -151,12 +188,19 @@ const MapTiles = (() => {
             txMax = lngToTileX(Math.max(nwLng, seLng), z);
             tyMin = latToTileY(Math.max(nwLat, seLat), z);
             tyMax = latToTileY(Math.min(nwLat, seLat), z);
-            if ((txMax - txMin + 1) * (tyMax - tyMin + 1) <= 100) break;
+            if ((txMax - txMin + 1) * (tyMax - tyMin + 1) <= 150) break;
         }
         if (z < 1) return;
 
         ctx.save();
         ctx.globalAlpha = opacity;
+
+        // Rotate the entire tile layer around the anchor screen point
+        if (rotDeg !== 0) {
+            ctx.translate(anchorScreen.x, anchorScreen.y);
+            ctx.rotate(rotRad);
+            ctx.translate(-anchorScreen.x, -anchorScreen.y);
+        }
 
         for (let tx = txMin; tx <= txMax; tx++) {
             for (let ty = tyMin; ty <= tyMax; ty++) {

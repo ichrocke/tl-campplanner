@@ -294,5 +294,6 @@
   "modal.map.source": "Kartentyp",
   "modal.map.opacity": "Deckkraft",
   "modal.map.enabled": "Karte anzeigen",
+  "modal.map.rotation": "Drehung",
   "modal.map.cancel": "Abbrechen"
 }

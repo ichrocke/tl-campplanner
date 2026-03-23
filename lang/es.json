@@ -294,5 +294,6 @@
   "modal.map.source": "Tipo de mapa",
   "modal.map.opacity": "Opacidad",
   "modal.map.enabled": "Mostrar mapa",
+  "modal.map.rotation": "Rotacion",
   "modal.map.cancel": "Cancelar"
 }

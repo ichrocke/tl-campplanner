@@ -75,7 +75,7 @@ const State = (() => {
             view: { panX: 0, panY: 0, zoom: 1 },
             layers: [{ id: generateId(), name: 'Default', visible: true, locked: false }],
             activeLayerId: null,
-            mapLayer: { enabled: false, lat: null, lng: null, source: 'osm', opacity: 0.5, anchorWorldX: 0, anchorWorldY: 0 },
+            mapLayer: { enabled: false, lat: null, lng: null, source: 'osm', opacity: 0.5, rotation: 0, anchorWorldX: 0, anchorWorldY: 0 },
         };
         site.activeLayerId = site.layers[0].id;
         _sites.push(site);
@@ -116,7 +116,7 @@ const State = (() => {
                 bgImage: null,
                 view: { panX: 0, panY: 0, zoom: 1 },
                 layers: JSON.parse(JSON.stringify(srcSite.layers || [{ id: generateId(), name: 'Default', visible: true, locked: false }])),
-                mapLayer: srcSite.mapLayer ? JSON.parse(JSON.stringify(srcSite.mapLayer)) : { enabled: false, lat: null, lng: null, source: 'osm', opacity: 0.5, anchorWorldX: 0, anchorWorldY: 0 },
+                mapLayer: srcSite.mapLayer ? JSON.parse(JSON.stringify(srcSite.mapLayer)) : { enabled: false, lat: null, lng: null, source: 'osm', opacity: 0.5, rotation: 0, anchorWorldX: 0, anchorWorldY: 0 },
             };
             site.activeLayerId = site.layers[0].id;
             _sites.push(site);
