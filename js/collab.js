@@ -99,10 +99,12 @@ const Collab = (() => {
         updateUrl();
     }
 
-    // --- SSE / Polling ---
+    // --- Polling (zuverlaessig) + SSE (optional, schneller) ---
 
     function startListening() {
-        _sseErrors = 0;
+        // Polling ist der zuverlaessige Standard
+        startPolling();
+        // SSE als Bonus fuer schnellere Updates versuchen
         trySSE();
     }
 
@@ -131,24 +133,22 @@ const Collab = (() => {
             });
 
             _eventSource.addEventListener('timeout', () => {
-                // Server beendet SSE nach Zeitlimit, neu verbinden
                 _eventSource.close();
                 setTimeout(() => {
                     if (_roomId) trySSE();
-                }, 500);
+                }, 1000);
             });
 
             _eventSource.onerror = () => {
                 _sseErrors++;
                 if (_sseErrors > 3) {
+                    // SSE funktioniert nicht auf diesem Server, nur Polling nutzen
                     _eventSource.close();
                     _eventSource = null;
-                    console.warn('Collab: SSE failed, falling back to polling');
-                    startPolling();
                 }
             };
         } catch (e) {
-            startPolling();
+            // SSE nicht verfuegbar, Polling laeuft bereits
         }
     }
 
@@ -163,7 +163,7 @@ const Collab = (() => {
                     onRemoteUpdate(data.state, data.version);
                 }
             } catch (e) { /* ignore, retry next interval */ }
-        }, 2500);
+        }, 2000);
     }
 
     // --- Remote Update empfangen ---
