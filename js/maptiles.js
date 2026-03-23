@@ -98,9 +98,11 @@ const MapTiles = (() => {
 
     function bestZoom(lat, worldPixelSize) {
         // worldPixelSize = meters per screen pixel = 1 / (PPM * siteZoom)
-        // Find highest z where tile resolution is still useful (not too blurry)
+        // Find highest z where tile resolution covers at least 1 screen pixel
+        // (metersPerPixel >= worldPixelSize means tile isn't wasting bandwidth)
+        // When zoomed in beyond max tile detail, use z=19 (best available)
         for (let z = 19; z >= 1; z--) {
-            if (metersPerPixel(lat, z) <= worldPixelSize * 2) return z;
+            if (metersPerPixel(lat, z) >= worldPixelSize) return z;
         }
         return 1;
     }
