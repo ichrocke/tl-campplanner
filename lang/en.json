@@ -301,5 +301,8 @@
   "collab.roomNotFound": "Room not found.",
   "collab.disconnectConfirm": "Disconnect from room?",
   "collab.connected": "connected",
-  "collab.enterName": "Your name for collaboration:"
+  "collab.enterName": "Your name for collaboration:",
+  "collab.locked": "LOCKED",
+  "collab.roomLocked": "This room has been locked by the admin. Editing disabled.",
+  "collab.roomUnlocked": "The room has been unlocked."
 }

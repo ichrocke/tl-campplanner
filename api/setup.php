@@ -33,6 +33,11 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS room_users (
     FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
+// Migration: locked-Spalte hinzufuegen
+try {
+    $pdo->exec("ALTER TABLE rooms ADD COLUMN locked TINYINT(1) DEFAULT 0 AFTER last_activity");
+} catch (Exception $e) {}
+
 // Migration: Cursor-Spalten hinzufuegen falls Tabelle schon existiert
 try {
     $pdo->exec("ALTER TABLE room_users ADD COLUMN cursor_x FLOAT DEFAULT 0 AFTER user_name");

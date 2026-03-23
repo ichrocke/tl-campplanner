@@ -10,7 +10,7 @@ if (!$roomId || !preg_match('/^[a-z0-9]{4,12}$/', $roomId)) {
 }
 
 $pdo = getDB();
-$stmt = $pdo->prepare('SELECT state_json, version FROM rooms WHERE id = ?');
+$stmt = $pdo->prepare('SELECT state_json, version, IFNULL(locked, 0) as locked FROM rooms WHERE id = ?');
 $stmt->execute([$roomId]);
 $room = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -18,9 +18,11 @@ if (!$room) {
     jsonResponse(['error' => 'Room not found'], 404);
 }
 
+$locked = intval($room['locked']);
+
 // Wenn Client bereits auf dem neuesten Stand ist
 if ($since > 0 && intval($room['version']) <= $since) {
-    jsonResponse(['changed' => false, 'version' => intval($room['version'])]);
+    jsonResponse(['changed' => false, 'version' => intval($room['version']), 'locked' => $locked]);
 }
 
 // last_activity aktualisieren
@@ -30,4 +32,5 @@ jsonResponse([
     'changed' => true,
     'version' => intval($room['version']),
     'state' => $room['state_json'],
+    'locked' => $locked,
 ]);

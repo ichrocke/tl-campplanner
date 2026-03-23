@@ -2298,14 +2298,19 @@ const UI = (() => {
         indicator.style.display = 'flex';
         indicator.style.cursor = 'pointer';
         indicator.style.pointerEvents = 'auto';
+        const locked = Collab.isLocked();
+        const dot = indicator.querySelector('span');
+        dot.style.background = locked ? '#f59e0b' : '#22c55e';
+        indicator.style.background = locked ? 'rgba(245,158,11,0.85)' : 'rgba(0,0,0,0.7)';
         const users = Collab.getOnlineUsers();
         const count = Math.max(1, users.length);
+        let label = count + ' ' + I18n.t('collab.connected');
+        if (locked) label = I18n.t('collab.locked') + ' | ' + label;
         if (_collabNamesExpanded) {
             const names = users.map(u => u.user_name).filter(Boolean).join(', ');
-            text.textContent = count + ' ' + I18n.t('collab.connected') + (names ? ' (' + names + ')' : '');
-        } else {
-            text.textContent = count + ' ' + I18n.t('collab.connected');
+            if (names) label += ' (' + names + ')';
         }
+        text.textContent = label;
     }
 
     document.addEventListener('DOMContentLoaded', () => {

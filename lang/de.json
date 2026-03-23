@@ -301,5 +301,8 @@
   "collab.roomNotFound": "Raum nicht gefunden.",
   "collab.disconnectConfirm": "Verbindung zum Raum trennen?",
   "collab.connected": "verbunden",
-  "collab.enterName": "Dein Name fuer die Zusammenarbeit:"
+  "collab.enterName": "Dein Name fuer die Zusammenarbeit:",
+  "collab.locked": "GESPERRT",
+  "collab.roomLocked": "Dieser Raum wurde vom Admin gesperrt. Bearbeitung nicht moeglich.",
+  "collab.roomUnlocked": "Der Raum wurde wieder freigegeben."
 }

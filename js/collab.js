@@ -24,6 +24,8 @@ const Collab = (() => {
     let _onUsersChange = null;
     let _localCursorX = 0;
     let _localCursorY = 0;
+    let _locked = false;
+    let _wasLocked = false; // fuer Nachricht bei Statuswechsel
 
     function init() {
         _userId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -36,6 +38,7 @@ const Collab = (() => {
         return _roomId !== null;
     }
 
+    function isLocked() { return _locked; }
     function getRoomId() { return _roomId; }
     function getUserName() { return _userName; }
     function getOnlineUsers() { return _onlineUsers; }
@@ -170,6 +173,21 @@ const Collab = (() => {
             try {
                 const resp = await fetch(API_BASE + 'room-state.php?room=' + encodeURIComponent(_roomId) + '&since=' + _version);
                 const data = await resp.json();
+                // Lock-Status pruefen
+                if (data.locked !== undefined) {
+                    const newLocked = !!data.locked;
+                    if (newLocked !== _locked) {
+                        _locked = newLocked;
+                        if (_locked && !_wasLocked) {
+                            UI.showHint(I18n.t('collab.roomLocked'));
+                        } else if (!_locked && _wasLocked) {
+                            UI.showHint(I18n.t('collab.roomUnlocked'));
+                            setTimeout(() => UI.showHint(''), 3000);
+                        }
+                        _wasLocked = _locked;
+                        if (_onUsersChange) _onUsersChange(_onlineUsers);
+                    }
+                }
                 if (data.changed && data.version > _version) {
                     onRemoteUpdate(data.state, data.version);
                 }
@@ -232,7 +250,7 @@ const Collab = (() => {
     // --- State pushen (debounced) ---
 
     function pushState() {
-        if (!_roomId || _syncLock) return;
+        if (!_roomId || _syncLock || _locked) return;
         clearTimeout(_pushTimer);
         _pushTimer = setTimeout(doPush, 400);
     }
@@ -281,6 +299,7 @@ const Collab = (() => {
 
     return {
         isConnected,
+        isLocked,
         getRoomId,
         getUserName,
         joinRoom,

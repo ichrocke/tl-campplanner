@@ -29,6 +29,18 @@ if ($action === 'create') {
     exit;
 }
 
+// Raum sperren/entsperren
+if ($action === 'lock' || $action === 'unlock') {
+    $id = $_GET['id'] ?? '';
+    if ($id) {
+        $val = ($action === 'lock') ? 1 : 0;
+        $stmt = $pdo->prepare('UPDATE rooms SET locked = ? WHERE id = ?');
+        $stmt->execute([$val, $id]);
+    }
+    header('Location: admin.php?key=' . urlencode(ADMIN_KEY));
+    exit;
+}
+
 // Raum loeschen
 if ($action === 'delete') {
     $id = $_GET['id'] ?? '';
@@ -41,7 +53,7 @@ if ($action === 'delete') {
 }
 
 // Liste aller Raeume
-$stmt = $pdo->query('SELECT id, name, version, created_at, updated_at, last_activity,
+$stmt = $pdo->query('SELECT id, name, version, created_at, updated_at, last_activity, IFNULL(locked, 0) as locked,
     LENGTH(state_json) as state_size,
     (SELECT COUNT(*) FROM room_users ru WHERE ru.room_id = rooms.id AND ru.last_seen > DATE_SUB(NOW(), INTERVAL 30 SECOND)) as online_users
     FROM rooms ORDER BY updated_at DESC');
@@ -119,7 +131,11 @@ h1 {
 .btn-create { background: var(--green); color: #fff; }
 .btn-link { background: var(--accent); color: #fff; }
 .btn-delete { background: var(--red); color: #fff; }
+.btn-lock { background: #f59e0b; color: #fff; }
+.btn-unlock { background: var(--green); color: #fff; }
 .btn-sm { padding: 6px 12px; font-size: 13px; }
+.room-card.locked { border-color: #f59e0b; opacity: 0.8; }
+.lock-badge { font-size: 11px; color: #f59e0b; font-weight: 600; }
 
 .room-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -211,10 +227,10 @@ h1 {
         <div class="empty">Noch keine Raeume erstellt.</div>
     <?php endif; ?>
 
-    <?php foreach ($rooms as $r): ?>
-        <div class="room-card">
+    <?php foreach ($rooms as $r): $isLocked = intval($r['locked']); ?>
+        <div class="room-card <?= $isLocked ? 'locked' : '' ?>">
             <div class="room-header">
-                <span class="room-name"><?= htmlspecialchars($r['name']) ?></span>
+                <span class="room-name"><?= htmlspecialchars($r['name']) ?> <?= $isLocked ? '<span class="lock-badge">GESPERRT</span>' : '' ?></span>
                 <span class="room-id"><?= htmlspecialchars($r['id']) ?></span>
             </div>
             <div class="room-meta">
@@ -228,6 +244,13 @@ h1 {
             </div>
             <div class="room-actions">
                 <button class="btn btn-link btn-sm" onclick="copyLink('<?= $r['id'] ?>')">Link kopieren</button>
+                <?php if ($isLocked): ?>
+                    <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=unlock&id=<?= $r['id'] ?>"
+                       class="btn btn-unlock btn-sm">Entsperren</a>
+                <?php else: ?>
+                    <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=lock&id=<?= $r['id'] ?>"
+                       class="btn btn-lock btn-sm">Sperren</a>
+                <?php endif; ?>
                 <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=delete&id=<?= $r['id'] ?>"
                    class="btn btn-delete btn-sm" onclick="return confirm('Raum wirklich loeschen?')">Loeschen</a>
             </div>

@@ -301,5 +301,8 @@
   "collab.roomNotFound": "Stanza non trovata.",
   "collab.disconnectConfirm": "Disconnettersi dalla stanza?",
   "collab.connected": "connessi",
-  "collab.enterName": "Il tuo nome per la collaborazione:"
+  "collab.enterName": "Il tuo nome per la collaborazione:",
+  "collab.locked": "BLOCCATO",
+  "collab.roomLocked": "Questa stanza e stata bloccata dall'amministratore.",
+  "collab.roomUnlocked": "La stanza e stata sbloccata."
 }

@@ -301,5 +301,8 @@
   "collab.roomNotFound": "Sala no encontrada.",
   "collab.disconnectConfirm": "Desconectar de la sala?",
   "collab.connected": "conectados",
-  "collab.enterName": "Tu nombre para la colaboracion:"
+  "collab.enterName": "Tu nombre para la colaboracion:",
+  "collab.locked": "BLOQUEADO",
+  "collab.roomLocked": "Esta sala ha sido bloqueada por el administrador.",
+  "collab.roomUnlocked": "La sala ha sido desbloqueada."
 }

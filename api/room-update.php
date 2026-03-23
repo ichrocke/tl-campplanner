@@ -27,6 +27,14 @@ if ($expectedVersion < 1) {
 
 $pdo = getDB();
 
+// Sperre pruefen
+$lockStmt = $pdo->prepare('SELECT IFNULL(locked, 0) as locked FROM rooms WHERE id = ?');
+$lockStmt->execute([$roomId]);
+$lockRow = $lockStmt->fetch(PDO::FETCH_ASSOC);
+if ($lockRow && intval($lockRow['locked'])) {
+    jsonResponse(['error' => 'locked', 'message' => 'Raum ist gesperrt'], 403);
+}
+
 // Optimistic Concurrency: nur updaten wenn Version stimmt
 $stmt = $pdo->prepare('UPDATE rooms SET state_json = ?, version = version + 1, last_activity = NOW() WHERE id = ? AND version = ?');
 $stmt->execute([$state, $roomId, $expectedVersion]);
