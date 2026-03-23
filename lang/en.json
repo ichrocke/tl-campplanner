@@ -285,5 +285,7 @@
   "props.shape.decagon": "Decagon",
   "props.shape.dodecagon": "Dodecagon",
   "template.yurt10": "Yurt (decagon)",
-  "template.yurt12": "Yurt (dodecagon)"
+  "template.yurt12": "Yurt (dodecagon)",
+  "ctx.saveAsTemplate": "Save as template",
+  "csv.example": "Download example CSV"
 }

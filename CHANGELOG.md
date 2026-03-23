@@ -1,5 +1,11 @@
 # Changelog
 
+## [5.6.0] - 2026-03-23
+
+### Added
+- **CSV example download**: Button to download an example CSV file next to the CSV import button
+- **Save as template**: Right-click context menu option to save a placed object as a reusable template in the palette
+
 ## [5.5.0] - 2026-03-21
 
 ### Added

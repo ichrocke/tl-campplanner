@@ -1830,6 +1830,19 @@ const UI = (() => {
             csvInput.value = '';
         });
 
+        // CSV example download
+        document.getElementById('btn-csv-example').addEventListener('click', () => {
+            const csv = 'name;breite;tiefe;abspann\n'
+                + 'Familienzelt;4;3;0.5\n'
+                + '2-Personen-Zelt;2;1.5;0.3\n'
+                + 'Gruppenzelt;6;4;0.8\n';
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'beispiel-zelte.csv'; a.click();
+            URL.revokeObjectURL(url);
+        });
+
         document.getElementById('btn-settings').addEventListener('click', () => {
             syncSettings();
             openModal('modal-settings');
@@ -1986,6 +1999,19 @@ const UI = (() => {
                 const a = document.createElement('a');
                 a.href = url; a.download = (obj.name || 'object').replace(/[^a-zA-Z0-9_-]/g, '_') + '.json'; a.click();
                 URL.revokeObjectURL(url);
+            }},
+            { label: I18n.t('ctx.saveAsTemplate'), action: () => {
+                const template = {
+                    type: obj.type || 'tent',
+                    name: obj.name || 'Vorlage',
+                    width: obj.width,
+                    height: obj.height,
+                    guyRopeDistance: obj.guyRopeDistance || 0,
+                    color: obj.color || '#4a90d9',
+                    shape: obj.shape || 'rect',
+                };
+                State.addTemplate(template);
+                buildPalette();
             }},
             { sep: true },
             ...(() => {

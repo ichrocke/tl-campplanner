@@ -332,7 +332,10 @@
 
                     <div class="settings-divider"></div>
                     <h4 class="settings-subtitle">CSV-Import</h4>
-                    <button id="btn-csv-import" class="btn-secondary" style="width:100%;font-size:11px;margin-bottom:12px">CSV Import (name;breite;tiefe;abspann)</button>
+                    <div style="display:flex;gap:6px;margin-bottom:12px">
+                        <button id="btn-csv-import" class="btn-secondary" style="flex:1;font-size:11px">CSV Import (name;breite;tiefe;abspann)</button>
+                        <button id="btn-csv-example" class="btn-secondary" style="font-size:11px;white-space:nowrap" data-i18n="csv.example">Beispiel-CSV herunterladen</button>
+                    </div>
                     <input type="file" id="file-csv-import" accept=".csv" style="display:none">
 
                     <div class="settings-divider"></div>

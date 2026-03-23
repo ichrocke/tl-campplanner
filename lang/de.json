@@ -285,5 +285,7 @@
   "props.shape.decagon": "Zehneck",
   "props.shape.dodecagon": "Zwoelfeck",
   "template.yurt10": "Jurte (10-Eck)",
-  "template.yurt12": "Jurte (12-Eck)"
+  "template.yurt12": "Jurte (12-Eck)",
+  "ctx.saveAsTemplate": "Als Vorlage speichern",
+  "csv.example": "Beispiel-CSV herunterladen"
 }
