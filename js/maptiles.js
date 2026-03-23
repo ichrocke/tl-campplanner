@@ -56,7 +56,12 @@ const MapTiles = (() => {
         if (source === 'satellite') {
             return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/' + z + '/' + y + '/' + x;
         }
-        return 'https://tile.openstreetmap.org/' + z + '/' + x + '/' + y + '.png';
+        // Use cartodb/carto positron basemap (OSM data, no restrictive tile policy)
+        if (source === 'osmLight') {
+            return 'https://a.basemaps.cartocdn.com/light_all/' + z + '/' + x + '/' + y + '.png';
+        }
+        // Default: OpenStreetMap via cartodb/carto voyager (full color, OSM-based)
+        return 'https://a.basemaps.cartocdn.com/rastertiles/voyager/' + z + '/' + x + '/' + y + '.png';
     }
 
     // --- Cache ---
