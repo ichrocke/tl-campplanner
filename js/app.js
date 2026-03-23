@@ -12,16 +12,21 @@
         I18n.setLang(savedLang);
     }
 
-    // Try to restore from localStorage
+    // Check if joining a collab room (skip localStorage in that case)
+    const _isCollabRoom = new URLSearchParams(window.location.search).has('room');
+
+    // Try to restore from localStorage (only in local mode)
     let restored = false;
-    try {
-        const saved = localStorage.getItem(STORAGE_KEY);
-        if (saved) {
-            State.importJSON(saved);
-            restored = true;
+    if (!_isCollabRoom) {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                State.importJSON(saved);
+                restored = true;
+            }
+        } catch (e) {
+            console.warn('Could not restore autosave:', e);
         }
-    } catch (e) {
-        console.warn('Could not restore autosave:', e);
     }
     if (!restored) {
         State.clear(); // creates first site
@@ -41,9 +46,10 @@
         document.querySelectorAll('.lang-flag').forEach(b => b.classList.toggle('active', b.dataset.lang === savedLang));
     }
 
-    // Auto-save to localStorage on state change (debounced)
+    // Auto-save to localStorage on state change (debounced, not in collab mode)
     let _saveTimer = null;
     function autoSave() {
+        if (typeof Collab !== 'undefined' && Collab.isConnected()) return;
         if (localStorage.getItem('zeltplaner_autosave_enabled') === '0') return;
         clearTimeout(_saveTimer);
         _saveTimer = setTimeout(() => {

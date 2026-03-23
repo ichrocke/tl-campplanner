@@ -61,19 +61,14 @@ const Collab = (() => {
                     parsed.sites.some(s => s.objects && s.objects.length > 0);
             } catch (e) { /* ignore */ }
 
-            if (serverHasContent) {
-                // Server-State laden
-                _syncLock = true;
-                try {
-                    State.importJSON(data.state, true);
-                } catch (e) {
-                    console.warn('Collab: Failed to import state:', e);
-                }
-                _syncLock = false;
-            } else {
-                // Raum ist leer: lokalen State zum Server pushen
-                await doPush();
+            // Server-State laden (auch wenn leer – der Raum ist die Wahrheit)
+            _syncLock = true;
+            try {
+                State.importJSON(data.state, true);
+            } catch (e) {
+                console.warn('Collab: Failed to import state:', e);
             }
+            _syncLock = false;
 
             startListening();
             updateUrl();
