@@ -2289,16 +2289,13 @@ const UI = (() => {
     function updateCollabStatus() {
         const indicator = document.getElementById('collab-indicator');
         const text = document.getElementById('collab-indicator-text');
-        const btn = document.getElementById('btn-collab');
         if (typeof Collab === 'undefined' || !Collab.isConnected()) {
-            indicator.classList.add('hidden');
-            btn.classList.remove('active');
+            indicator.style.display = 'none';
             return;
         }
-        indicator.classList.remove('hidden');
-        btn.classList.add('active');
+        indicator.style.display = 'flex';
         const users = Collab.getOnlineUsers();
-        const count = Math.max(1, users.length); // Mindestens 1 (man selbst)
+        const count = Math.max(1, users.length);
         text.textContent = count + ' ' + I18n.t('collab.connected');
     }
 
