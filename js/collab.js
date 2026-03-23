@@ -53,14 +53,27 @@ const Collab = (() => {
             _roomId = roomId;
             _version = data.version;
 
-            // State vom Server laden
-            _syncLock = true;
+            // Pruefen ob der Raum einen nicht-leeren State hat
+            let serverHasContent = false;
             try {
-                State.importJSON(data.state, true);
-            } catch (e) {
-                console.warn('Collab: Failed to import state:', e);
+                const parsed = JSON.parse(data.state);
+                serverHasContent = parsed.sites && parsed.sites.length > 0 &&
+                    parsed.sites.some(s => s.objects && s.objects.length > 0);
+            } catch (e) { /* ignore */ }
+
+            if (serverHasContent) {
+                // Server-State laden
+                _syncLock = true;
+                try {
+                    State.importJSON(data.state, true);
+                } catch (e) {
+                    console.warn('Collab: Failed to import state:', e);
+                }
+                _syncLock = false;
+            } else {
+                // Raum ist leer: lokalen State zum Server pushen
+                await doPush();
             }
-            _syncLock = false;
 
             startListening();
             updateUrl();

@@ -2298,7 +2298,8 @@ const UI = (() => {
         indicator.classList.remove('hidden');
         btn.classList.add('active');
         const users = Collab.getOnlineUsers();
-        text.textContent = users.length + ' ' + I18n.t('collab.connected');
+        const count = Math.max(1, users.length); // Mindestens 1 (man selbst)
+        text.textContent = count + ' ' + I18n.t('collab.connected');
     }
 
     return {
