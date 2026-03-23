@@ -32,9 +32,9 @@ const State = (() => {
         return Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 6);
     }
 
-    function notify(skipUndo) {
+    function notify(skipUndo, skipSync) {
         if (!skipUndo) pushUndo();
-        _listeners.forEach(fn => fn());
+        _listeners.forEach(fn => fn(skipSync));
     }
 
     function pushUndo() {
@@ -327,7 +327,7 @@ const State = (() => {
         // Color palette storage (set by UI)
         _colorPalette: null,
 
-        importJSON(json) {
+        importJSON(json, skipSync) {
             const data = JSON.parse(json);
             if (!data.sites || !Array.isArray(data.sites)) throw new Error('Invalid format');
             _sites = data.sites;
@@ -394,7 +394,7 @@ const State = (() => {
             if (data.minimapEnabled !== undefined) { this._minimapEnabled = data.minimapEnabled; if (typeof Canvas !== 'undefined') Canvas.minimapEnabled = data.minimapEnabled; }
             if (data.colorPalette) this._colorPalette = data.colorPalette;
             _activeSiteIndex = 0;
-            notify();
+            notify(false, skipSync);
         },
 
         clear() {

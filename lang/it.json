@@ -295,5 +295,10 @@
   "modal.map.opacity": "Opacita",
   "modal.map.enabled": "Mostra mappa",
   "modal.map.rotation": "Rotazione",
-  "modal.map.cancel": "Annulla"
+  "modal.map.cancel": "Annulla",
+  "collab.title": "Collabora",
+  "collab.enterRoom": "Inserisci ID stanza:",
+  "collab.roomNotFound": "Stanza non trovata.",
+  "collab.disconnectConfirm": "Disconnettersi dalla stanza?",
+  "collab.connected": "connessi"
 }

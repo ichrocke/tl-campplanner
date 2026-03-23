@@ -295,5 +295,10 @@
   "modal.map.opacity": "Opacidad",
   "modal.map.enabled": "Mostrar mapa",
   "modal.map.rotation": "Rotacion",
-  "modal.map.cancel": "Cancelar"
+  "modal.map.cancel": "Cancelar",
+  "collab.title": "Colaborar",
+  "collab.enterRoom": "Introducir ID de sala:",
+  "collab.roomNotFound": "Sala no encontrada.",
+  "collab.disconnectConfirm": "Desconectar de la sala?",
+  "collab.connected": "conectados"
 }

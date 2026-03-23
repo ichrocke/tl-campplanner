@@ -295,5 +295,10 @@
   "modal.map.opacity": "Deckkraft",
   "modal.map.enabled": "Karte anzeigen",
   "modal.map.rotation": "Drehung",
-  "modal.map.cancel": "Abbrechen"
+  "modal.map.cancel": "Abbrechen",
+  "collab.title": "Zusammenarbeiten",
+  "collab.enterRoom": "Raum-ID eingeben:",
+  "collab.roomNotFound": "Raum nicht gefunden.",
+  "collab.disconnectConfirm": "Verbindung zum Raum trennen?",
+  "collab.connected": "verbunden"
 }

@@ -62,7 +62,7 @@
     });
 
     // State change handler
-    State.onChange(() => {
+    State.onChange((skipSync) => {
         UI.buildTabs();
         UI.buildPalette();
         UI.buildPlacedList();
@@ -70,6 +70,10 @@
         UI.syncSettings();
         Canvas.render();
         autoSave();
+        // Collab: State zum Server pushen (wenn nicht vom Server empfangen)
+        if (!skipSync && typeof Collab !== 'undefined' && Collab.isConnected()) {
+            Collab.pushState();
+        }
     });
 
     // Canvas events (mouse)
@@ -132,6 +136,20 @@
 
     // Initial render
     Canvas.render();
+
+    // Collab: Raum aus URL beitreten
+    if (typeof Collab !== 'undefined') {
+        const roomFromUrl = Collab.getRoomFromUrl();
+        if (roomFromUrl) {
+            Collab.joinRoom(roomFromUrl).then(ok => {
+                if (ok) {
+                    UI.updateCollabStatus();
+                } else {
+                    alert(I18n.t('collab.roomNotFound'));
+                }
+            });
+        }
+    }
 
     // Resize observer for canvas
     const ro = new ResizeObserver(() => {

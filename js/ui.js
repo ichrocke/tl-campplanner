@@ -502,6 +502,33 @@ const UI = (() => {
         });
 
         document.getElementById('map-cancel').addEventListener('click', closeModal);
+
+        // Collab button
+        document.getElementById('btn-collab').addEventListener('click', () => {
+            if (typeof Collab === 'undefined') return;
+            if (Collab.isConnected()) {
+                if (confirm(I18n.t('collab.disconnectConfirm'))) {
+                    Collab.disconnect();
+                    updateCollabStatus();
+                }
+            } else {
+                const roomId = prompt(I18n.t('collab.enterRoom'));
+                if (roomId && roomId.trim()) {
+                    Collab.joinRoom(roomId.trim()).then(ok => {
+                        if (ok) {
+                            updateCollabStatus();
+                        } else {
+                            alert(I18n.t('collab.roomNotFound'));
+                        }
+                    });
+                }
+            }
+        });
+
+        // Collab user count updates
+        if (typeof Collab !== 'undefined') {
+            Collab.onUsersChange(() => updateCollabStatus());
+        }
     }
 
     // --- Language flags ---
@@ -2258,6 +2285,22 @@ const UI = (() => {
         buildPlacedList();
     }
 
+    // --- Collab Status ---
+    function updateCollabStatus() {
+        const indicator = document.getElementById('collab-indicator');
+        const text = document.getElementById('collab-indicator-text');
+        const btn = document.getElementById('btn-collab');
+        if (typeof Collab === 'undefined' || !Collab.isConnected()) {
+            indicator.classList.add('hidden');
+            btn.classList.remove('active');
+            return;
+        }
+        indicator.classList.remove('hidden');
+        btn.classList.add('active');
+        const users = Collab.getOnlineUsers();
+        text.textContent = users.length + ' ' + I18n.t('collab.connected');
+    }
+
     return {
         init, buildTabs, buildPalette, buildPlacedList, buildLayers, syncSettings, translateUI,
         showProperties, hideProperties, getActiveColor,
@@ -2265,5 +2308,6 @@ const UI = (() => {
         showContextMenu, showCanvasContextMenu, showGroundVertexMenu, showGroundEdgeMenu,
         showAreaVertexMenu, showAreaEdgeMenu, showFenceVertexMenu, showFenceEdgeMenu,
         removeContextMenu, openTextModal, showMultiProperties,
+        updateCollabStatus,
     };
 })();
