@@ -53,15 +53,7 @@ const Collab = (() => {
             _roomId = roomId;
             _version = data.version;
 
-            // Pruefen ob der Raum einen nicht-leeren State hat
-            let serverHasContent = false;
-            try {
-                const parsed = JSON.parse(data.state);
-                serverHasContent = parsed.sites && parsed.sites.length > 0 &&
-                    parsed.sites.some(s => s.objects && s.objects.length > 0);
-            } catch (e) { /* ignore */ }
-
-            // Server-State laden (auch wenn leer – der Raum ist die Wahrheit)
+            // Server-State laden
             _syncLock = true;
             try {
                 State.importJSON(data.state, true);
@@ -69,6 +61,11 @@ const Collab = (() => {
                 console.warn('Collab: Failed to import state:', e);
             }
             _syncLock = false;
+
+            // Sicherstellen, dass mindestens ein Zeltplatz existiert
+            if (!State.activeSite) {
+                State.createSite();
+            }
 
             startListening();
             updateUrl();
