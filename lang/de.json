@@ -287,5 +287,14 @@
   "template.yurt10": "Jurte (10-Eck)",
   "template.yurt12": "Jurte (12-Eck)",
   "ctx.saveAsTemplate": "Als Vorlage speichern",
-  "csv.example": "Beispiel-CSV herunterladen"
+  "csv.example": "Beispiel-CSV herunterladen",
+  "modal.map.title": "Kartenansicht",
+  "modal.map.search": "Ort suchen",
+  "modal.map.searchBtn": "Suchen",
+  "modal.map.lat": "Breitengrad",
+  "modal.map.lng": "Laengengrad",
+  "modal.map.source": "Kartentyp",
+  "modal.map.opacity": "Deckkraft",
+  "modal.map.enabled": "Karte anzeigen",
+  "modal.map.noResults": "Keine Ergebnisse gefunden"
 }

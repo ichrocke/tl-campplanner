@@ -287,5 +287,14 @@
   "template.yurt10": "Yurt (decagon)",
   "template.yurt12": "Yurt (dodecagon)",
   "ctx.saveAsTemplate": "Save as template",
-  "csv.example": "Download example CSV"
+  "csv.example": "Download example CSV",
+  "modal.map.title": "Map View",
+  "modal.map.search": "Search location",
+  "modal.map.searchBtn": "Search",
+  "modal.map.lat": "Latitude",
+  "modal.map.lng": "Longitude",
+  "modal.map.source": "Map type",
+  "modal.map.opacity": "Opacity",
+  "modal.map.enabled": "Show map",
+  "modal.map.noResults": "No results found"
 }

@@ -461,6 +461,83 @@ const UI = (() => {
             reader.readAsDataURL(file);
             e.target.value = '';
         });
+
+        // Map tiles
+        document.getElementById('btn-maptiles').addEventListener('click', () => {
+            const site = State.activeSite;
+            if (!site) return;
+            const ml = site.mapLayer || {};
+            document.getElementById('map-lat').value = ml.lat || '';
+            document.getElementById('map-lng').value = ml.lng || '';
+            document.getElementById('map-source').value = ml.source || 'osm';
+            document.getElementById('map-opacity').value = ml.opacity != null ? ml.opacity : 0.5;
+            document.getElementById('map-opacity-val').textContent = Math.round((ml.opacity != null ? ml.opacity : 0.5) * 100) + '%';
+            document.getElementById('map-enabled').checked = !!ml.enabled;
+            document.getElementById('map-search-results').innerHTML = '';
+            openModal('modal-maptiles');
+        });
+
+        document.getElementById('map-opacity').addEventListener('input', (e) => {
+            document.getElementById('map-opacity-val').textContent = Math.round(e.target.value * 100) + '%';
+        });
+
+        document.getElementById('map-search-btn').addEventListener('click', async () => {
+            const q = document.getElementById('map-search-input').value.trim();
+            if (!q) return;
+            const btn = document.getElementById('map-search-btn');
+            btn.disabled = true;
+            try {
+                const results = await MapTiles.searchLocation(q);
+                const container = document.getElementById('map-search-results');
+                container.innerHTML = '';
+                if (!results.length) {
+                    container.textContent = I18n.t('modal.map.noResults');
+                    return;
+                }
+                results.forEach(r => {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'padding:4px 6px;cursor:pointer;border-radius:4px;margin-bottom:2px';
+                    div.textContent = r.display_name;
+                    div.addEventListener('mouseenter', () => { div.style.background = 'var(--bg-tertiary)'; });
+                    div.addEventListener('mouseleave', () => { div.style.background = ''; });
+                    div.addEventListener('click', () => {
+                        document.getElementById('map-lat').value = parseFloat(r.lat).toFixed(6);
+                        document.getElementById('map-lng').value = parseFloat(r.lon).toFixed(6);
+                        document.getElementById('map-enabled').checked = true;
+                        container.querySelectorAll('div').forEach(d => { d.style.fontWeight = ''; });
+                        div.style.fontWeight = 'bold';
+                    });
+                    container.appendChild(div);
+                });
+            } catch (e) {
+                document.getElementById('map-search-results').textContent = 'Fehler bei der Suche';
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        document.getElementById('map-search-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); document.getElementById('map-search-btn').click(); }
+        });
+
+        document.getElementById('map-ok').addEventListener('click', () => {
+            const site = State.activeSite;
+            if (!site) return;
+            if (!site.mapLayer) site.mapLayer = {};
+            site.mapLayer.lat = parseFloat(document.getElementById('map-lat').value) || null;
+            site.mapLayer.lng = parseFloat(document.getElementById('map-lng').value) || null;
+            site.mapLayer.source = document.getElementById('map-source').value;
+            site.mapLayer.opacity = parseFloat(document.getElementById('map-opacity').value);
+            site.mapLayer.enabled = document.getElementById('map-enabled').checked;
+            if (site.mapLayer.anchorWorldX == null) site.mapLayer.anchorWorldX = 0;
+            if (site.mapLayer.anchorWorldY == null) site.mapLayer.anchorWorldY = 0;
+            MapTiles.clearCache();
+            State.notifyChange();
+            Canvas.render();
+            closeModal();
+        });
+
+        document.getElementById('map-cancel').addEventListener('click', closeModal);
     }
 
     // --- Language flags ---

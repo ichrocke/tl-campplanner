@@ -5,6 +5,7 @@
 ### Added
 - **CSV example download**: Button to download an example CSV file next to the CSV import button
 - **Save as template**: Right-click context menu option to save a placed object as a reusable template in the palette
+- **Dynamic map tiles**: Integrate OpenStreetMap or satellite imagery (ESRI) as background layer. Search for locations via Nominatim geocoding or enter coordinates directly. Tiles are scaled to match the world coordinate system so tents appear in correct size on the map
 
 ## [5.5.0] - 2026-03-21
 

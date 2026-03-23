@@ -116,6 +116,9 @@ const Canvas = (() => {
         const activeSite = State.activeSite;
         if (!activeSite) return;
         ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (activeSite.mapLayer && activeSite.mapLayer.enabled && typeof MapTiles !== 'undefined') {
+            MapTiles.drawMapTiles(ctx, canvas, activeSite, w2s, s2w, zoom);
+        }
         drawBgImages(activeSite);
         drawGrid(activeSite);
 
@@ -2075,6 +2078,9 @@ const Canvas = (() => {
         ctx.fillRect(0, 0, pxW, pxH);
 
         // Render using exact same functions as on-screen
+        if (site.mapLayer && site.mapLayer.enabled && typeof MapTiles !== 'undefined') {
+            MapTiles.drawMapTiles(ctx, canvas, site, w2s, s2w, zoom);
+        }
         drawBgImages(site);
         if (!options || options.showGrid !== false) drawGrid(site);
         drawGround(site);
