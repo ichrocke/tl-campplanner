@@ -4,45 +4,68 @@
 
 const Collab = (() => {
     const API_BASE = 'api/';
+    const POLL_INTERVAL = 1000;       // State-Polling alle 1 Sekunde
+    const CURSOR_INTERVAL = 300;      // Cursor senden alle 300ms
+    const CURSOR_COLORS = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63'];
 
     let _roomId = null;
     let _version = 0;
     let _userId = null;
     let _userName = '';
+    let _userColor = '';
     let _eventSource = null;
     let _pollTimer = null;
     let _pushTimer = null;
+    let _cursorTimer = null;
     let _syncLock = false;
     let _sseErrors = 0;
     let _onlineUsers = [];
+    let _remoteCursors = [];
     let _onUsersChange = null;
+    let _localCursorX = 0;
+    let _localCursorY = 0;
 
     function init() {
-        // Zufaellige User-ID pro Session
         _userId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-        _userName = 'User ' + _userId.slice(-4);
+        _userColor = CURSOR_COLORS[Math.floor(Math.random() * CURSOR_COLORS.length)];
+        // Gespeicherten Namen laden oder Standard
+        _userName = localStorage.getItem('collab_userName') || '';
     }
 
     function isConnected() {
         return _roomId !== null;
     }
 
-    function getRoomId() {
-        return _roomId;
-    }
-
-    function getOnlineUsers() {
-        return _onlineUsers;
-    }
+    function getRoomId() { return _roomId; }
+    function getUserName() { return _userName; }
+    function getOnlineUsers() { return _onlineUsers; }
+    function getRemoteCursors() { return _remoteCursors; }
 
     function onUsersChange(fn) {
         _onUsersChange = fn;
+    }
+
+    // --- Name abfragen ---
+
+    function promptName() {
+        const saved = localStorage.getItem('collab_userName') || '';
+        const name = prompt(I18n.t('collab.enterName'), saved);
+        if (name && name.trim()) {
+            _userName = name.trim();
+            localStorage.setItem('collab_userName', _userName);
+        } else if (!_userName) {
+            _userName = 'User ' + _userId.slice(-4);
+        }
     }
 
     // --- Raum beitreten ---
 
     async function joinRoom(roomId) {
         if (!roomId) return false;
+
+        // Name abfragen beim Beitreten
+        promptName();
+
         try {
             const resp = await fetch(API_BASE + 'room-state.php?room=' + encodeURIComponent(roomId));
             const data = await resp.json();
@@ -68,6 +91,7 @@ const Collab = (() => {
             }
 
             startListening();
+            startCursorSync();
             updateUrl();
             return true;
         } catch (e) {
@@ -79,32 +103,24 @@ const Collab = (() => {
     // --- Verbindung trennen ---
 
     function disconnect() {
-        if (_eventSource) {
-            _eventSource.close();
-            _eventSource = null;
-        }
-        if (_pollTimer) {
-            clearInterval(_pollTimer);
-            _pollTimer = null;
-        }
-        if (_pushTimer) {
-            clearTimeout(_pushTimer);
-            _pushTimer = null;
-        }
+        if (_eventSource) { _eventSource.close(); _eventSource = null; }
+        if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
+        if (_pushTimer) { clearTimeout(_pushTimer); _pushTimer = null; }
+        if (_cursorTimer) { clearInterval(_cursorTimer); _cursorTimer = null; }
         _roomId = null;
         _version = 0;
         _sseErrors = 0;
         _onlineUsers = [];
+        _remoteCursors = [];
         if (_onUsersChange) _onUsersChange([]);
         updateUrl();
+        Canvas.render();
     }
 
-    // --- Polling (zuverlaessig) + SSE (optional, schneller) ---
+    // --- Polling + SSE ---
 
     function startListening() {
-        // Polling ist der zuverlaessige Standard
         startPolling();
-        // SSE als Bonus fuer schnellere Updates versuchen
         trySSE();
     }
 
@@ -122,7 +138,7 @@ const Collab = (() => {
                     if (data.version && data.version > _version) {
                         onRemoteUpdate(data.state, data.version);
                     }
-                } catch (err) { /* ignore parse errors */ }
+                } catch (err) { /* ignore */ }
             };
 
             _eventSource.addEventListener('users', (e) => {
@@ -134,22 +150,17 @@ const Collab = (() => {
 
             _eventSource.addEventListener('timeout', () => {
                 _eventSource.close();
-                setTimeout(() => {
-                    if (_roomId) trySSE();
-                }, 1000);
+                setTimeout(() => { if (_roomId) trySSE(); }, 1000);
             });
 
             _eventSource.onerror = () => {
                 _sseErrors++;
                 if (_sseErrors > 3) {
-                    // SSE funktioniert nicht auf diesem Server, nur Polling nutzen
                     _eventSource.close();
                     _eventSource = null;
                 }
             };
-        } catch (e) {
-            // SSE nicht verfuegbar, Polling laeuft bereits
-        }
+        } catch (e) { /* Polling laeuft bereits */ }
     }
 
     function startPolling() {
@@ -162,8 +173,46 @@ const Collab = (() => {
                 if (data.changed && data.version > _version) {
                     onRemoteUpdate(data.state, data.version);
                 }
-            } catch (e) { /* ignore, retry next interval */ }
-        }, 2000);
+            } catch (e) { /* retry next interval */ }
+        }, POLL_INTERVAL);
+    }
+
+    // --- Cursor-Sync ---
+
+    function startCursorSync() {
+        if (_cursorTimer) return;
+        _cursorTimer = setInterval(async () => {
+            if (!_roomId) return;
+            try {
+                const resp = await fetch(API_BASE + 'room-cursors.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        roomId: _roomId,
+                        userId: _userId,
+                        userName: _userName,
+                        x: _localCursorX,
+                        y: _localCursorY,
+                        color: _userColor,
+                    }),
+                });
+                const data = await resp.json();
+                if (data.cursors) {
+                    _remoteCursors = data.cursors;
+                    // Online-Users aus Cursor-Daten ableiten
+                    const allUsers = data.cursors.map(c => ({ user_id: c.user_id, user_name: c.user_name }));
+                    allUsers.push({ user_id: _userId, user_name: _userName });
+                    _onlineUsers = allUsers;
+                    if (_onUsersChange) _onUsersChange(_onlineUsers);
+                    Canvas.render();
+                }
+            } catch (e) { /* ignore */ }
+        }, CURSOR_INTERVAL);
+    }
+
+    function updateLocalCursor(worldX, worldY) {
+        _localCursorX = worldX;
+        _localCursorY = worldY;
     }
 
     // --- Remote Update empfangen ---
@@ -180,12 +229,12 @@ const Collab = (() => {
         Canvas.render();
     }
 
-    // --- State zum Server pushen (debounced) ---
+    // --- State pushen (debounced) ---
 
     function pushState() {
         if (!_roomId || _syncLock) return;
         clearTimeout(_pushTimer);
-        _pushTimer = setTimeout(doPush, 600);
+        _pushTimer = setTimeout(doPush, 400);
     }
 
     async function doPush() {
@@ -204,12 +253,9 @@ const Collab = (() => {
             if (data.ok) {
                 _version = data.version;
             } else if (data.conflict) {
-                // Konflikt: Server-State uebernehmen
                 _version = data.currentVersion;
                 _syncLock = true;
-                try {
-                    State.importJSON(data.state, true);
-                } catch (e) { /* ignore */ }
+                try { State.importJSON(data.state, true); } catch (e) { /* ignore */ }
                 _syncLock = false;
                 Canvas.render();
             }
@@ -218,19 +264,14 @@ const Collab = (() => {
         }
     }
 
-    // --- URL-Parameter verwalten ---
+    // --- URL ---
 
     function updateUrl() {
         const url = new URL(window.location);
-        if (_roomId) {
-            url.searchParams.set('room', _roomId);
-        } else {
-            url.searchParams.delete('room');
-        }
+        if (_roomId) { url.searchParams.set('room', _roomId); }
+        else { url.searchParams.delete('room'); }
         history.replaceState(null, '', url);
     }
-
-    // --- Room-ID aus URL lesen ---
 
     function getRoomFromUrl() {
         return new URLSearchParams(window.location.search).get('room');
@@ -241,12 +282,15 @@ const Collab = (() => {
     return {
         isConnected,
         getRoomId,
+        getUserName,
         joinRoom,
         disconnect,
         pushState,
         getRoomFromUrl,
         getOnlineUsers,
+        getRemoteCursors,
         onUsersChange,
+        updateLocalCursor,
         get syncLock() { return _syncLock; },
     };
 })();

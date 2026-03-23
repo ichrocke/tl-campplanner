@@ -156,6 +156,7 @@ const Canvas = (() => {
         drawSelectionRect();
         drawGroupRotHandle(activeSite);
         drawSiteLabel(activeSite);
+        drawRemoteCursors();
         drawScaleBar(activeSite);
         drawCompass();
         drawMinimap(activeSite);
@@ -1730,6 +1731,50 @@ const Canvas = (() => {
     // Compass image cache
     let _compassImg = null;
     let _compassLoading = false;
+    function drawRemoteCursors() {
+        if (typeof Collab === 'undefined' || !Collab.isConnected()) return;
+        const cursors = Collab.getRemoteCursors();
+        if (!cursors || !cursors.length) return;
+
+        cursors.forEach(c => {
+            const s = w2s(parseFloat(c.cursor_x), parseFloat(c.cursor_y));
+            const color = c.color || '#e74c3c';
+
+            // Cursor-Pfeil
+            ctx.save();
+            ctx.translate(s.x, s.y);
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(0, 16);
+            ctx.lineTo(4.5, 12);
+            ctx.lineTo(10, 18);
+            ctx.lineTo(13, 15);
+            ctx.lineTo(7, 9);
+            ctx.lineTo(12, 7);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.fill();
+
+            // Name-Label
+            const name = c.user_name || '?';
+            ctx.font = 'bold 10px sans-serif';
+            const tw = ctx.measureText(name).width;
+            const lx = 14, ly = 16;
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.roundRect(lx - 2, ly - 9, tw + 6, 14, 3);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(name, lx + 1, ly - 2);
+            ctx.restore();
+        });
+    }
+
     function drawCompass() {
         const size = 120;
         const cx = 10;

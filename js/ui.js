@@ -2296,7 +2296,8 @@ const UI = (() => {
         indicator.style.display = 'flex';
         const users = Collab.getOnlineUsers();
         const count = Math.max(1, users.length);
-        text.textContent = count + ' ' + I18n.t('collab.connected');
+        const names = users.map(u => u.user_name).filter(Boolean).join(', ');
+        text.textContent = count + ' ' + I18n.t('collab.connected') + (names ? ' (' + names + ')' : '');
     }
 
     return {

@@ -449,6 +449,11 @@ const Tools = (() => {
 
         UI.updateCoords(world.x, world.y);
 
+        // Collab: Cursor-Position melden
+        if (typeof Collab !== 'undefined' && Collab.isConnected()) {
+            Collab.updateLocalCursor(world.x, world.y);
+        }
+
         if (drag) {
             switch (drag.type) {
                 case 'minimapDrag': {

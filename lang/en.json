@@ -300,5 +300,6 @@
   "collab.enterRoom": "Enter room ID:",
   "collab.roomNotFound": "Room not found.",
   "collab.disconnectConfirm": "Disconnect from room?",
-  "collab.connected": "connected"
+  "collab.connected": "connected",
+  "collab.enterName": "Your name for collaboration:"
 }

@@ -300,5 +300,6 @@
   "collab.enterRoom": "Introducir ID de sala:",
   "collab.roomNotFound": "Sala no encontrada.",
   "collab.disconnectConfirm": "Desconectar de la sala?",
-  "collab.connected": "conectados"
+  "collab.connected": "conectados",
+  "collab.enterName": "Tu nombre para la colaboracion:"
 }
