@@ -330,6 +330,16 @@ const State = (() => {
         importJSON(json, skipSync) {
             const data = JSON.parse(json);
             if (!data.sites || !Array.isArray(data.sites)) throw new Error('Invalid format');
+
+            // Collab: lokale View-Positionen und aktiven Site-Index bewahren
+            let savedViews = null;
+            let savedSiteIndex = 0;
+            if (skipSync && _sites.length > 0) {
+                savedViews = {};
+                _sites.forEach(s => { if (s.id && s.view) savedViews[s.id] = { ...s.view }; });
+                savedSiteIndex = _activeSiteIndex;
+            }
+
             _sites = data.sites;
             let autoOff = 0;
             _sites.forEach(s => {
@@ -393,7 +403,19 @@ const State = (() => {
             if (data.showDistances !== undefined) this.showDistances = data.showDistances;
             if (data.minimapEnabled !== undefined) { this._minimapEnabled = data.minimapEnabled; if (typeof Canvas !== 'undefined') Canvas.minimapEnabled = data.minimapEnabled; }
             if (data.colorPalette) this._colorPalette = data.colorPalette;
-            _activeSiteIndex = 0;
+
+            // Collab: lokale Views wiederherstellen
+            if (savedViews) {
+                _sites.forEach(s => {
+                    if (s.id && savedViews[s.id]) {
+                        s.view = savedViews[s.id];
+                    }
+                });
+                _activeSiteIndex = Math.min(savedSiteIndex, _sites.length - 1);
+            } else {
+                _activeSiteIndex = 0;
+            }
+
             notify(false, skipSync);
         },
 
