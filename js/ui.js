@@ -2286,6 +2286,8 @@ const UI = (() => {
     }
 
     // --- Collab Status ---
+    let _collabNamesExpanded = false;
+
     function updateCollabStatus() {
         const indicator = document.getElementById('collab-indicator');
         const text = document.getElementById('collab-indicator-text');
@@ -2294,11 +2296,24 @@ const UI = (() => {
             return;
         }
         indicator.style.display = 'flex';
+        indicator.style.cursor = 'pointer';
+        indicator.style.pointerEvents = 'auto';
         const users = Collab.getOnlineUsers();
         const count = Math.max(1, users.length);
-        const names = users.map(u => u.user_name).filter(Boolean).join(', ');
-        text.textContent = count + ' ' + I18n.t('collab.connected') + (names ? ' (' + names + ')' : '');
+        if (_collabNamesExpanded) {
+            const names = users.map(u => u.user_name).filter(Boolean).join(', ');
+            text.textContent = count + ' ' + I18n.t('collab.connected') + (names ? ' (' + names + ')' : '');
+        } else {
+            text.textContent = count + ' ' + I18n.t('collab.connected');
+        }
     }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('collab-indicator').addEventListener('click', () => {
+            _collabNamesExpanded = !_collabNamesExpanded;
+            updateCollabStatus();
+        });
+    });
 
     return {
         init, buildTabs, buildPalette, buildPlacedList, buildLayers, syncSettings, translateUI,
