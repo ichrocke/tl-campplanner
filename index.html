@@ -447,21 +447,12 @@
         <div id="modal-maptiles" class="modal hidden" style="max-width:480px">
             <h3 data-i18n="modal.map.title">Kartenansicht</h3>
             <div class="modal-body">
-                <label><span data-i18n="modal.map.search">Ort suchen</span>
-                    <div style="display:flex;gap:4px">
-                        <input type="text" id="map-search-input" placeholder="z.B. Waldecker Zeltplatz">
-                        <button id="map-search-btn" class="btn-secondary" data-i18n="modal.map.searchBtn">Suchen</button>
-                    </div>
+                <label><span data-i18n="modal.map.lat">Breitengrad</span>
+                    <input type="number" id="map-lat" step="0.0001" placeholder="51.0504">
                 </label>
-                <div id="map-search-results" style="font-size:12px;margin:4px 0;max-height:120px;overflow-y:auto"></div>
-                <div style="display:flex;gap:8px">
-                    <label style="flex:1"><span data-i18n="modal.map.lat">Breitengrad</span>
-                        <input type="number" id="map-lat" step="0.0001" placeholder="51.0504">
-                    </label>
-                    <label style="flex:1"><span data-i18n="modal.map.lng">Laengengrad</span>
-                        <input type="number" id="map-lng" step="0.0001" placeholder="9.4177">
-                    </label>
-                </div>
+                <label><span data-i18n="modal.map.lng">Laengengrad</span>
+                    <input type="number" id="map-lng" step="0.0001" placeholder="9.4177">
+                </label>
                 <label><span data-i18n="modal.map.source">Kartentyp</span>
                     <select id="map-source">
                         <option value="osm">OpenStreetMap</option>
@@ -480,7 +471,7 @@
                 </label>
             </div>
             <div class="modal-actions">
-                <button id="map-cancel" class="btn-secondary" data-i18n="btn.cancel">Abbrechen</button>
+                <button id="map-cancel" class="btn-secondary" data-i18n="modal.map.cancel">Abbrechen</button>
                 <button id="map-ok" class="btn-primary">OK</button>
             </div>
         </div>

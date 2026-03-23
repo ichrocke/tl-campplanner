@@ -185,23 +185,12 @@ const MapTiles = (() => {
         ctx.restore();
     }
 
-    // --- Geocoding via Nominatim ---
-
-    async function searchLocation(query) {
-        const url = 'https://nominatim.openstreetmap.org/search?q=' +
-            encodeURIComponent(query) + '&format=json&limit=5&accept-language=de';
-        const resp = await fetch(url);
-        if (!resp.ok) return [];
-        return await resp.json();
-    }
-
     function clearCache() {
         _cache.clear();
     }
 
     return {
         drawMapTiles,
-        searchLocation,
         clearCache,
     };
 })();

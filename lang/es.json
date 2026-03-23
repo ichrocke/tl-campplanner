@@ -289,12 +289,10 @@
   "ctx.saveAsTemplate": "Guardar como plantilla",
   "csv.example": "Descargar CSV de ejemplo",
   "modal.map.title": "Vista de mapa",
-  "modal.map.search": "Buscar ubicacion",
-  "modal.map.searchBtn": "Buscar",
   "modal.map.lat": "Latitud",
   "modal.map.lng": "Longitud",
   "modal.map.source": "Tipo de mapa",
   "modal.map.opacity": "Opacidad",
   "modal.map.enabled": "Mostrar mapa",
-  "modal.map.noResults": "Sin resultados"
+  "modal.map.cancel": "Cancelar"
 }
