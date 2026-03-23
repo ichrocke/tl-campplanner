@@ -24,16 +24,19 @@ if ($action === 'create') {
     ]);
     $stmt = $pdo->prepare('INSERT INTO rooms (id, name, state_json) VALUES (?, ?, ?)');
     $stmt->execute([$id, $name, $emptyState]);
-    jsonResponse(['ok' => true, 'roomId' => $id, 'name' => $name]);
+    header('Location: admin.php?key=' . urlencode(ADMIN_KEY));
+    exit;
 }
 
 // Raum loeschen
 if ($action === 'delete') {
     $id = $_GET['id'] ?? '';
-    if (!$id) jsonResponse(['error' => 'Missing id'], 400);
-    $stmt = $pdo->prepare('DELETE FROM rooms WHERE id = ?');
-    $stmt->execute([$id]);
-    jsonResponse(['ok' => true]);
+    if ($id) {
+        $stmt = $pdo->prepare('DELETE FROM rooms WHERE id = ?');
+        $stmt->execute([$id]);
+    }
+    header('Location: admin.php?key=' . urlencode(ADMIN_KEY));
+    exit;
 }
 
 // Liste aller Raeume
