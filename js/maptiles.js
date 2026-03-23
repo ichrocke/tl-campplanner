@@ -98,9 +98,9 @@ const MapTiles = (() => {
 
     function bestZoom(lat, worldPixelSize) {
         // worldPixelSize = meters per screen pixel = 1 / (PPM * siteZoom)
-        // We want metersPerPixel(lat, z) close to worldPixelSize
-        for (let z = 20; z >= 1; z--) {
-            if (metersPerPixel(lat, z) <= worldPixelSize) return z;
+        // Find highest z where tile resolution is still useful (not too blurry)
+        for (let z = 19; z >= 1; z--) {
+            if (metersPerPixel(lat, z) <= worldPixelSize * 2) return z;
         }
         return 1;
     }
@@ -126,9 +126,6 @@ const MapTiles = (() => {
         const siteZoom = site.view.zoom || 1;
         const mPerScreenPx = 1 / (PPM * siteZoom);
 
-        // Best tile zoom
-        const z = Math.min(19, Math.max(1, bestZoom(anchor.lat, mPerScreenPx)));
-
         // Visible world bounds
         const topLeft = s2w(0, 0);
         const bottomRight = s2w(canvasEl.width, canvasEl.height);
@@ -139,14 +136,17 @@ const MapTiles = (() => {
         const seLat = worldYToLat(bottomRight.y, anchor);
         const seLng = worldXToLng(bottomRight.x, anchor);
 
-        // Tile range
-        const txMin = lngToTileX(Math.min(nwLng, seLng), z);
-        const txMax = lngToTileX(Math.max(nwLng, seLng), z);
-        const tyMin = latToTileY(Math.max(nwLat, seLat), z); // higher lat = lower tile Y
-        const tyMax = latToTileY(Math.min(nwLat, seLat), z);
-
-        // Limit number of tiles to prevent overload
-        if ((txMax - txMin + 1) * (tyMax - tyMin + 1) > 200) return;
+        // Best tile zoom, reduce if too many tiles would be needed
+        let z = Math.min(19, Math.max(1, bestZoom(anchor.lat, mPerScreenPx)));
+        let txMin, txMax, tyMin, tyMax;
+        for (; z >= 1; z--) {
+            txMin = lngToTileX(Math.min(nwLng, seLng), z);
+            txMax = lngToTileX(Math.max(nwLng, seLng), z);
+            tyMin = latToTileY(Math.max(nwLat, seLat), z);
+            tyMax = latToTileY(Math.min(nwLat, seLat), z);
+            if ((txMax - txMin + 1) * (tyMax - tyMin + 1) <= 100) break;
+        }
+        if (z < 1) return;
 
         ctx.save();
         ctx.globalAlpha = opacity;
