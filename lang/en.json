@@ -306,5 +306,6 @@
   "collab.roomLocked": "This room has been locked by the admin. Editing disabled.",
   "collab.roomUnlocked": "The room has been unlocked.",
   "collab.roomExpired": "The room has expired and was closed.",
+  "collab.dataWarningOk": "Understood",
   "collab.dataWarning": "\u26A0 Notice: This tool does not perform automatic backups - not even in rooms. The operator assumes no responsibility for data loss. Please use the export function regularly to save your work."
 }

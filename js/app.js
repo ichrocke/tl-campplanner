@@ -154,7 +154,7 @@
         msg.style.cssText = 'margin:0 0 16px;font-size:14px;line-height:1.5;color:#1a1a2e';
         msg.textContent = I18n.t('collab.dataWarning').replace(/^\u26A0\s*/, '');
         const btn = document.createElement('button');
-        btn.textContent = 'Verstanden';
+        btn.textContent = I18n.t('collab.dataWarningOk');
         btn.style.cssText = 'padding:8px 20px;border:none;border-radius:8px;background:#1a1a2e;color:#fff;font-size:14px;cursor:pointer';
         btn.addEventListener('click', () => { overlay.remove(); });
         right.appendChild(msg);
