@@ -70,6 +70,35 @@ if ($action === 'rename') {
     exit;
 }
 
+// Nachrichten eines Raums laden (JSON)
+if ($action === 'messages') {
+    $id = $_GET['id'] ?? '';
+    if ($id) {
+        $stmt = $pdo->prepare('SELECT id, user_name, message, created_at FROM room_messages WHERE room_id = ? ORDER BY created_at DESC LIMIT 50');
+        $stmt->execute([$id]);
+        jsonResponse(['messages' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
+    }
+    jsonResponse(['messages' => []]);
+}
+
+// Einzelne Nachricht loeschen
+if ($action === 'delete_msg') {
+    $msgId = intval($_GET['msgId'] ?? 0);
+    if ($msgId) {
+        $pdo->prepare('DELETE FROM room_messages WHERE id = ?')->execute([$msgId]);
+    }
+    jsonResponse(['ok' => true]);
+}
+
+// Alle Nachrichten eines Raums loeschen
+if ($action === 'clear_msgs') {
+    $id = $_GET['id'] ?? '';
+    if ($id) {
+        $pdo->prepare('DELETE FROM room_messages WHERE room_id = ?')->execute([$id]);
+    }
+    jsonResponse(['ok' => true]);
+}
+
 // Nachricht an Raum senden
 if ($action === 'message') {
     $id = $_GET['id'] ?? '';
@@ -412,7 +441,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                     <div class="msg-row">
                         <input type="text" id="msg-<?= $r['id'] ?>" placeholder="Nachricht an Raum...">
                         <button class="btn btn-link" onclick="sendMsg('<?= $r['id'] ?>')">Senden</button>
+                        <button class="btn btn-sm" style="background:var(--surface2);color:var(--text)" onclick="loadHistory('<?= $r['id'] ?>')">Verlauf</button>
                     </div>
+                    <div id="history-<?= $r['id'] ?>" style="display:none;margin-top:8px"></div>
                 </div>
             </template>
         <?php endforeach; ?>
@@ -544,6 +575,38 @@ function sortRooms() {
     });
     pairs.forEach(p => { list.appendChild(p.card); if (p.tpl && p.tpl.tagName === 'TEMPLATE') list.appendChild(p.tpl); });
 }
+async function loadHistory(roomId) {
+    const el = document.getElementById('history-' + roomId);
+    if (el.style.display !== 'none') { el.style.display = 'none'; return; }
+    el.innerHTML = '<span style="color:var(--text2);font-size:12px">Laden...</span>';
+    el.style.display = 'block';
+    try {
+        const resp = await fetch('?key=<?= urlencode(ADMIN_KEY) ?>&action=messages&id=' + roomId);
+        const data = await resp.json();
+        if (!data.messages || !data.messages.length) {
+            el.innerHTML = '<span style="color:var(--text2);font-size:12px">Keine Nachrichten.</span>';
+            return;
+        }
+        let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:12px;color:var(--text2)">' + data.messages.length + ' Nachrichten</span><button class="btn btn-delete btn-sm" onclick="clearMsgs(\'' + roomId + '\')">Alle loeschen</button></div>';
+        data.messages.forEach(m => {
+            html += '<div style="display:flex;justify-content:space-between;align-items:flex-start;padding:6px 0;border-bottom:1px solid var(--surface2);font-size:12px">'
+                + '<div><strong style="color:var(--accent)">' + esc(m.user_name) + '</strong> <span style="color:var(--text2)">' + m.created_at + '</span><br>' + esc(m.message) + '</div>'
+                + '<button style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;padding:0 4px" onclick="deleteMsg(' + m.id + ',\'' + roomId + '\')">&times;</button>'
+                + '</div>';
+        });
+        el.innerHTML = html;
+    } catch (e) { el.innerHTML = '<span style="color:var(--red);font-size:12px">Fehler</span>'; }
+}
+async function deleteMsg(msgId, roomId) {
+    await fetch('?key=<?= urlencode(ADMIN_KEY) ?>&action=delete_msg&msgId=' + msgId);
+    loadHistory(roomId);
+}
+async function clearMsgs(roomId) {
+    if (!confirm('Alle Nachrichten loeschen?')) return;
+    await fetch('?key=<?= urlencode(ADMIN_KEY) ?>&action=clear_msgs&id=' + roomId);
+    loadHistory(roomId);
+}
+function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
 function renameRoom(id) {
     const input = document.getElementById('rename-' + id);
     const name = input.value.trim();
