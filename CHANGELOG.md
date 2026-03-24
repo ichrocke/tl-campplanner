@@ -8,6 +8,7 @@
 - **Data warning**: Modal with ISO warning sign shown once per session, informing users about missing auto-backup
 - **CSV import extended**: Optional columns for hex color (farbe) and description (beschreibung)
 - **Admin messaging**: Admin can send messages to rooms, shown as toast notifications to online and later-joining users
+- **Admin statistics**: Dashboard with live stats (active rooms, users online, total objects, data size, messages today, rooms created today, locked, archived)
 
 ### Changed
 - Symbol picker no longer shows text labels, only icons with tooltip
