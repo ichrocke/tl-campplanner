@@ -26,7 +26,9 @@ const Collab = (() => {
     let _localCursorY = 0;
     let _locked = false;
     let _wasLocked = false;
-    let _expiresDeadline = null; // Date.now() + remaining ms, or null
+    let _expiresDeadline = null;
+    let _lastMsgId = 0;
+    let _onMessage = null;
 
     function init() {
         _userId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -198,9 +200,27 @@ const Collab = (() => {
                 if (data.changed && data.version > _version) {
                     onRemoteUpdate(data.state, data.version);
                 }
+                // Nachrichten abfragen
+                pollMessages();
             } catch (e) { /* retry next interval */ }
         }, POLL_INTERVAL);
     }
+
+    async function pollMessages() {
+        if (!_roomId || !_onMessage) return;
+        try {
+            const resp = await fetch(API_BASE + 'room-messages.php?room=' + encodeURIComponent(_roomId) + '&since=' + _lastMsgId);
+            const data = await resp.json();
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach(m => {
+                    _lastMsgId = Math.max(_lastMsgId, intval(m.id));
+                    _onMessage(m);
+                });
+            }
+        } catch (e) { /* ignore */ }
+    }
+
+    function intval(v) { return parseInt(v) || 0; }
 
     // --- Cursor-Sync ---
 
@@ -238,6 +258,27 @@ const Collab = (() => {
     function updateLocalCursor(worldX, worldY) {
         _localCursorX = worldX;
         _localCursorY = worldY;
+    }
+
+    // --- Nachrichten ---
+
+    function onMessage(fn) { _onMessage = fn; }
+
+    async function sendMessage(text) {
+        if (!_roomId || !text.trim()) return false;
+        try {
+            const resp = await fetch(API_BASE + 'room-messages.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    roomId: _roomId,
+                    userName: _userName,
+                    message: text.trim(),
+                }),
+            });
+            const data = await resp.json();
+            return !!data.ok;
+        } catch (e) { return false; }
     }
 
     // --- Remote Update empfangen ---
@@ -317,6 +358,8 @@ const Collab = (() => {
         getOnlineUsers,
         getRemoteCursors,
         onUsersChange,
+        onMessage,
+        sendMessage,
         updateLocalCursor,
         get syncLock() { return _syncLock; },
     };

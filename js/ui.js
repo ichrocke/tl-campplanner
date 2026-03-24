@@ -525,10 +525,17 @@ const UI = (() => {
             }
         });
 
-        // Collab user count updates
+        // Collab user count updates + messages
         if (typeof Collab !== 'undefined') {
             Collab.onUsersChange(() => updateCollabStatus());
+            Collab.onMessage((msg) => showCollabMessage(msg));
         }
+
+        // Chat input
+        document.getElementById('collab-chat-send').addEventListener('click', sendChatMessage);
+        document.getElementById('collab-chat-input').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); sendChatMessage(); }
+        });
     }
 
     // --- Language flags ---
@@ -2355,6 +2362,45 @@ const UI = (() => {
         buildPlacedList();
     }
 
+    // --- Collab Messages ---
+
+    function showCollabMessage(msg) {
+        const container = document.getElementById('collab-messages');
+        const toast = document.createElement('div');
+        toast.style.cssText = 'background:rgba(0,0,0,0.85);color:#fff;padding:8px 12px;border-radius:8px;font-size:12px;line-height:1.4;pointer-events:auto;animation:fadeInMsg 0.3s ease';
+        toast.innerHTML = '<strong style="color:#3b82f6">' + escapeHtml(msg.user_name) + '</strong> <span style="color:#94a3b8;font-size:10px">' + formatMsgTime(msg.created_at) + '</span><br>' + escapeHtml(msg.message);
+        container.appendChild(toast);
+        // Nach 8 Sekunden ausblenden
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transition = 'opacity 0.5s';
+            setTimeout(() => toast.remove(), 500);
+        }, 8000);
+        // Max 5 Toasts
+        while (container.children.length > 5) container.firstChild.remove();
+    }
+
+    function formatMsgTime(dateStr) {
+        try {
+            const d = new Date(dateStr + 'Z');
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } catch (e) { return ''; }
+    }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+    }
+
+    function sendChatMessage() {
+        const input = document.getElementById('collab-chat-input');
+        const text = input.value.trim();
+        if (!text || typeof Collab === 'undefined' || !Collab.isConnected()) return;
+        Collab.sendMessage(text);
+        input.value = '';
+    }
+
     // --- Collab Status ---
     let _collabNamesExpanded = false;
     let _collabCountdownTimer = null;
@@ -2372,11 +2418,14 @@ const UI = (() => {
     function updateCollabStatus() {
         const indicator = document.getElementById('collab-indicator');
         const text = document.getElementById('collab-indicator-text');
+        const chatBar = document.getElementById('collab-chat-bar');
         if (typeof Collab === 'undefined' || !Collab.isConnected()) {
             indicator.style.display = 'none';
+            chatBar.style.display = 'none';
             if (_collabCountdownTimer) { clearInterval(_collabCountdownTimer); _collabCountdownTimer = null; }
             return;
         }
+        chatBar.style.display = 'block';
         indicator.style.display = 'flex';
         indicator.style.cursor = 'pointer';
         indicator.style.pointerEvents = 'auto';

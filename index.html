@@ -99,6 +99,17 @@
                     <span id="collab-indicator-text"></span>
                 </div>
 
+                <!-- Collab message toasts -->
+                <div id="collab-messages" style="position:absolute;top:40px;right:8px;z-index:50;display:flex;flex-direction:column;gap:4px;max-width:320px;pointer-events:none"></div>
+
+                <!-- Collab chat input -->
+                <div id="collab-chat-bar" style="position:absolute;bottom:8px;right:8px;z-index:50;display:none">
+                    <div style="display:flex;gap:4px;background:rgba(0,0,0,0.7);padding:4px;border-radius:10px">
+                        <input type="text" id="collab-chat-input" placeholder="Nachricht..." style="width:220px;padding:6px 10px;border:none;border-radius:8px;font-size:12px;background:rgba(255,255,255,0.9);color:#1a1a2e;outline:none">
+                        <button id="collab-chat-send" style="padding:6px 12px;border:none;border-radius:8px;background:#3b82f6;color:#fff;font-size:12px;cursor:pointer">&#10148;</button>
+                    </div>
+                </div>
+
                 <!-- Floating tool palette -->
                 <div id="floating-tools">
                     <div id="floating-tools-handle" title="Drag to move">&#8942;&#8942;</div>

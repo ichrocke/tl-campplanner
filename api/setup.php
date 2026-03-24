@@ -52,6 +52,16 @@ try {
     // Spalten existieren bereits
 }
 
+// Nachrichten-Tabelle
+$pdo->exec("CREATE TABLE IF NOT EXISTS room_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    room_id VARCHAR(12) NOT NULL,
+    user_name VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (room_id) REFERENCES rooms(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
 // Archiv-Tabelle
 $pdo->exec("CREATE TABLE IF NOT EXISTS rooms_archive (
     id VARCHAR(12) PRIMARY KEY,
