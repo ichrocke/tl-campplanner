@@ -2318,40 +2318,39 @@ const UI = (() => {
         const count = Math.max(1, users.length);
 
         // Countdown-Timer starten falls Ablaufzeit vorhanden
-        const expiresAt = Collab.getExpiresAt();
-        if (expiresAt && !_collabCountdownTimer) {
+        const deadline = Collab.getExpiresDeadline();
+        if (deadline && !_collabCountdownTimer) {
             _collabCountdownTimer = setInterval(updateCollabCountdown, 1000);
         }
-        if (!expiresAt && _collabCountdownTimer) {
+        if (!deadline && _collabCountdownTimer) {
             clearInterval(_collabCountdownTimer);
             _collabCountdownTimer = null;
         }
 
-        buildCollabLabel(count, locked, expiresAt, users);
+        buildCollabLabel(count, locked, deadline, users);
     }
 
     function updateCollabCountdown() {
         if (typeof Collab === 'undefined' || !Collab.isConnected()) return;
-        const expiresAt = Collab.getExpiresAt();
-        if (!expiresAt) return;
-        const remaining = new Date(expiresAt + 'Z').getTime() - Date.now();
+        const deadline = Collab.getExpiresDeadline();
+        if (!deadline) return;
+        const remaining = deadline - Date.now();
         if (remaining <= 0) {
-            // Raum abgelaufen
             Collab.disconnect();
             alert(I18n.t('collab.roomExpired'));
             return;
         }
         const users = Collab.getOnlineUsers();
         const count = Math.max(1, users.length);
-        buildCollabLabel(count, Collab.isLocked(), expiresAt, users);
+        buildCollabLabel(count, Collab.isLocked(), deadline, users);
     }
 
-    function buildCollabLabel(count, locked, expiresAt, users) {
+    function buildCollabLabel(count, locked, deadline, users) {
         const text = document.getElementById('collab-indicator-text');
         let parts = [];
         if (locked) parts.push(I18n.t('collab.locked'));
-        if (expiresAt) {
-            const remaining = new Date(expiresAt + 'Z').getTime() - Date.now();
+        if (deadline) {
+            const remaining = deadline - Date.now();
             parts.push(formatCountdown(Math.max(0, remaining)));
         }
         parts.push(count + ' ' + I18n.t('collab.connected'));

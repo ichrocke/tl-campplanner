@@ -26,7 +26,7 @@ const Collab = (() => {
     let _localCursorY = 0;
     let _locked = false;
     let _wasLocked = false;
-    let _expiresAt = null; // ISO datetime string or null
+    let _expiresDeadline = null; // Date.now() + remaining ms, or null
 
     function init() {
         _userId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -40,7 +40,7 @@ const Collab = (() => {
     }
 
     function isLocked() { return _locked; }
-    function getExpiresAt() { return _expiresAt; }
+    function getExpiresDeadline() { return _expiresDeadline; }
     function getRoomId() { return _roomId; }
     function getUserName() { return _userName; }
     function getOnlineUsers() { return _onlineUsers; }
@@ -176,8 +176,8 @@ const Collab = (() => {
                 const resp = await fetch(API_BASE + 'room-state.php?room=' + encodeURIComponent(_roomId) + '&since=' + _version);
                 const data = await resp.json();
                 // Ablaufzeit aktualisieren
-                if (data.expiresAt !== undefined) {
-                    _expiresAt = data.expiresAt;
+                if (data.expiresIn !== undefined) {
+                    _expiresDeadline = (data.expiresIn >= 0) ? Date.now() + data.expiresIn * 1000 : null;
                 }
                 // Lock-Status pruefen
                 if (data.locked !== undefined) {
@@ -306,7 +306,7 @@ const Collab = (() => {
     return {
         isConnected,
         isLocked,
-        getExpiresAt,
+        getExpiresDeadline,
         getRoomId,
         getUserName,
         joinRoom,
