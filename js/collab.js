@@ -25,7 +25,8 @@ const Collab = (() => {
     let _localCursorX = 0;
     let _localCursorY = 0;
     let _locked = false;
-    let _wasLocked = false; // fuer Nachricht bei Statuswechsel
+    let _wasLocked = false;
+    let _expiresAt = null; // ISO datetime string or null
 
     function init() {
         _userId = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
@@ -39,6 +40,7 @@ const Collab = (() => {
     }
 
     function isLocked() { return _locked; }
+    function getExpiresAt() { return _expiresAt; }
     function getRoomId() { return _roomId; }
     function getUserName() { return _userName; }
     function getOnlineUsers() { return _onlineUsers; }
@@ -173,6 +175,10 @@ const Collab = (() => {
             try {
                 const resp = await fetch(API_BASE + 'room-state.php?room=' + encodeURIComponent(_roomId) + '&since=' + _version);
                 const data = await resp.json();
+                // Ablaufzeit aktualisieren
+                if (data.expiresAt !== undefined) {
+                    _expiresAt = data.expiresAt;
+                }
                 // Lock-Status pruefen
                 if (data.locked !== undefined) {
                     const newLocked = !!data.locked;
@@ -300,6 +306,7 @@ const Collab = (() => {
     return {
         isConnected,
         isLocked,
+        getExpiresAt,
         getRoomId,
         getUserName,
         joinRoom,

@@ -304,5 +304,6 @@
   "collab.enterName": "Dein Name fuer die Zusammenarbeit:",
   "collab.locked": "GESPERRT",
   "collab.roomLocked": "Dieser Raum wurde vom Admin gesperrt. Bearbeitung nicht moeglich.",
-  "collab.roomUnlocked": "Der Raum wurde wieder freigegeben."
+  "collab.roomUnlocked": "Der Raum wurde wieder freigegeben.",
+  "collab.roomExpired": "Der Raum ist abgelaufen und wurde geschlossen."
 }

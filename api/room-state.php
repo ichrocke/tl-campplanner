@@ -11,7 +11,7 @@ if (!$roomId || !preg_match('/^[a-z0-9]{4,12}$/', $roomId)) {
 
 $pdo = getDB();
 cleanupExpiredRooms();
-$stmt = $pdo->prepare('SELECT state_json, version, IFNULL(locked, 0) as locked FROM rooms WHERE id = ?');
+$stmt = $pdo->prepare('SELECT state_json, version, IFNULL(locked, 0) as locked, expires_at FROM rooms WHERE id = ?');
 $stmt->execute([$roomId]);
 $room = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -22,8 +22,10 @@ if (!$room) {
 $locked = intval($room['locked']);
 
 // Wenn Client bereits auf dem neuesten Stand ist
+$expiresAt = $room['expires_at'];
+
 if ($since > 0 && intval($room['version']) <= $since) {
-    jsonResponse(['changed' => false, 'version' => intval($room['version']), 'locked' => $locked]);
+    jsonResponse(['changed' => false, 'version' => intval($room['version']), 'locked' => $locked, 'expiresAt' => $expiresAt]);
 }
 
 // last_activity aktualisieren
@@ -34,4 +36,5 @@ jsonResponse([
     'version' => intval($room['version']),
     'state' => $room['state_json'],
     'locked' => $locked,
+    'expiresAt' => $expiresAt,
 ]);

@@ -2287,12 +2287,24 @@ const UI = (() => {
 
     // --- Collab Status ---
     let _collabNamesExpanded = false;
+    let _collabCountdownTimer = null;
+
+    function formatCountdown(ms) {
+        if (ms <= 0) return '0:00';
+        const totalSec = Math.floor(ms / 1000);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        if (h > 0) return h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        return m + ':' + String(s).padStart(2, '0');
+    }
 
     function updateCollabStatus() {
         const indicator = document.getElementById('collab-indicator');
         const text = document.getElementById('collab-indicator-text');
         if (typeof Collab === 'undefined' || !Collab.isConnected()) {
             indicator.style.display = 'none';
+            if (_collabCountdownTimer) { clearInterval(_collabCountdownTimer); _collabCountdownTimer = null; }
             return;
         }
         indicator.style.display = 'flex';
@@ -2304,13 +2316,50 @@ const UI = (() => {
         indicator.style.background = locked ? 'rgba(245,158,11,0.85)' : 'rgba(0,0,0,0.7)';
         const users = Collab.getOnlineUsers();
         const count = Math.max(1, users.length);
-        let label = count + ' ' + I18n.t('collab.connected');
-        if (locked) label = I18n.t('collab.locked') + ' | ' + label;
+
+        // Countdown-Timer starten falls Ablaufzeit vorhanden
+        const expiresAt = Collab.getExpiresAt();
+        if (expiresAt && !_collabCountdownTimer) {
+            _collabCountdownTimer = setInterval(updateCollabCountdown, 1000);
+        }
+        if (!expiresAt && _collabCountdownTimer) {
+            clearInterval(_collabCountdownTimer);
+            _collabCountdownTimer = null;
+        }
+
+        buildCollabLabel(count, locked, expiresAt, users);
+    }
+
+    function updateCollabCountdown() {
+        if (typeof Collab === 'undefined' || !Collab.isConnected()) return;
+        const expiresAt = Collab.getExpiresAt();
+        if (!expiresAt) return;
+        const remaining = new Date(expiresAt + 'Z').getTime() - Date.now();
+        if (remaining <= 0) {
+            // Raum abgelaufen
+            Collab.disconnect();
+            alert(I18n.t('collab.roomExpired'));
+            return;
+        }
+        const users = Collab.getOnlineUsers();
+        const count = Math.max(1, users.length);
+        buildCollabLabel(count, Collab.isLocked(), expiresAt, users);
+    }
+
+    function buildCollabLabel(count, locked, expiresAt, users) {
+        const text = document.getElementById('collab-indicator-text');
+        let parts = [];
+        if (locked) parts.push(I18n.t('collab.locked'));
+        if (expiresAt) {
+            const remaining = new Date(expiresAt + 'Z').getTime() - Date.now();
+            parts.push(formatCountdown(Math.max(0, remaining)));
+        }
+        parts.push(count + ' ' + I18n.t('collab.connected'));
         if (_collabNamesExpanded) {
             const names = users.map(u => u.user_name).filter(Boolean).join(', ');
-            if (names) label += ' (' + names + ')';
+            if (names) parts[parts.length - 1] += ' (' + names + ')';
         }
-        text.textContent = label;
+        text.textContent = parts.join(' | ');
     }
 
     document.addEventListener('DOMContentLoaded', () => {

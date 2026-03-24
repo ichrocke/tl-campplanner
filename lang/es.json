@@ -304,5 +304,6 @@
   "collab.enterName": "Tu nombre para la colaboracion:",
   "collab.locked": "BLOQUEADO",
   "collab.roomLocked": "Esta sala ha sido bloqueada por el administrador.",
-  "collab.roomUnlocked": "La sala ha sido desbloqueada."
+  "collab.roomUnlocked": "La sala ha sido desbloqueada.",
+  "collab.roomExpired": "La sala ha caducado y fue cerrada."
 }

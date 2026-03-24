@@ -304,5 +304,6 @@
   "collab.enterName": "Your name for collaboration:",
   "collab.locked": "LOCKED",
   "collab.roomLocked": "This room has been locked by the admin. Editing disabled.",
-  "collab.roomUnlocked": "The room has been unlocked."
+  "collab.roomUnlocked": "The room has been unlocked.",
+  "collab.roomExpired": "The room has expired and was closed."
 }
