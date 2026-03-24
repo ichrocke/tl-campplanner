@@ -296,12 +296,6 @@ h1 {
     border-radius: var(--radius);
     padding: 14px 16px;
 }
-.room-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-}
 .room-name {
     font-weight: 600;
     font-size: 15px;
@@ -337,7 +331,34 @@ h1 {
 }
 .room-actions {
     display: flex;
-    gap: 8px;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.room-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+.room-card { overflow: hidden; }
+.msg-row {
+    display: flex;
+    gap: 4px;
+    margin-top: 6px;
+}
+.msg-row input { flex: 1; min-width: 0; }
+@media (max-width: 480px) {
+    .room-actions { flex-direction: column; }
+    .room-actions .btn-sm, .room-actions .ttl-group { width: 100%; }
+    .room-actions .ttl-group { justify-content: center; }
+    .create-form { flex-direction: column; }
+    .create-form input, .create-form .btn { width: 100%; }
+    .ttl-group.create-ttl { justify-content: center; }
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .section-title { flex-direction: column; gap: 8px; align-items: flex-start; }
+    .msg-row { flex-direction: column; }
 }
 .empty {
     text-align: center;
@@ -441,8 +462,8 @@ h1 {
                 <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=delete&id=<?= $r['id'] ?>"
                    class="btn btn-delete btn-sm" onclick="return confirm('Raum wirklich loeschen?')">Loeschen</a>
             </div>
-            <div style="display:flex;gap:4px;margin-top:6px">
-                <input type="text" id="msg-<?= $r['id'] ?>" placeholder="Nachricht an Raum senden..." style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:12px">
+            <div class="msg-row">
+                <input type="text" id="msg-<?= $r['id'] ?>" placeholder="Nachricht an Raum senden..." style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:12px">
                 <button class="btn btn-link btn-sm" onclick="sendMsg('<?= $r['id'] ?>')">Senden</button>
             </div>
         </div>
