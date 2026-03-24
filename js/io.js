@@ -954,6 +954,7 @@ ${els}</svg>`;
         const iBreite = header.indexOf('breite');
         const iTiefe = header.indexOf('tiefe');
         const iAbspann = header.indexOf('abspann');
+        const iFarbe = header.indexOf('farbe');
         if (iName < 0 || iBreite < 0 || iTiefe < 0) {
             alert('CSV-Header muss enthalten: name;breite;tiefe;abspann');
             return;
@@ -978,7 +979,10 @@ ${els}</svg>`;
             const breite = parseFloat(parts[iBreite]) || 1;
             const tiefe = parseFloat(parts[iTiefe]) || 1;
             const abspann = iAbspann >= 0 ? (parseFloat(parts[iAbspann]) || 0) : 0;
-            items.push({ name, breite, tiefe, abspann });
+            let farbe = iFarbe >= 0 ? (parts[iFarbe] || '').trim() : '';
+            if (farbe && !farbe.startsWith('#')) farbe = '#' + farbe;
+            if (!/^#[0-9a-fA-F]{6}$/.test(farbe)) farbe = '';
+            items.push({ name, breite, tiefe, abspann, farbe });
         }
 
         if (items.length === 0) { alert('Keine Daten in CSV'); return; }
@@ -1005,7 +1009,7 @@ ${els}</svg>`;
                 width: item.breite,
                 height: item.tiefe,
                 guyRopeDistance: item.abspann,
-                color: '#4a90d9',
+                color: item.farbe || '#4a90d9',
                 shape: 'rect',
             }, x, y);
 
