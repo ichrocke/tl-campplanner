@@ -10,12 +10,13 @@ if (($_GET['key'] ?? '') !== ADMIN_KEY) {
 $pdo = getDB();
 $action = $_GET['action'] ?? 'list';
 
-// Ablauf-Hilfsfunktion
-function calcExpiry($ttl) {
-    if (!$ttl || $ttl === 'forever') return null;
-    $hours = intval($ttl);
-    if ($hours <= 0) return null;
-    return date('Y-m-d H:i:s', time() + $hours * 3600);
+// Ablauf berechnen aus Tage/Stunden/Minuten
+function calcExpiryFromFields($days, $hours, $minutes) {
+    $d = intval($days); $h = intval($hours); $m = intval($minutes);
+    if ($d === 0 && $h === 0 && $m === 0) return null; // unbegrenzt
+    $totalSec = $d * 86400 + $h * 3600 + $m * 60;
+    if ($totalSec <= 0) return null;
+    return date('Y-m-d H:i:s', time() + $totalSec);
 }
 
 // Abgelaufene Raeume aufraeumen
@@ -25,8 +26,7 @@ cleanupExpiredRooms();
 if ($action === 'create') {
     $name = trim($_GET['name'] ?? '');
     if (!$name) $name = 'Raum ' . date('d.m.Y H:i');
-    $ttl = $_GET['ttl'] ?? 'forever';
-    $expiresAt = calcExpiry($ttl);
+    $expiresAt = calcExpiryFromFields($_GET['days'] ?? 0, $_GET['hours'] ?? 0, $_GET['minutes'] ?? 0);
     $id = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz0123456789'), 0, 8);
     $emptyState = json_encode([
         'version' => 1,
@@ -45,13 +45,12 @@ if ($action === 'create') {
 // Ablauf aendern
 if ($action === 'set_ttl') {
     $id = $_GET['id'] ?? '';
-    $ttl = $_GET['ttl'] ?? 'forever';
     if ($id) {
-        if ($ttl === 'forever') {
-            $pdo->prepare('UPDATE rooms SET expires_at = NULL WHERE id = ?')->execute([$id]);
-        } else {
-            $expiresAt = calcExpiry($ttl);
+        $expiresAt = calcExpiryFromFields($_GET['days'] ?? 0, $_GET['hours'] ?? 0, $_GET['minutes'] ?? 0);
+        if ($expiresAt) {
             $pdo->prepare('UPDATE rooms SET expires_at = ? WHERE id = ?')->execute([$expiresAt, $id]);
+        } else {
+            $pdo->prepare('UPDATE rooms SET expires_at = NULL WHERE id = ?')->execute([$id]);
         }
     }
     header('Location: admin.php?key=' . urlencode(ADMIN_KEY));
@@ -167,14 +166,29 @@ h1 {
 .lock-badge { font-size: 11px; color: #f59e0b; font-weight: 600; }
 .expiry-badge { font-size: 11px; color: var(--text2); }
 .expiry-badge.soon { color: var(--red); font-weight: 600; }
-.ttl-select {
+.ttl-group {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--text2);
+}
+.ttl-group input {
+    width: 42px;
     padding: 4px 6px;
     border: 1px solid var(--border);
     border-radius: 6px;
     background: var(--surface2);
     color: var(--text);
     font-size: 12px;
+    text-align: center;
 }
+.ttl-group.create-ttl input {
+    width: 48px;
+    padding: 8px 6px;
+    font-size: 14px;
+}
+.ttl-group.create-ttl { font-size: 14px; color: var(--text); }
 .create-form { flex-wrap: wrap; }
 
 .room-list { display: flex; flex-direction: column; gap: 10px; }
@@ -259,17 +273,14 @@ h1 {
         <input type="hidden" name="key" value="<?= htmlspecialchars(ADMIN_KEY) ?>">
         <input type="hidden" name="action" value="create">
         <input type="text" name="name" placeholder="Raumname (optional)" style="flex:1">
-        <select name="ttl" style="padding:10px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:14px">
-            <option value="forever">Unbegrenzt</option>
-            <option value="6">6 Stunden</option>
-            <option value="12">12 Stunden</option>
-            <option value="24" selected>1 Tag</option>
-            <option value="72">3 Tage</option>
-            <option value="168">7 Tage</option>
-            <option value="720">30 Tage</option>
-        </select>
+        <div class="ttl-group create-ttl">
+            <input type="number" name="days" value="1" min="0"> T
+            <input type="number" name="hours" value="0" min="0" max="23"> Std
+            <input type="number" name="minutes" value="0" min="0" max="59"> Min
+        </div>
         <button type="submit" class="btn btn-create">+ Erstellen</button>
     </form>
+    <p style="font-size:11px;color:var(--text2);margin:-16px 0 20px">Alle Felder 0 = unbegrenzt</p>
 
     <div class="room-list">
     <?php if (empty($rooms)): ?>
@@ -307,16 +318,12 @@ h1 {
             </div>
             <div class="room-actions">
                 <button class="btn btn-link btn-sm" onclick="copyLink('<?= $r['id'] ?>')">Link kopieren</button>
-                <select class="ttl-select" onchange="setTtl('<?= $r['id'] ?>', this.value)">
-                    <option value="" disabled selected>Ablauf...</option>
-                    <option value="forever">Unbegrenzt</option>
-                    <option value="6">6 Std.</option>
-                    <option value="12">12 Std.</option>
-                    <option value="24">1 Tag</option>
-                    <option value="72">3 Tage</option>
-                    <option value="168">7 Tage</option>
-                    <option value="720">30 Tage</option>
-                </select>
+                <form class="ttl-group" style="margin:0" onsubmit="return setTtl(event, '<?= $r['id'] ?>')">
+                    <input type="number" name="days" value="0" min="0" placeholder="T"> T
+                    <input type="number" name="hours" value="0" min="0" placeholder="S"> S
+                    <input type="number" name="minutes" value="0" min="0" placeholder="M"> M
+                    <button type="submit" class="btn btn-link btn-sm" style="padding:4px 8px">Setzen</button>
+                </form>
                 <?php if ($isLocked): ?>
                     <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=unlock&id=<?= $r['id'] ?>"
                        class="btn btn-unlock btn-sm">Entsperren</a>
@@ -340,8 +347,12 @@ function copyLink(id) {
     navigator.clipboard.writeText(url);
     showToast('Link kopiert!');
 }
-function setTtl(id, ttl) {
-    location.href = '?key=<?= urlencode(ADMIN_KEY) ?>&action=set_ttl&id=' + id + '&ttl=' + ttl;
+function setTtl(e, id) {
+    e.preventDefault();
+    const f = e.target;
+    const d = f.days.value || 0, h = f.hours.value || 0, m = f.minutes.value || 0;
+    location.href = '?key=<?= urlencode(ADMIN_KEY) ?>&action=set_ttl&id=' + id + '&days=' + d + '&hours=' + h + '&minutes=' + m;
+    return false;
 }
 function showToast(msg) {
     const t = document.getElementById('toast');
