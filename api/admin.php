@@ -59,6 +59,17 @@ if ($action === 'set_ttl') {
     exit;
 }
 
+// Raum umbenennen
+if ($action === 'rename') {
+    $id = $_GET['id'] ?? '';
+    $newName = trim($_GET['name'] ?? '');
+    if ($id && $newName) {
+        $pdo->prepare('UPDATE rooms SET name = ? WHERE id = ?')->execute([$newName, $id]);
+    }
+    header('Location: admin.php?key=' . urlencode(ADMIN_KEY));
+    exit;
+}
+
 // Nachricht an Raum senden
 if ($action === 'message') {
     $id = $_GET['id'] ?? '';
@@ -325,6 +336,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
             <!-- Hidden detail popup data -->
             <template id="detail-<?= $r['id'] ?>">
                 <div class="popup-title"><?= htmlspecialchars($r['name']) ?> <span class="room-id"><?= $r['id'] ?></span></div>
+                <div class="popup-section">
+                    <label>Name</label>
+                    <div class="msg-row">
+                        <input type="text" id="rename-<?= $r['id'] ?>" value="<?= htmlspecialchars($r['name']) ?>">
+                        <button class="btn btn-link" onclick="renameRoom('<?= $r['id'] ?>')">Umbenennen</button>
+                    </div>
+                </div>
                 <div class="popup-actions">
                     <button class="btn btn-link" onclick="copyLink('<?= $r['id'] ?>');closePopup()">Link kopieren</button>
                     <?php if ($isLocked): ?>
@@ -438,6 +456,12 @@ function showToast(msg) {
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2000);
+}
+function renameRoom(id) {
+    const input = document.getElementById('rename-' + id);
+    const name = input.value.trim();
+    if (!name) return;
+    location.href = '?key=<?= urlencode(ADMIN_KEY) ?>&action=rename&id=' + id + '&name=' + encodeURIComponent(name);
 }
 function openRoom(id) {
     const tpl = document.getElementById('detail-' + id);
