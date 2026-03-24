@@ -11,12 +11,15 @@
 - **Admin statistics**: Dashboard with live stats (active rooms, users online, total objects, data size, messages today, rooms created today, locked, archived)
 - **French language**: Full French translation added
 - **User room creation**: Users can create 8-hour rooms and join via room ID directly from the app
+- **Room rename**: Admin can rename rooms in the detail popup
+- **Room search & sort**: Search by name/ID and sort by activity, name, creation date, online users, or expiry
+- **Message history**: View, delete individual, or clear all messages per room in admin detail popup
 
 ### Changed
 - Symbol picker no longer shows text labels, only icons with tooltip
 - OSM tiles switched to CARTO CDN to avoid 403 errors from tile.openstreetmap.org
 - CSV import buttons stacked vertically for better layout
-- Admin panel redesigned: hamburger menu with tabs (Rooms/Archive/Stats), room detail popup on card click, mobile-first responsive layout
+- Admin panel redesigned: hamburger menu on mobile, tab bar on desktop (Rooms/Archive/Stats), room detail popup on card click
 - Sensitive config files removed from repository (config.php, CLAUDE.md)
 
 ## [5.6.0] - 2026-03-23
