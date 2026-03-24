@@ -10,13 +10,10 @@ if (($_GET['key'] ?? '') !== ADMIN_KEY) {
 $pdo = getDB();
 $action = $_GET['action'] ?? 'list';
 
-// Ablauf berechnen aus Tage/Stunden/Minuten
-function calcExpiryFromFields($days, $hours, $minutes) {
+// Ablauf berechnen: Gesamtminuten ab jetzt (0 = unbegrenzt)
+function calcTotalMinutes($days, $hours, $minutes) {
     $d = intval($days); $h = intval($hours); $m = intval($minutes);
-    if ($d === 0 && $h === 0 && $m === 0) return null; // unbegrenzt
-    $totalSec = $d * 86400 + $h * 3600 + $m * 60;
-    if ($totalSec <= 0) return null;
-    return date('Y-m-d H:i:s', time() + $totalSec);
+    return $d * 1440 + $h * 60 + $m;
 }
 
 // Abgelaufene Raeume aufraeumen
@@ -26,7 +23,7 @@ cleanupExpiredRooms();
 if ($action === 'create') {
     $name = trim($_GET['name'] ?? '');
     if (!$name) $name = 'Raum ' . date('d.m.Y H:i');
-    $expiresAt = calcExpiryFromFields($_GET['days'] ?? 0, $_GET['hours'] ?? 0, $_GET['minutes'] ?? 0);
+    $totalMin = calcTotalMinutes($_GET['days'] ?? 0, $_GET['hours'] ?? 0, $_GET['minutes'] ?? 0);
     $id = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz0123456789'), 0, 8);
     $emptyState = json_encode([
         'version' => 1,
@@ -36,8 +33,13 @@ if ($action === 'create') {
         'showDistances' => false,
         'minimapEnabled' => true,
     ]);
-    $stmt = $pdo->prepare('INSERT INTO rooms (id, name, state_json, expires_at) VALUES (?, ?, ?, ?)');
-    $stmt->execute([$id, $name, $emptyState, $expiresAt]);
+    if ($totalMin > 0) {
+        $stmt = $pdo->prepare('INSERT INTO rooms (id, name, state_json, expires_at) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL ? MINUTE))');
+        $stmt->execute([$id, $name, $emptyState, $totalMin]);
+    } else {
+        $stmt = $pdo->prepare('INSERT INTO rooms (id, name, state_json, expires_at) VALUES (?, ?, ?, NULL)');
+        $stmt->execute([$id, $name, $emptyState]);
+    }
     header('Location: admin.php?key=' . urlencode(ADMIN_KEY));
     exit;
 }
@@ -46,9 +48,9 @@ if ($action === 'create') {
 if ($action === 'set_ttl') {
     $id = $_GET['id'] ?? '';
     if ($id) {
-        $expiresAt = calcExpiryFromFields($_GET['days'] ?? 0, $_GET['hours'] ?? 0, $_GET['minutes'] ?? 0);
-        if ($expiresAt) {
-            $pdo->prepare('UPDATE rooms SET expires_at = ? WHERE id = ?')->execute([$expiresAt, $id]);
+        $totalMin = calcTotalMinutes($_GET['days'] ?? 0, $_GET['hours'] ?? 0, $_GET['minutes'] ?? 0);
+        if ($totalMin > 0) {
+            $pdo->prepare('UPDATE rooms SET expires_at = DATE_ADD(NOW(), INTERVAL ? MINUTE) WHERE id = ?')->execute([$totalMin, $id]);
         } else {
             $pdo->prepare('UPDATE rooms SET expires_at = NULL WHERE id = ?')->execute([$id]);
         }
