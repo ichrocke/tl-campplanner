@@ -227,6 +227,20 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .empty{text-align:center;color:var(--text2);padding:40px 0;font-size:14px}
 .hint{font-size:11px;color:var(--text2);margin:-2px 0 16px;line-height:1.4}
+.archive-actions{flex-direction:row!important}
+.popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;align-items:center;justify-content:center;padding:16px}
+.popup-overlay.open{display:flex}
+.popup-box{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto}
+.popup-title{font-size:17px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.popup-actions{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.popup-actions .btn{text-align:center;padding:12px 18px;font-size:15px}
+.popup-section{margin-bottom:14px}
+.popup-section label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px}
+.popup-section .ttl-group{gap:6px}
+.popup-section .ttl-group input{width:50px;padding:8px 6px;font-size:14px}
+.popup-section .btn{padding:10px 16px;font-size:14px}
+.popup-section .msg-row input{padding:10px 12px;font-size:14px}
+.popup-close{display:block;width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);background:none;color:var(--text2);font-size:14px;cursor:pointer;margin-top:8px}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 20px;border-radius:var(--radius);font-size:14px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:300}
 .toast.show{opacity:1}
 @media(max-width:480px){
@@ -295,7 +309,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                 else { $d = floor($remaining/86400); $h = floor(($remaining%86400)/3600); $expiryText = $d . ' T ' . $h . ' Std.'; }
             }
         ?>
-            <div class="room-card <?= $isLocked ? 'locked' : '' ?>">
+            <div class="room-card <?= $isLocked ? 'locked' : '' ?>" onclick="openRoom('<?= $r['id'] ?>')" style="cursor:pointer">
                 <div class="room-header">
                     <span class="room-name"><?= htmlspecialchars($r['name']) ?> <?= $isLocked ? '<span class="lock-badge">GESPERRT</span>' : '' ?></span>
                     <span class="room-id"><?= htmlspecialchars($r['id']) ?></span>
@@ -307,26 +321,36 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                     <span><?= date('d.m.Y H:i', strtotime($r['last_activity'])) ?></span>
                     <span class="expiry-badge <?= $expiresSoon ? 'soon' : '' ?>"><?= $expiryText ?></span>
                 </div>
-                <div class="room-actions">
-                    <button class="btn btn-link btn-sm" onclick="copyLink('<?= $r['id'] ?>')">Link kopieren</button>
-                    <form class="ttl-group" style="margin:0" onsubmit="return setTtl(event,'<?= $r['id'] ?>')">
+            </div>
+            <!-- Hidden detail popup data -->
+            <template id="detail-<?= $r['id'] ?>">
+                <div class="popup-title"><?= htmlspecialchars($r['name']) ?> <span class="room-id"><?= $r['id'] ?></span></div>
+                <div class="popup-actions">
+                    <button class="btn btn-link" onclick="copyLink('<?= $r['id'] ?>');closePopup()">Link kopieren</button>
+                    <?php if ($isLocked): ?>
+                        <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=unlock&id=<?= $r['id'] ?>" class="btn btn-unlock">Entsperren</a>
+                    <?php else: ?>
+                        <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=lock&id=<?= $r['id'] ?>" class="btn btn-lock">Sperren</a>
+                    <?php endif; ?>
+                    <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=delete&id=<?= $r['id'] ?>" class="btn btn-delete" onclick="return confirm('Raum wirklich loeschen?')">Loeschen</a>
+                </div>
+                <div class="popup-section">
+                    <label>Ablauf neu setzen</label>
+                    <form class="ttl-group" style="justify-content:center" onsubmit="return setTtl(event,'<?= $r['id'] ?>')">
                         <input type="number" name="days" value="0" min="0"> T
                         <input type="number" name="hours" value="0" min="0"> S
                         <input type="number" name="minutes" value="0" min="0"> M
-                        <button type="submit" class="btn btn-link btn-sm" style="padding:4px 8px">Setzen</button>
+                        <button type="submit" class="btn btn-link">Setzen</button>
                     </form>
-                    <?php if ($isLocked): ?>
-                        <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=unlock&id=<?= $r['id'] ?>" class="btn btn-unlock btn-sm">Entsperren</a>
-                    <?php else: ?>
-                        <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=lock&id=<?= $r['id'] ?>" class="btn btn-lock btn-sm">Sperren</a>
-                    <?php endif; ?>
-                    <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=delete&id=<?= $r['id'] ?>" class="btn btn-delete btn-sm" onclick="return confirm('Raum wirklich loeschen?')">Loeschen</a>
                 </div>
-                <div class="msg-row">
-                    <input type="text" id="msg-<?= $r['id'] ?>" placeholder="Nachricht an Raum...">
-                    <button class="btn btn-link btn-sm" onclick="sendMsg('<?= $r['id'] ?>')">Senden</button>
+                <div class="popup-section">
+                    <label>Nachricht senden</label>
+                    <div class="msg-row">
+                        <input type="text" id="msg-<?= $r['id'] ?>" placeholder="Nachricht an Raum...">
+                        <button class="btn btn-link" onclick="sendMsg('<?= $r['id'] ?>')">Senden</button>
+                    </div>
                 </div>
-            </div>
+            </template>
         <?php endforeach; ?>
         </div>
     </div>
@@ -357,9 +381,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                         <span><?= date('d.m.Y H:i', strtotime($a['archived_at'])) ?></span>
                         <span>Loeschung in <?= $daysLeft ?> T</span>
                     </div>
-                    <div class="room-actions">
-                        <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=restore&id=<?= $a['id'] ?>" class="btn btn-unlock btn-sm">Wiederherstellen</a>
-                        <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=purge&id=<?= $a['id'] ?>" class="btn btn-delete btn-sm" onclick="return confirm('Endgueltig loeschen?')">Endgueltig loeschen</a>
+                    <div class="room-actions archive-actions">
+                        <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=restore&id=<?= $a['id'] ?>" class="btn btn-unlock btn-sm" style="flex:1;text-align:center">Wiederherstellen</a>
+                        <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=purge&id=<?= $a['id'] ?>" class="btn btn-delete btn-sm" onclick="return confirm('Endgueltig loeschen?')" style="flex:1;text-align:center">Loeschen</a>
                     </div>
                 </div>
     <?php endforeach; ?>
@@ -381,6 +405,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
         </div>
     </div>
 
+</div>
+
+<!-- Room detail popup -->
+<div id="popup-overlay" class="popup-overlay" onclick="if(event.target===this)closePopup()">
+    <div class="popup-box" id="popup-box"></div>
 </div>
 
 <div id="toast" class="toast"></div>
@@ -409,6 +438,16 @@ function showToast(msg) {
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2000);
+}
+function openRoom(id) {
+    const tpl = document.getElementById('detail-' + id);
+    if (!tpl) return;
+    const box = document.getElementById('popup-box');
+    box.innerHTML = tpl.innerHTML + '<button class="popup-close" onclick="closePopup()">Schliessen</button>';
+    document.getElementById('popup-overlay').classList.add('open');
+}
+function closePopup() {
+    document.getElementById('popup-overlay').classList.remove('open');
 }
 function toggleNav() {
     document.getElementById('nav-overlay').classList.toggle('open');
