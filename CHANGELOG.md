@@ -12,6 +12,8 @@
 ### Changed
 - Symbol picker no longer shows text labels, only icons with tooltip
 - OSM tiles switched to CARTO CDN to avoid 403 errors from tile.openstreetmap.org
+- CSV import buttons stacked vertically for better layout
+- Sensitive config files removed from repository (config.php, CLAUDE.md)
 
 ## [5.6.0] - 2026-03-23
 
