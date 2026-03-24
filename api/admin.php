@@ -59,6 +59,18 @@ if ($action === 'set_ttl') {
     exit;
 }
 
+// Nachricht an Raum senden
+if ($action === 'message') {
+    $id = $_GET['id'] ?? '';
+    $msg = trim($_GET['msg'] ?? '');
+    if ($id && $msg) {
+        $stmt = $pdo->prepare('INSERT INTO room_messages (room_id, user_name, message) VALUES (?, ?, ?)');
+        $stmt->execute([$id, 'Admin', $msg]);
+    }
+    header('Location: admin.php?key=' . urlencode(ADMIN_KEY));
+    exit;
+}
+
 // Raum sperren/entsperren
 if ($action === 'lock' || $action === 'unlock') {
     $id = $_GET['id'] ?? '';
@@ -386,6 +398,10 @@ h1 {
                 <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=delete&id=<?= $r['id'] ?>"
                    class="btn btn-delete btn-sm" onclick="return confirm('Raum wirklich loeschen?')">Loeschen</a>
             </div>
+            <div style="display:flex;gap:4px;margin-top:6px">
+                <input type="text" id="msg-<?= $r['id'] ?>" placeholder="Nachricht an Raum senden..." style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:12px">
+                <button class="btn btn-link btn-sm" onclick="sendMsg('<?= $r['id'] ?>')">Senden</button>
+            </div>
         </div>
     <?php endforeach; ?>
     </div>
@@ -439,6 +455,12 @@ function setTtl(e, id) {
     const d = f.days.value || 0, h = f.hours.value || 0, m = f.minutes.value || 0;
     location.href = '?key=<?= urlencode(ADMIN_KEY) ?>&action=set_ttl&id=' + id + '&days=' + d + '&hours=' + h + '&minutes=' + m;
     return false;
+}
+function sendMsg(id) {
+    const input = document.getElementById('msg-' + id);
+    const msg = input.value.trim();
+    if (!msg) return;
+    location.href = '?key=<?= urlencode(ADMIN_KEY) ?>&action=message&id=' + id + '&msg=' + encodeURIComponent(msg);
 }
 function showToast(msg) {
     const t = document.getElementById('toast');

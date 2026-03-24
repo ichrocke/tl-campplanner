@@ -530,12 +530,6 @@ const UI = (() => {
             Collab.onUsersChange(() => updateCollabStatus());
             Collab.onMessage((msg) => showCollabMessage(msg));
         }
-
-        // Chat input
-        document.getElementById('collab-chat-send').addEventListener('click', sendChatMessage);
-        document.getElementById('collab-chat-input').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') { e.preventDefault(); sendChatMessage(); }
-        });
     }
 
     // --- Language flags ---
@@ -2393,14 +2387,6 @@ const UI = (() => {
         return div.innerHTML;
     }
 
-    function sendChatMessage() {
-        const input = document.getElementById('collab-chat-input');
-        const text = input.value.trim();
-        if (!text || typeof Collab === 'undefined' || !Collab.isConnected()) return;
-        Collab.sendMessage(text);
-        input.value = '';
-    }
-
     // --- Collab Status ---
     let _collabNamesExpanded = false;
     let _collabCountdownTimer = null;
@@ -2418,14 +2404,11 @@ const UI = (() => {
     function updateCollabStatus() {
         const indicator = document.getElementById('collab-indicator');
         const text = document.getElementById('collab-indicator-text');
-        const chatBar = document.getElementById('collab-chat-bar');
         if (typeof Collab === 'undefined' || !Collab.isConnected()) {
             indicator.style.display = 'none';
-            chatBar.style.display = 'none';
             if (_collabCountdownTimer) { clearInterval(_collabCountdownTimer); _collabCountdownTimer = null; }
             return;
         }
-        chatBar.style.display = 'block';
         indicator.style.display = 'flex';
         indicator.style.cursor = 'pointer';
         indicator.style.pointerEvents = 'auto';
