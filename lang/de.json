@@ -306,5 +306,5 @@
   "collab.roomLocked": "Dieser Raum wurde vom Admin gesperrt. Bearbeitung nicht moeglich.",
   "collab.roomUnlocked": "Der Raum wurde wieder freigegeben.",
   "collab.roomExpired": "Der Raum ist abgelaufen und wurde geschlossen.",
-  "collab.dataWarning": "Hinweis: Dieses Tool fuehrt keine automatische Datensicherung durch - auch nicht in Raeumen. Der Betreiber uebernimmt keine Verantwortung fuer Datenverlust. Bitte nutze regelmaessig die Export-Funktion, um deine Arbeit zu sichern."
+  "collab.dataWarning": "\u26A0 Hinweis: Dieses Tool fuehrt keine automatische Datensicherung durch - auch nicht in Raeumen. Der Betreiber uebernimmt keine Verantwortung fuer Datenverlust. Bitte nutze regelmaessig die Export-Funktion, um deine Arbeit zu sichern."
 }
