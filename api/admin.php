@@ -171,338 +171,216 @@ header('Content-Type: text/html; charset=utf-8');
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Collab Admin</title>
 <style>
-:root {
-    --bg: #0f172a;
-    --surface: #1e293b;
-    --surface2: #334155;
-    --border: #475569;
-    --text: #f1f5f9;
-    --text2: #94a3b8;
-    --accent: #3b82f6;
-    --green: #22c55e;
-    --red: #ef4444;
-    --radius: 12px;
+:root { --bg:#0f172a; --surface:#1e293b; --surface2:#334155; --border:#475569; --text:#f1f5f9; --text2:#94a3b8; --accent:#3b82f6; --green:#22c55e; --red:#ef4444; --radius:12px; }
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:var(--surface);border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+.topbar h1{font-size:17px;font-weight:600}
+.hamburger{background:none;border:none;color:var(--text);cursor:pointer;padding:4px}
+.nav-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200}
+.nav-overlay.open{display:block}
+.nav-drawer{position:fixed;top:0;right:0;width:240px;height:100%;background:var(--surface);z-index:201;transform:translateX(100%);transition:transform 0.2s ease;padding:16px;display:flex;flex-direction:column;gap:4px}
+.nav-overlay.open .nav-drawer{transform:translateX(0)}
+.nav-item{display:block;padding:12px 14px;border-radius:var(--radius);color:var(--text);text-decoration:none;font-size:15px;cursor:pointer;border:none;background:none;text-align:left;width:100%}
+.nav-item:hover,.nav-item.active{background:var(--surface2)}
+.nav-item .badge{float:right;background:var(--accent);color:#fff;font-size:11px;padding:1px 7px;border-radius:10px}
+.container{max-width:640px;margin:0 auto;padding:16px}
+.tab-content{display:none}.tab-content.active{display:block}
+.create-form{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+.create-form input[type=text]{flex:1;min-width:0;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:15px;outline:none}
+.create-form input::placeholder{color:var(--text2)}
+.create-form input:focus{border-color:var(--accent)}
+.btn{padding:10px 18px;border:none;border-radius:var(--radius);font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;transition:opacity 0.15s;text-decoration:none;display:inline-block;text-align:center}
+.btn:active{opacity:0.8}
+.btn-create{background:var(--green);color:#fff}
+.btn-link{background:var(--accent);color:#fff}
+.btn-delete{background:var(--red);color:#fff}
+.btn-lock{background:#f59e0b;color:#fff}
+.btn-unlock{background:var(--green);color:#fff}
+.btn-sm{padding:6px 12px;font-size:13px}
+.ttl-group{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--text2)}
+.ttl-group input{width:42px;padding:4px 6px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:12px;text-align:center}
+.ttl-group.create-ttl input{width:48px;padding:8px 6px;font-size:14px}
+.ttl-group.create-ttl{font-size:14px;color:var(--text)}
+.room-list{display:flex;flex-direction:column;gap:10px}
+.room-card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:14px 16px;overflow:hidden}
+.room-card.locked{border-color:#f59e0b;opacity:0.8}
+.room-card.archived{opacity:0.6;border-style:dashed}
+.room-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:6px}
+.room-name{font-weight:600;font-size:15px}
+.room-id{font-family:monospace;font-size:12px;color:var(--text2);background:var(--surface2);padding:2px 8px;border-radius:6px}
+.room-meta{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--text2);margin-bottom:10px}
+.room-meta span{display:flex;align-items:center;gap:4px}
+.room-actions{display:flex;flex-wrap:wrap;gap:6px}
+.lock-badge{font-size:11px;color:#f59e0b;font-weight:600}
+.expiry-badge{font-size:11px;color:var(--text2)}
+.expiry-badge.soon{color:var(--red);font-weight:600}
+.archive-badge{font-size:11px;padding:1px 6px;border-radius:4px;background:var(--surface2)}
+.dot-online{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block}
+.dot-offline{width:7px;height:7px;border-radius:50%;background:var(--border);display:inline-block}
+.msg-row{display:flex;gap:4px;margin-top:6px}
+.msg-row input{flex:1;min-width:0;padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:12px}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.stat-card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:14px;text-align:center}
+.stat-val{font-size:28px;font-weight:700;color:var(--accent)}
+.stat-label{font-size:11px;color:var(--text2);margin-top:2px}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.empty{text-align:center;color:var(--text2);padding:40px 0;font-size:14px}
+.hint{font-size:11px;color:var(--text2);margin:-2px 0 16px;line-height:1.4}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--green);color:#fff;padding:10px 20px;border-radius:var(--radius);font-size:14px;opacity:0;transition:opacity 0.3s;pointer-events:none;z-index:300}
+.toast.show{opacity:1}
+@media(max-width:480px){
+    .room-actions{flex-direction:column}
+    .room-actions .btn-sm,.room-actions .ttl-group{width:100%}
+    .room-actions .ttl-group{justify-content:center}
+    .create-form{flex-direction:column}
+    .create-form input,.create-form .btn{width:100%}
+    .ttl-group.create-ttl{justify-content:center}
+    .stats-grid{grid-template-columns:repeat(2,1fr)}
+    .msg-row{flex-direction:column}
 }
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 16px;
-}
-.container { max-width: 640px; margin: 0 auto; }
-h1 {
-    font-size: 20px;
-    font-weight: 600;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--surface2);
-}
-.create-form {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 24px;
-}
-.create-form input {
-    flex: 1;
-    padding: 10px 14px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--surface);
-    color: var(--text);
-    font-size: 15px;
-    outline: none;
-}
-.create-form input:focus {
-    border-color: var(--accent);
-}
-.create-form input::placeholder {
-    color: var(--text2);
-}
-.btn {
-    padding: 10px 18px;
-    border: none;
-    border-radius: var(--radius);
-    font-size: 14px;
-    font-weight: 500;
-    cursor: pointer;
-    white-space: nowrap;
-    transition: opacity 0.15s;
-}
-.btn:active { opacity: 0.8; }
-.btn-create { background: var(--green); color: #fff; }
-.btn-link { background: var(--accent); color: #fff; }
-.btn-delete { background: var(--red); color: #fff; }
-.btn-lock { background: #f59e0b; color: #fff; }
-.btn-unlock { background: var(--green); color: #fff; }
-.btn-sm { padding: 6px 12px; font-size: 13px; }
-.room-card.locked { border-color: #f59e0b; opacity: 0.8; }
-.lock-badge { font-size: 11px; color: #f59e0b; font-weight: 600; }
-.expiry-badge { font-size: 11px; color: var(--text2); }
-.expiry-badge.soon { color: var(--red); font-weight: 600; }
-.ttl-group {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    font-size: 12px;
-    color: var(--text2);
-}
-.ttl-group input {
-    width: 42px;
-    padding: 4px 6px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--surface2);
-    color: var(--text);
-    font-size: 12px;
-    text-align: center;
-}
-.ttl-group.create-ttl input {
-    width: 48px;
-    padding: 8px 6px;
-    font-size: 14px;
-}
-.ttl-group.create-ttl { font-size: 14px; color: var(--text); }
-.create-form { flex-wrap: wrap; }
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-    gap: 8px;
-    margin-bottom: 20px;
-}
-.stat-card {
-    background: var(--surface);
-    border: 1px solid var(--surface2);
-    border-radius: var(--radius);
-    padding: 12px;
-    text-align: center;
-}
-.stat-val { font-size: 24px; font-weight: 700; color: var(--accent); }
-.stat-label { font-size: 11px; color: var(--text2); margin-top: 2px; }
-.room-card.archived { opacity: 0.6; border-style: dashed; }
-.archive-badge { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--surface2); }
-.section-title {
-    font-size: 16px; font-weight: 600; margin: 32px 0 12px;
-    padding-top: 16px; border-top: 1px solid var(--surface2);
-    display: flex; justify-content: space-between; align-items: center;
-}
-
-.room-list { display: flex; flex-direction: column; gap: 10px; }
-
-.room-card {
-    background: var(--surface);
-    border: 1px solid var(--surface2);
-    border-radius: var(--radius);
-    padding: 14px 16px;
-}
-.room-name {
-    font-weight: 600;
-    font-size: 15px;
-}
-.room-id {
-    font-family: monospace;
-    font-size: 12px;
-    color: var(--text2);
-    background: var(--surface2);
-    padding: 2px 8px;
-    border-radius: 6px;
-}
-.room-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    font-size: 12px;
-    color: var(--text2);
-    margin-bottom: 10px;
-}
-.room-meta span { display: flex; align-items: center; gap: 4px; }
-.dot-online {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--green);
-    display: inline-block;
-}
-.dot-offline {
-    width: 7px; height: 7px;
-    border-radius: 50%;
-    background: var(--border);
-    display: inline-block;
-}
-.room-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-.room-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 8px;
-    flex-wrap: wrap;
-    gap: 6px;
-}
-.room-card { overflow: hidden; }
-.msg-row {
-    display: flex;
-    gap: 4px;
-    margin-top: 6px;
-}
-.msg-row input { flex: 1; min-width: 0; }
-@media (max-width: 480px) {
-    .room-actions { flex-direction: column; }
-    .room-actions .btn-sm, .room-actions .ttl-group { width: 100%; }
-    .room-actions .ttl-group { justify-content: center; }
-    .create-form { flex-direction: column; }
-    .create-form input, .create-form .btn { width: 100%; }
-    .ttl-group.create-ttl { justify-content: center; }
-    .stats-grid { grid-template-columns: repeat(2, 1fr); }
-    .section-title { flex-direction: column; gap: 8px; align-items: flex-start; }
-    .msg-row { flex-direction: column; }
-}
-.empty {
-    text-align: center;
-    color: var(--text2);
-    padding: 40px 0;
-    font-size: 14px;
-}
-.toast {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--green);
-    color: #fff;
-    padding: 10px 20px;
-    border-radius: var(--radius);
-    font-size: 14px;
-    opacity: 0;
-    transition: opacity 0.3s;
-    pointer-events: none;
-}
-.toast.show { opacity: 1; }
 </style>
 </head>
 <body>
+
+<!-- Top bar with hamburger -->
+<div class="topbar">
+    <h1>Collab Admin</h1>
+    <button class="hamburger" onclick="toggleNav()" aria-label="Menu">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+</div>
+
+<!-- Navigation drawer -->
+<div id="nav-overlay" class="nav-overlay" onclick="toggleNav()">
+    <div class="nav-drawer" onclick="event.stopPropagation()">
+        <button class="nav-item active" onclick="showTab('rooms')">Aktive Raeume <span class="badge"><?= count($rooms) ?></span></button>
+        <button class="nav-item" onclick="showTab('archive')">Archiv <span class="badge"><?= count($archived) ?></span></button>
+        <button class="nav-item" onclick="showTab('stats')">Statistik</button>
+    </div>
+</div>
+
 <div class="container">
-    <h1>Zeltplatzplaner Collab</h1>
 
-    <div class="stats-grid">
-        <div class="stat-card"><div class="stat-val"><?= $stats['rooms_active'] ?></div><div class="stat-label">Aktive Raeume</div></div>
-        <div class="stat-card"><div class="stat-val"><?= $stats['users_online'] ?></div><div class="stat-label">User online</div></div>
-        <div class="stat-card"><div class="stat-val"><?= $stats['total_objects'] ?></div><div class="stat-label">Objekte gesamt</div></div>
-        <div class="stat-card"><div class="stat-val"><?= $stats['total_size_kb'] ?></div><div class="stat-label">KB Daten</div></div>
-        <div class="stat-card"><div class="stat-val"><?= $stats['messages_today'] ?></div><div class="stat-label">Nachrichten heute</div></div>
-        <div class="stat-card"><div class="stat-val"><?= $stats['rooms_created_today'] ?></div><div class="stat-label">Erstellt heute</div></div>
-        <div class="stat-card"><div class="stat-val"><?= $stats['rooms_locked'] ?></div><div class="stat-label">Gesperrt</div></div>
-        <div class="stat-card"><div class="stat-val"><?= $stats['rooms_archived'] ?></div><div class="stat-label">Im Archiv</div></div>
+    <!-- TAB: Aktive Raeume -->
+    <div id="tab-rooms" class="tab-content active">
+        <form class="create-form">
+            <input type="hidden" name="key" value="<?= htmlspecialchars(ADMIN_KEY) ?>">
+            <input type="hidden" name="action" value="create">
+            <input type="text" name="name" placeholder="Raumname (optional)">
+            <div class="ttl-group create-ttl">
+                <input type="number" name="days" value="1" min="0"> T
+                <input type="number" name="hours" value="0" min="0" max="23"> Std
+                <input type="number" name="minutes" value="0" min="0" max="59"> Min
+            </div>
+            <button type="submit" class="btn btn-create">+ Erstellen</button>
+        </form>
+        <p class="hint">Alle Felder 0 = unbegrenzt</p>
+
+        <div class="room-list">
+        <?php if (empty($rooms)): ?>
+            <div class="empty">Noch keine Raeume erstellt.</div>
+        <?php endif; ?>
+
+        <?php foreach ($rooms as $r):
+            $isLocked = intval($r['locked']);
+            $remaining = intval($r['expires_in']);
+            $expiresForever = ($remaining < 0);
+            $expiresSoon = false;
+            $expiryText = 'Unbegrenzt';
+            if (!$expiresForever) {
+                if ($remaining <= 0) { $expiryText = 'Abgelaufen'; }
+                elseif ($remaining < 3600) { $expiryText = ceil($remaining/60) . ' Min.'; $expiresSoon = true; }
+                elseif ($remaining < 86400) { $h = floor($remaining/3600); $m = ceil(($remaining%3600)/60); $expiryText = $h . ' Std. ' . $m . ' Min.'; $expiresSoon = ($remaining < 7200); }
+                else { $d = floor($remaining/86400); $h = floor(($remaining%86400)/3600); $expiryText = $d . ' T ' . $h . ' Std.'; }
+            }
+        ?>
+            <div class="room-card <?= $isLocked ? 'locked' : '' ?>">
+                <div class="room-header">
+                    <span class="room-name"><?= htmlspecialchars($r['name']) ?> <?= $isLocked ? '<span class="lock-badge">GESPERRT</span>' : '' ?></span>
+                    <span class="room-id"><?= htmlspecialchars($r['id']) ?></span>
+                </div>
+                <div class="room-meta">
+                    <span><span class="<?= $r['online_users'] > 0 ? 'dot-online' : 'dot-offline' ?>"></span> <?= $r['online_users'] ?> online</span>
+                    <span>v<?= $r['version'] ?></span>
+                    <span><?= round($r['state_size'] / 1024, 1) ?> KB</span>
+                    <span><?= date('d.m.Y H:i', strtotime($r['last_activity'])) ?></span>
+                    <span class="expiry-badge <?= $expiresSoon ? 'soon' : '' ?>"><?= $expiryText ?></span>
+                </div>
+                <div class="room-actions">
+                    <button class="btn btn-link btn-sm" onclick="copyLink('<?= $r['id'] ?>')">Link kopieren</button>
+                    <form class="ttl-group" style="margin:0" onsubmit="return setTtl(event,'<?= $r['id'] ?>')">
+                        <input type="number" name="days" value="0" min="0"> T
+                        <input type="number" name="hours" value="0" min="0"> S
+                        <input type="number" name="minutes" value="0" min="0"> M
+                        <button type="submit" class="btn btn-link btn-sm" style="padding:4px 8px">Setzen</button>
+                    </form>
+                    <?php if ($isLocked): ?>
+                        <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=unlock&id=<?= $r['id'] ?>" class="btn btn-unlock btn-sm">Entsperren</a>
+                    <?php else: ?>
+                        <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=lock&id=<?= $r['id'] ?>" class="btn btn-lock btn-sm">Sperren</a>
+                    <?php endif; ?>
+                    <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=delete&id=<?= $r['id'] ?>" class="btn btn-delete btn-sm" onclick="return confirm('Raum wirklich loeschen?')">Loeschen</a>
+                </div>
+                <div class="msg-row">
+                    <input type="text" id="msg-<?= $r['id'] ?>" placeholder="Nachricht an Raum...">
+                    <button class="btn btn-link btn-sm" onclick="sendMsg('<?= $r['id'] ?>')">Senden</button>
+                </div>
+            </div>
+        <?php endforeach; ?>
+        </div>
     </div>
 
-    <form class="create-form">
-        <input type="hidden" name="key" value="<?= htmlspecialchars(ADMIN_KEY) ?>">
-        <input type="hidden" name="action" value="create">
-        <input type="text" name="name" placeholder="Raumname (optional)" style="flex:1">
-        <div class="ttl-group create-ttl">
-            <input type="number" name="days" value="1" min="0"> T
-            <input type="number" name="hours" value="0" min="0" max="23"> Std
-            <input type="number" name="minutes" value="0" min="0" max="59"> Min
-        </div>
-        <button type="submit" class="btn btn-create">+ Erstellen</button>
-    </form>
-    <p style="font-size:11px;color:var(--text2);margin:-16px 0 20px">Alle Felder 0 = unbegrenzt</p>
-
-    <div class="room-list">
-    <?php if (empty($rooms)): ?>
-        <div class="empty">Noch keine Raeume erstellt.</div>
-    <?php endif; ?>
-
-    <?php foreach ($rooms as $r):
-        $isLocked = intval($r['locked']);
-        $remaining = intval($r['expires_in']);
-        $expiresForever = ($remaining < 0);
-        $expiresSoon = false;
-        $expiryText = 'Unbegrenzt';
-        if (!$expiresForever) {
-            if ($remaining <= 0) { $expiryText = 'Abgelaufen'; }
-            elseif ($remaining < 3600) { $expiryText = 'Laeuft ab in ' . ceil($remaining/60) . ' Min.'; $expiresSoon = true; }
-            elseif ($remaining < 86400) { $h = floor($remaining/3600); $m = ceil(($remaining%3600)/60); $expiryText = 'Laeuft ab in ' . $h . ' Std. ' . $m . ' Min.'; $expiresSoon = ($remaining < 7200); }
-            else { $d = floor($remaining/86400); $h = floor(($remaining%86400)/3600); $expiryText = 'Laeuft ab in ' . $d . ' T ' . $h . ' Std.'; }
-        }
-    ?>
-        <div class="room-card <?= $isLocked ? 'locked' : '' ?>">
-            <div class="room-header">
-                <span class="room-name"><?= htmlspecialchars($r['name']) ?> <?= $isLocked ? '<span class="lock-badge">GESPERRT</span>' : '' ?></span>
-                <span class="room-id"><?= htmlspecialchars($r['id']) ?></span>
+    <!-- TAB: Archiv -->
+    <div id="tab-archive" class="tab-content">
+        <?php if (empty($archived)): ?>
+            <div class="empty">Archiv ist leer.</div>
+        <?php else: ?>
+            <div class="section-header">
+                <span><?= count($archived) ?> archivierte Raeume</span>
+                <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=purge_all" class="btn btn-delete btn-sm" onclick="return confirm('Alle endgueltig loeschen?')">Alle loeschen</a>
             </div>
-            <div class="room-meta">
-                <span>
-                    <span class="<?= $r['online_users'] > 0 ? 'dot-online' : 'dot-offline' ?>"></span>
-                    <?= $r['online_users'] ?> online
-                </span>
-                <span>v<?= $r['version'] ?></span>
-                <span><?= round($r['state_size'] / 1024, 1) ?> KB</span>
-                <span><?= date('d.m.Y H:i', strtotime($r['last_activity'])) ?></span>
-                <span class="expiry-badge <?= $expiresSoon ? 'soon' : '' ?>"><?= $expiryText ?></span>
-            </div>
-            <div class="room-actions">
-                <button class="btn btn-link btn-sm" onclick="copyLink('<?= $r['id'] ?>')">Link kopieren</button>
-                <form class="ttl-group" style="margin:0" onsubmit="return setTtl(event, '<?= $r['id'] ?>')">
-                    <input type="number" name="days" value="0" min="0" placeholder="T"> T
-                    <input type="number" name="hours" value="0" min="0" placeholder="S"> S
-                    <input type="number" name="minutes" value="0" min="0" placeholder="M"> M
-                    <button type="submit" class="btn btn-link btn-sm" style="padding:4px 8px">Setzen</button>
-                </form>
-                <?php if ($isLocked): ?>
-                    <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=unlock&id=<?= $r['id'] ?>"
-                       class="btn btn-unlock btn-sm">Entsperren</a>
-                <?php else: ?>
-                    <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=lock&id=<?= $r['id'] ?>"
-                       class="btn btn-lock btn-sm">Sperren</a>
-                <?php endif; ?>
-                <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=delete&id=<?= $r['id'] ?>"
-                   class="btn btn-delete btn-sm" onclick="return confirm('Raum wirklich loeschen?')">Loeschen</a>
-            </div>
-            <div class="msg-row">
-                <input type="text" id="msg-<?= $r['id'] ?>" placeholder="Nachricht an Raum senden..." style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);font-size:12px">
-                <button class="btn btn-link btn-sm" onclick="sendMsg('<?= $r['id'] ?>')">Senden</button>
-            </div>
-        </div>
-    <?php endforeach; ?>
-    </div>
-
-    <?php if (!empty($archived)): ?>
-    <div class="section-title">
-        Archiv (<?= count($archived) ?>)
-        <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=purge_all"
-           class="btn btn-delete btn-sm" onclick="return confirm('Alle archivierten Raeume endgueltig loeschen?')">Alle loeschen</a>
-    </div>
-    <div class="room-list">
-    <?php foreach ($archived as $a):
-        $purgeIn = intval($a['purge_in']);
-        $daysLeft = ceil($purgeIn / 86400);
-        $reason = $a['archive_reason'] === 'expired' ? 'Abgelaufen' : 'Geloescht';
-    ?>
-        <div class="room-card archived">
-            <div class="room-header">
-                <span class="room-name"><?= htmlspecialchars($a['name']) ?> <span class="archive-badge"><?= $reason ?></span></span>
-                <span class="room-id"><?= htmlspecialchars($a['id']) ?></span>
-            </div>
-            <div class="room-meta">
-                <span>v<?= $a['version'] ?></span>
-                <span><?= round($a['state_size'] / 1024, 1) ?> KB</span>
-                <span>Archiviert: <?= date('d.m.Y H:i', strtotime($a['archived_at'])) ?></span>
-                <span>Wird geloescht in <?= $daysLeft ?> T</span>
-            </div>
-            <div class="room-actions">
-                <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=restore&id=<?= $a['id'] ?>"
-                   class="btn btn-unlock btn-sm">Wiederherstellen</a>
-                <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=purge&id=<?= $a['id'] ?>"
-                   class="btn btn-delete btn-sm" onclick="return confirm('Endgueltig loeschen?')">Endgueltig loeschen</a>
-            </div>
-        </div>
+            <div class="room-list">
+            <?php foreach ($archived as $a):
+                $purgeIn = intval($a['purge_in']);
+                $daysLeft = max(1, ceil($purgeIn / 86400));
+                $reason = $a['archive_reason'] === 'expired' ? 'Abgelaufen' : 'Geloescht';
+            ?>
+                <div class="room-card archived">
+                    <div class="room-header">
+                        <span class="room-name"><?= htmlspecialchars($a['name']) ?> <span class="archive-badge"><?= $reason ?></span></span>
+                        <span class="room-id"><?= htmlspecialchars($a['id']) ?></span>
+                    </div>
+                    <div class="room-meta">
+                        <span>v<?= $a['version'] ?></span>
+                        <span><?= round($a['state_size'] / 1024, 1) ?> KB</span>
+                        <span><?= date('d.m.Y H:i', strtotime($a['archived_at'])) ?></span>
+                        <span>Loeschung in <?= $daysLeft ?> T</span>
+                    </div>
+                    <div class="room-actions">
+                        <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=restore&id=<?= $a['id'] ?>" class="btn btn-unlock btn-sm">Wiederherstellen</a>
+                        <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=purge&id=<?= $a['id'] ?>" class="btn btn-delete btn-sm" onclick="return confirm('Endgueltig loeschen?')">Endgueltig loeschen</a>
+                    </div>
+                </div>
     <?php endforeach; ?>
     </div>
     <?php endif; ?>
+    </div>
+
+    <!-- TAB: Statistik -->
+    <div id="tab-stats" class="tab-content">
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-val"><?= $stats['rooms_active'] ?></div><div class="stat-label">Aktive Raeume</div></div>
+            <div class="stat-card"><div class="stat-val"><?= $stats['users_online'] ?></div><div class="stat-label">User online</div></div>
+            <div class="stat-card"><div class="stat-val"><?= $stats['total_objects'] ?></div><div class="stat-label">Objekte gesamt</div></div>
+            <div class="stat-card"><div class="stat-val"><?= $stats['total_size_kb'] ?></div><div class="stat-label">KB Daten</div></div>
+            <div class="stat-card"><div class="stat-val"><?= $stats['messages_today'] ?></div><div class="stat-label">Nachrichten heute</div></div>
+            <div class="stat-card"><div class="stat-val"><?= $stats['rooms_created_today'] ?></div><div class="stat-label">Erstellt heute</div></div>
+            <div class="stat-card"><div class="stat-val"><?= $stats['rooms_locked'] ?></div><div class="stat-label">Gesperrt</div></div>
+            <div class="stat-card"><div class="stat-val"><?= $stats['rooms_archived'] ?></div><div class="stat-label">Im Archiv</div></div>
+        </div>
+    </div>
+
 </div>
 
 <div id="toast" class="toast"></div>
@@ -531,6 +409,16 @@ function showToast(msg) {
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2000);
+}
+function toggleNav() {
+    document.getElementById('nav-overlay').classList.toggle('open');
+}
+function showTab(name) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+    event.target.closest('.nav-item').classList.add('active');
+    toggleNav();
 }
 </script>
 </body>
