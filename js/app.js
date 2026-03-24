@@ -140,13 +140,39 @@
     document.getElementById('link-datenschutz').addEventListener('click', (e) => { e.preventDefault(); showLegal('datenschutz'); });
     document.getElementById('legal-close').addEventListener('click', () => { legalModal.classList.add('hidden'); legalOverlay.classList.add('hidden'); });
 
+    // Daten-Warnung als Modal
+    window.showDataWarning = function() {
+        if (sessionStorage.getItem('data_warning_shown')) return;
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:10000;display:flex;align-items:center;justify-content:center;padding:16px';
+        const box = document.createElement('div');
+        box.style.cssText = 'background:#fff;border-radius:12px;max-width:480px;width:100%;padding:24px;box-shadow:0 8px 32px rgba(0,0,0,0.3);display:flex;gap:16px;align-items:flex-start';
+        const svg = '<svg viewBox="0 0 600 524" xmlns="http://www.w3.org/2000/svg" style="min-width:48px;width:48px;flex-shrink:0;align-self:stretch"><path d="m300 16 284 492h-568z" fill="#F9A800" stroke-linejoin="round" stroke="#000" stroke-width="32"/><path d="m337 192a37 37 0 0 0-74 0l11 143a26 26 0 0 0 52 0m12 85a38 38 0 1 1 0-1"/></svg>';
+        const right = document.createElement('div');
+        right.style.cssText = 'flex:1';
+        const msg = document.createElement('p');
+        msg.style.cssText = 'margin:0 0 16px;font-size:14px;line-height:1.5;color:#1a1a2e';
+        msg.textContent = I18n.t('collab.dataWarning').replace(/^\u26A0\s*/, '');
+        const btn = document.createElement('button');
+        btn.textContent = 'Verstanden';
+        btn.style.cssText = 'padding:8px 20px;border:none;border-radius:8px;background:#1a1a2e;color:#fff;font-size:14px;cursor:pointer';
+        btn.addEventListener('click', () => { overlay.remove(); });
+        right.appendChild(msg);
+        right.appendChild(btn);
+        box.innerHTML = svg;
+        box.appendChild(right);
+        overlay.appendChild(box);
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        document.body.appendChild(overlay);
+        sessionStorage.setItem('data_warning_shown', '1');
+    };
+
     // Initial render
     Canvas.render();
 
     // Daten-Warnung (einmal pro Session)
     if (!sessionStorage.getItem('data_warning_shown')) {
-        alert(I18n.t('collab.dataWarning'));
-        sessionStorage.setItem('data_warning_shown', '1');
+        showDataWarning();
     }
 
     // Collab: Raum aus URL beitreten

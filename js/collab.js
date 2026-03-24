@@ -63,14 +63,6 @@ const Collab = (() => {
         }
     }
 
-    // --- Daten-Warnung ---
-
-    function showDataWarning() {
-        if (sessionStorage.getItem('collab_warning_shown')) return;
-        alert(I18n.t('collab.dataWarning'));
-        sessionStorage.setItem('collab_warning_shown', '1');
-    }
-
     // --- Raum beitreten ---
 
     async function joinRoom(roomId) {
@@ -78,7 +70,7 @@ const Collab = (() => {
 
         // Name abfragen beim Beitreten
         promptName();
-        showDataWarning();
+        if (typeof window.showDataWarning === 'function') window.showDataWarning();
 
         try {
             const resp = await fetch(API_BASE + 'room-state.php?room=' + encodeURIComponent(roomId));
