@@ -1,12 +1,24 @@
 # Changelog
 
+## [5.7.0] - 2026-03-24
+
+### Added
+- **Collaborative editing**: Create or join rooms directly from the app (new button in sidebar). Real-time sync with remote cursor display, room locking, expiry countdown, admin messaging, and room archive. Self-hosted PHP + MySQL backend
+- **Room management**: Admin panel with room creation, locking/unlocking, configurable expiry (days/hours/minutes), message sending, and 7-day archive with restore
+- **Data warning**: Modal with ISO warning sign shown once per session, informing users about missing auto-backup
+- **CSV import extended**: Optional columns for hex color (farbe) and description (beschreibung)
+- **Admin messaging**: Admin can send messages to rooms, shown as toast notifications to online and later-joining users
+
+### Changed
+- Symbol picker no longer shows text labels, only icons with tooltip
+- OSM tiles switched to CARTO CDN to avoid 403 errors from tile.openstreetmap.org
+
 ## [5.6.0] - 2026-03-23
 
 ### Added
 - **CSV example download**: Button to download an example CSV file next to the CSV import button
 - **Save as template**: Right-click context menu option to save a placed object as a reusable template in the palette
 - **Dynamic map tiles**: Integrate OpenStreetMap or satellite imagery (ESRI) as background layer. Enter coordinates to load tiles scaled to the world coordinate system. Supports rotation with compass auto-sync
-- **Collaborative editing**: Multiple users can work on the same plan simultaneously. Create or join rooms directly from the app. Real-time sync with cursor display, room locking, expiry countdown, and archive. Self-hosted PHP + MySQL backend
 
 ## [5.5.0] - 2026-03-21
 
