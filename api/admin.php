@@ -268,12 +268,37 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 </head>
 <body>
 
-<!-- Top bar with hamburger -->
+<!-- Top bar -->
 <div class="topbar">
     <h1>Collab Admin</h1>
-    <button class="hamburger" onclick="toggleNav()" aria-label="Menu">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-    </button>
+    <div style="display:flex;align-items:center;gap:8px">
+        <button class="hamburger" onclick="toggleSearch()" aria-label="Suche">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button class="hamburger" onclick="toggleSort()" aria-label="Sortieren">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="16" y2="12"/><line x1="4" y1="18" x2="12" y2="18"/></svg>
+        </button>
+        <button class="hamburger" onclick="toggleNav()" aria-label="Menu">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+    </div>
+</div>
+
+<!-- Search bar (hidden by default) -->
+<div id="search-bar" style="display:none;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--surface2)">
+    <input type="text" id="search-input" placeholder="Name oder ID suchen..." oninput="filterRooms()" style="width:100%;padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:15px;outline:none">
+</div>
+
+<!-- Sort bar (hidden by default) -->
+<div id="sort-bar" style="display:none;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--surface2);display:none">
+    <select id="sort-select" onchange="sortRooms()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px">
+        <option value="updated">Letzte Aktivitaet</option>
+        <option value="name">Name (A-Z)</option>
+        <option value="name-desc">Name (Z-A)</option>
+        <option value="created">Erstelldatum</option>
+        <option value="online">Online User</option>
+        <option value="expiry">Ablaufzeit</option>
+    </select>
 </div>
 
 <!-- Navigation drawer -->
@@ -320,7 +345,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                 else { $d = floor($remaining/86400); $h = floor(($remaining%86400)/3600); $expiryText = $d . ' T ' . $h . ' Std.'; }
             }
         ?>
-            <div class="room-card <?= $isLocked ? 'locked' : '' ?>" onclick="openRoom('<?= $r['id'] ?>')" style="cursor:pointer">
+            <div class="room-card <?= $isLocked ? 'locked' : '' ?>" onclick="openRoom('<?= $r['id'] ?>')" style="cursor:pointer"
+                 data-name="<?= htmlspecialchars(strtolower($r['name'])) ?>"
+                 data-id="<?= $r['id'] ?>"
+                 data-updated="<?= $r['updated_at'] ?>"
+                 data-created="<?= $r['created_at'] ?>"
+                 data-online="<?= $r['online_users'] ?>"
+                 data-expiry="<?= $remaining ?>">
                 <div class="room-header">
                     <span class="room-name"><?= htmlspecialchars($r['name']) ?> <?= $isLocked ? '<span class="lock-badge">GESPERRT</span>' : '' ?></span>
                     <span class="room-id"><?= htmlspecialchars($r['id']) ?></span>
@@ -456,6 +487,47 @@ function showToast(msg) {
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2000);
+}
+function toggleSearch() {
+    const bar = document.getElementById('search-bar');
+    const isOpen = bar.style.display !== 'none';
+    bar.style.display = isOpen ? 'none' : 'block';
+    document.getElementById('sort-bar').style.display = 'none';
+    if (!isOpen) document.getElementById('search-input').focus();
+    else { document.getElementById('search-input').value = ''; filterRooms(); }
+}
+function toggleSort() {
+    const bar = document.getElementById('sort-bar');
+    bar.style.display = bar.style.display !== 'none' ? 'none' : 'block';
+    document.getElementById('search-bar').style.display = 'none';
+}
+function filterRooms() {
+    const q = document.getElementById('search-input').value.toLowerCase().trim();
+    document.querySelectorAll('#tab-rooms .room-list .room-card').forEach(card => {
+        const name = card.dataset.name || '';
+        const id = card.dataset.id || '';
+        // Also hide the associated template
+        card.style.display = (!q || name.includes(q) || id.includes(q)) ? '' : 'none';
+    });
+}
+function sortRooms() {
+    const key = document.getElementById('sort-select').value;
+    const list = document.querySelector('#tab-rooms .room-list');
+    const cards = Array.from(list.querySelectorAll('.room-card'));
+    // Collect card + next template pairs
+    const pairs = cards.map(c => ({ card: c, tpl: c.nextElementSibling }));
+    pairs.sort((a, b) => {
+        const ac = a.card, bc = b.card;
+        switch (key) {
+            case 'name': return (ac.dataset.name || '').localeCompare(bc.dataset.name || '');
+            case 'name-desc': return (bc.dataset.name || '').localeCompare(ac.dataset.name || '');
+            case 'created': return (ac.dataset.created || '').localeCompare(bc.dataset.created || '');
+            case 'online': return parseInt(bc.dataset.online||0) - parseInt(ac.dataset.online||0);
+            case 'expiry': return parseInt(ac.dataset.expiry||999999) - parseInt(bc.dataset.expiry||999999);
+            default: return (bc.dataset.updated || '').localeCompare(ac.dataset.updated || '');
+        }
+    });
+    pairs.forEach(p => { list.appendChild(p.card); if (p.tpl && p.tpl.tagName === 'TEMPLATE') list.appendChild(p.tpl); });
 }
 function renameRoom(id) {
     const input = document.getElementById('rename-' + id);
