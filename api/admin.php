@@ -71,23 +71,67 @@ if ($action === 'lock' || $action === 'unlock') {
     exit;
 }
 
-// Raum loeschen
+// Raum loeschen (ins Archiv)
 if ($action === 'delete') {
     $id = $_GET['id'] ?? '';
     if ($id) {
-        $stmt = $pdo->prepare('DELETE FROM rooms WHERE id = ?');
-        $stmt->execute([$id]);
+        $pdo->prepare("INSERT IGNORE INTO rooms_archive (id, name, state_json, version, created_at, archived_at, archive_reason)
+            SELECT id, name, state_json, version, created_at, NOW(), 'deleted'
+            FROM rooms WHERE id = ?")->execute([$id]);
+        $pdo->prepare('DELETE FROM rooms WHERE id = ?')->execute([$id]);
     }
     header('Location: admin.php?key=' . urlencode(ADMIN_KEY));
     exit;
 }
 
+// Archiv: Raum wiederherstellen
+if ($action === 'restore') {
+    $id = $_GET['id'] ?? '';
+    if ($id) {
+        $arch = $pdo->prepare('SELECT * FROM rooms_archive WHERE id = ?');
+        $arch->execute([$id]);
+        $row = $arch->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            $pdo->prepare('INSERT INTO rooms (id, name, state_json, version, created_at) VALUES (?, ?, ?, ?, ?)')->execute([$row['id'], $row['name'], $row['state_json'], $row['version'], $row['created_at']]);
+            $pdo->prepare('DELETE FROM rooms_archive WHERE id = ?')->execute([$id]);
+        }
+    }
+    header('Location: admin.php?key=' . urlencode(ADMIN_KEY));
+    exit;
+}
+
+// Archiv: Einzelnen endgueltig loeschen
+if ($action === 'purge') {
+    $id = $_GET['id'] ?? '';
+    if ($id) {
+        $pdo->prepare('DELETE FROM rooms_archive WHERE id = ?')->execute([$id]);
+    }
+    header('Location: admin.php?key=' . urlencode(ADMIN_KEY));
+    exit;
+}
+
+// Archiv: Alle endgueltig loeschen
+if ($action === 'purge_all') {
+    $pdo->exec('DELETE FROM rooms_archive');
+    header('Location: admin.php?key=' . urlencode(ADMIN_KEY));
+    exit;
+}
+
 // Liste aller Raeume
-$stmt = $pdo->query('SELECT id, name, version, created_at, updated_at, last_activity, IFNULL(locked, 0) as locked, expires_at,
+$stmt = $pdo->query('SELECT id, name, version, created_at, updated_at, last_activity, IFNULL(locked, 0) as locked,
+    IFNULL(TIMESTAMPDIFF(SECOND, NOW(), expires_at), -1) as expires_in,
     LENGTH(state_json) as state_size,
     (SELECT COUNT(*) FROM room_users ru WHERE ru.room_id = rooms.id AND ru.last_seen > DATE_SUB(NOW(), INTERVAL 30 SECOND)) as online_users
     FROM rooms ORDER BY updated_at DESC');
 $rooms = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Archiv laden
+$archStmt = $pdo->query('SELECT id, name, version, created_at, archived_at, archive_reason,
+    LENGTH(state_json) as state_size,
+    TIMESTAMPDIFF(SECOND, archived_at, DATE_ADD(archived_at, INTERVAL 7 DAY)) as total_ttl,
+    GREATEST(0, TIMESTAMPDIFF(SECOND, NOW(), DATE_ADD(archived_at, INTERVAL 7 DAY))) as purge_in
+    FROM rooms_archive ORDER BY archived_at DESC');
+$archived = $archStmt ? $archStmt->fetchAll(PDO::FETCH_ASSOC) : [];
 
 header('Content-Type: text/html; charset=utf-8');
 ?>
@@ -192,6 +236,13 @@ h1 {
 }
 .ttl-group.create-ttl { font-size: 14px; color: var(--text); }
 .create-form { flex-wrap: wrap; }
+.room-card.archived { opacity: 0.6; border-style: dashed; }
+.archive-badge { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--surface2); }
+.section-title {
+    font-size: 16px; font-weight: 600; margin: 32px 0 12px;
+    padding-top: 16px; border-top: 1px solid var(--surface2);
+    display: flex; justify-content: space-between; align-items: center;
+}
 
 .room-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -291,16 +342,15 @@ h1 {
 
     <?php foreach ($rooms as $r):
         $isLocked = intval($r['locked']);
-        $expiresAt = $r['expires_at'];
-        $expiresForever = ($expiresAt === null);
+        $remaining = intval($r['expires_in']);
+        $expiresForever = ($remaining < 0);
         $expiresSoon = false;
         $expiryText = 'Unbegrenzt';
         if (!$expiresForever) {
-            $remaining = strtotime($expiresAt) - time();
             if ($remaining <= 0) { $expiryText = 'Abgelaufen'; }
             elseif ($remaining < 3600) { $expiryText = 'Laeuft ab in ' . ceil($remaining/60) . ' Min.'; $expiresSoon = true; }
-            elseif ($remaining < 86400) { $expiryText = 'Laeuft ab in ' . round($remaining/3600, 1) . ' Std.'; $expiresSoon = ($remaining < 7200); }
-            else { $expiryText = 'Laeuft ab am ' . date('d.m.Y H:i', strtotime($expiresAt)); }
+            elseif ($remaining < 86400) { $h = floor($remaining/3600); $m = ceil(($remaining%3600)/60); $expiryText = 'Laeuft ab in ' . $h . ' Std. ' . $m . ' Min.'; $expiresSoon = ($remaining < 7200); }
+            else { $d = floor($remaining/86400); $h = floor(($remaining%86400)/3600); $expiryText = 'Laeuft ab in ' . $d . ' T ' . $h . ' Std.'; }
         }
     ?>
         <div class="room-card <?= $isLocked ? 'locked' : '' ?>">
@@ -339,6 +389,40 @@ h1 {
         </div>
     <?php endforeach; ?>
     </div>
+
+    <?php if (!empty($archived)): ?>
+    <div class="section-title">
+        Archiv (<?= count($archived) ?>)
+        <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=purge_all"
+           class="btn btn-delete btn-sm" onclick="return confirm('Alle archivierten Raeume endgueltig loeschen?')">Alle loeschen</a>
+    </div>
+    <div class="room-list">
+    <?php foreach ($archived as $a):
+        $purgeIn = intval($a['purge_in']);
+        $daysLeft = ceil($purgeIn / 86400);
+        $reason = $a['archive_reason'] === 'expired' ? 'Abgelaufen' : 'Geloescht';
+    ?>
+        <div class="room-card archived">
+            <div class="room-header">
+                <span class="room-name"><?= htmlspecialchars($a['name']) ?> <span class="archive-badge"><?= $reason ?></span></span>
+                <span class="room-id"><?= htmlspecialchars($a['id']) ?></span>
+            </div>
+            <div class="room-meta">
+                <span>v<?= $a['version'] ?></span>
+                <span><?= round($a['state_size'] / 1024, 1) ?> KB</span>
+                <span>Archiviert: <?= date('d.m.Y H:i', strtotime($a['archived_at'])) ?></span>
+                <span>Wird geloescht in <?= $daysLeft ?> T</span>
+            </div>
+            <div class="room-actions">
+                <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=restore&id=<?= $a['id'] ?>"
+                   class="btn btn-unlock btn-sm">Wiederherstellen</a>
+                <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=purge&id=<?= $a['id'] ?>"
+                   class="btn btn-delete btn-sm" onclick="return confirm('Endgueltig loeschen?')">Endgueltig loeschen</a>
+            </div>
+        </div>
+    <?php endforeach; ?>
+    </div>
+    <?php endif; ?>
 </div>
 
 <div id="toast" class="toast"></div>

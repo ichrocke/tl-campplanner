@@ -143,6 +143,12 @@
     // Initial render
     Canvas.render();
 
+    // Daten-Warnung (einmal pro Session)
+    if (!sessionStorage.getItem('data_warning_shown')) {
+        alert(I18n.t('collab.dataWarning'));
+        sessionStorage.setItem('data_warning_shown', '1');
+    }
+
     // Collab: Raum aus URL beitreten
     if (typeof Collab !== 'undefined') {
         const roomFromUrl = Collab.getRoomFromUrl();

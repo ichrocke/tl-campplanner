@@ -52,4 +52,15 @@ try {
     // Spalten existieren bereits
 }
 
+// Archiv-Tabelle
+$pdo->exec("CREATE TABLE IF NOT EXISTS rooms_archive (
+    id VARCHAR(12) PRIMARY KEY,
+    name VARCHAR(255) DEFAULT '',
+    state_json LONGTEXT NOT NULL,
+    version INT UNSIGNED NOT NULL DEFAULT 1,
+    created_at DATETIME,
+    archived_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    archive_reason VARCHAR(50) DEFAULT 'deleted'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
 echo "Tabellen erfolgreich erstellt/aktualisiert.\n";

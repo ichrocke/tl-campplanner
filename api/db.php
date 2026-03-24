@@ -23,11 +23,17 @@ function jsonResponse($data, $code = 200) {
     exit;
 }
 
-// Abgelaufene Raeume loeschen
+// Abgelaufene Raeume ins Archiv verschieben + alte Archive loeschen
 function cleanupExpiredRooms() {
     try {
         $pdo = getDB();
+        // Abgelaufene Raeume archivieren
+        $pdo->exec("INSERT IGNORE INTO rooms_archive (id, name, state_json, version, created_at, archived_at, archive_reason)
+            SELECT id, name, state_json, version, created_at, NOW(), 'expired'
+            FROM rooms WHERE expires_at IS NOT NULL AND expires_at < NOW()");
         $pdo->exec("DELETE FROM rooms WHERE expires_at IS NOT NULL AND expires_at < NOW()");
+        // Archive aelter als 7 Tage endgueltig loeschen
+        $pdo->exec("DELETE FROM rooms_archive WHERE archived_at < DATE_SUB(NOW(), INTERVAL 7 DAY)");
     } catch (Exception $e) {}
 }
 

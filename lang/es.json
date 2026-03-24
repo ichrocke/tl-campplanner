@@ -305,5 +305,6 @@
   "collab.locked": "BLOQUEADO",
   "collab.roomLocked": "Esta sala ha sido bloqueada por el administrador.",
   "collab.roomUnlocked": "La sala ha sido desbloqueada.",
-  "collab.roomExpired": "La sala ha caducado y fue cerrada."
+  "collab.roomExpired": "La sala ha caducado y fue cerrada.",
+  "collab.dataWarning": "Aviso: Esta herramienta no realiza copias de seguridad automaticas, tampoco en salas. El operador no se responsabiliza de la perdida de datos. Utiliza la funcion de exportacion regularmente."
 }
