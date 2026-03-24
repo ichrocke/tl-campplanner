@@ -239,6 +239,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .empty{text-align:center;color:var(--text2);padding:40px 0;font-size:14px}
 .hint{font-size:11px;color:var(--text2);margin:-2px 0 16px;line-height:1.4}
 .archive-actions{flex-direction:row!important}
+.desktop-tabs{display:flex;gap:4px;padding:0 16px 0;background:var(--surface);border-bottom:1px solid var(--surface2)}
+.dtab{padding:10px 16px;border:none;background:none;color:var(--text2);font-size:14px;cursor:pointer;border-bottom:2px solid transparent;transition:all 0.15s}
+.dtab.active{color:var(--text);border-bottom-color:var(--accent)}
+.dtab:hover{color:var(--text)}
+.dtab .badge{background:var(--surface2);color:var(--text2);font-size:11px;padding:1px 7px;border-radius:10px;margin-left:4px}
+.dtab.active .badge{background:var(--accent);color:#fff}
+@media(max-width:640px){.desktop-tabs{display:none}}
+@media(min-width:641px){.topbar .hamburger:last-child{display:none}}
 .popup-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;align-items:center;justify-content:center;padding:16px}
 .popup-overlay.open{display:flex}
 .popup-box{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;width:100%;max-width:400px;max-height:90vh;overflow-y:auto}
@@ -301,7 +309,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
     </select>
 </div>
 
-<!-- Navigation drawer -->
+<!-- Desktop tab bar -->
+<div class="desktop-tabs">
+    <button class="dtab active" onclick="showTab('rooms',this)">Raeume <span class="badge"><?= count($rooms) ?></span></button>
+    <button class="dtab" onclick="showTab('archive',this)">Archiv <span class="badge"><?= count($archived) ?></span></button>
+    <button class="dtab" onclick="showTab('stats',this)">Statistik</button>
+</div>
+
+<!-- Mobile navigation drawer -->
 <div id="nav-overlay" class="nav-overlay" onclick="toggleNav()">
     <div class="nav-drawer" onclick="event.stopPropagation()">
         <button class="nav-item active" onclick="showTab('rooms')">Aktive Raeume <span class="badge"><?= count($rooms) ?></span></button>
@@ -548,12 +563,22 @@ function closePopup() {
 function toggleNav() {
     document.getElementById('nav-overlay').classList.toggle('open');
 }
-function showTab(name) {
+function showTab(name, dtabEl) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.getElementById('tab-' + name).classList.add('active');
+    // Highlight nav items
     document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-    event.target.closest('.nav-item').classList.add('active');
-    toggleNav();
+    document.querySelectorAll('.dtab').forEach(b => b.classList.remove('active'));
+    if (dtabEl) {
+        dtabEl.classList.add('active');
+    } else {
+        if (event && event.target) event.target.closest('.nav-item').classList.add('active');
+        toggleNav();
+    }
+    // Sync desktop tabs
+    document.querySelectorAll('.dtab').forEach(b => {
+        if (b.textContent.toLowerCase().includes(name === 'rooms' ? 'raeume' : name === 'archive' ? 'archiv' : 'statistik')) b.classList.add('active');
+    });
 }
 </script>
 </body>
