@@ -129,6 +129,23 @@ if ($action === 'purge_all') {
     exit;
 }
 
+// Statistiken
+$stats = [];
+$stats['rooms_active'] = intval($pdo->query('SELECT COUNT(*) FROM rooms')->fetchColumn());
+$stats['rooms_archived'] = intval($pdo->query('SELECT COUNT(*) FROM rooms_archive')->fetchColumn());
+$stats['rooms_locked'] = intval($pdo->query('SELECT COUNT(*) FROM rooms WHERE locked = 1')->fetchColumn());
+$stats['users_online'] = intval($pdo->query('SELECT COUNT(DISTINCT user_id) FROM room_users WHERE last_seen > DATE_SUB(NOW(), INTERVAL 30 SECOND)')->fetchColumn());
+$stats['messages_total'] = intval($pdo->query('SELECT COUNT(*) FROM room_messages')->fetchColumn());
+$stats['messages_today'] = intval($pdo->query('SELECT COUNT(*) FROM room_messages WHERE created_at > CURDATE()')->fetchColumn());
+$stats['total_objects'] = 0;
+$stats['total_size_kb'] = 0;
+foreach ($pdo->query('SELECT state_json, LENGTH(state_json) as sz FROM rooms')->fetchAll(PDO::FETCH_ASSOC) as $row) {
+    $stats['total_size_kb'] += intval($row['sz']);
+    try { $d = json_decode($row['state_json'], true); if ($d && !empty($d['sites'])) foreach ($d['sites'] as $s) $stats['total_objects'] += count($s['objects'] ?? []); } catch (Exception $e) {}
+}
+$stats['total_size_kb'] = round($stats['total_size_kb'] / 1024, 1);
+$stats['rooms_created_today'] = intval($pdo->query('SELECT COUNT(*) FROM rooms WHERE created_at > CURDATE()')->fetchColumn());
+
 // Liste aller Raeume
 $stmt = $pdo->query('SELECT id, name, version, created_at, updated_at, last_activity, IFNULL(locked, 0) as locked,
     IFNULL(TIMESTAMPDIFF(SECOND, NOW(), expires_at), -1) as expires_in,
@@ -248,6 +265,21 @@ h1 {
 }
 .ttl-group.create-ttl { font-size: 14px; color: var(--text); }
 .create-form { flex-wrap: wrap; }
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 8px;
+    margin-bottom: 20px;
+}
+.stat-card {
+    background: var(--surface);
+    border: 1px solid var(--surface2);
+    border-radius: var(--radius);
+    padding: 12px;
+    text-align: center;
+}
+.stat-val { font-size: 24px; font-weight: 700; color: var(--accent); }
+.stat-label { font-size: 11px; color: var(--text2); margin-top: 2px; }
 .room-card.archived { opacity: 0.6; border-style: dashed; }
 .archive-badge { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--surface2); }
 .section-title {
@@ -333,6 +365,17 @@ h1 {
 <body>
 <div class="container">
     <h1>Zeltplatzplaner Collab</h1>
+
+    <div class="stats-grid">
+        <div class="stat-card"><div class="stat-val"><?= $stats['rooms_active'] ?></div><div class="stat-label">Aktive Raeume</div></div>
+        <div class="stat-card"><div class="stat-val"><?= $stats['users_online'] ?></div><div class="stat-label">User online</div></div>
+        <div class="stat-card"><div class="stat-val"><?= $stats['total_objects'] ?></div><div class="stat-label">Objekte gesamt</div></div>
+        <div class="stat-card"><div class="stat-val"><?= $stats['total_size_kb'] ?></div><div class="stat-label">KB Daten</div></div>
+        <div class="stat-card"><div class="stat-val"><?= $stats['messages_today'] ?></div><div class="stat-label">Nachrichten heute</div></div>
+        <div class="stat-card"><div class="stat-val"><?= $stats['rooms_created_today'] ?></div><div class="stat-label">Erstellt heute</div></div>
+        <div class="stat-card"><div class="stat-val"><?= $stats['rooms_locked'] ?></div><div class="stat-label">Gesperrt</div></div>
+        <div class="stat-card"><div class="stat-val"><?= $stats['rooms_archived'] ?></div><div class="stat-label">Im Archiv</div></div>
+    </div>
 
     <form class="create-form">
         <input type="hidden" name="key" value="<?= htmlspecialchars(ADMIN_KEY) ?>">
