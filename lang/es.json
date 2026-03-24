@@ -298,7 +298,7 @@
   "modal.map.cancel": "Cancelar",
   "collab.title": "Colaborar",
   "collab.enterRoom": "Introducir ID de sala:",
-  "collab.roomNotFound": "Sala no encontrada.",
+  "collab.roomNotFound": "Esta sala no existe o ha caducado.",
   "collab.disconnectConfirm": "Desconectar de la sala?",
   "collab.connected": "conectados",
   "collab.enterName": "Tu nombre para la colaboracion:",

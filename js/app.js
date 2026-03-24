@@ -152,6 +152,10 @@
                     UI.updateCollabStatus();
                 } else {
                     alert(I18n.t('collab.roomNotFound'));
+                    // URL bereinigen
+                    const url = new URL(window.location);
+                    url.searchParams.delete('room');
+                    history.replaceState(null, '', url);
                 }
             });
         }

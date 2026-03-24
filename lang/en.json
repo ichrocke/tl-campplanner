@@ -298,7 +298,7 @@
   "modal.map.cancel": "Cancel",
   "collab.title": "Collaborate",
   "collab.enterRoom": "Enter room ID:",
-  "collab.roomNotFound": "Room not found.",
+  "collab.roomNotFound": "This room does not exist or has expired.",
   "collab.disconnectConfirm": "Disconnect from room?",
   "collab.connected": "connected",
   "collab.enterName": "Your name for collaboration:",

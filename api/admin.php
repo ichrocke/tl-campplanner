@@ -10,10 +10,23 @@ if (($_GET['key'] ?? '') !== ADMIN_KEY) {
 $pdo = getDB();
 $action = $_GET['action'] ?? 'list';
 
+// Ablauf-Hilfsfunktion
+function calcExpiry($ttl) {
+    if (!$ttl || $ttl === 'forever') return null;
+    $hours = intval($ttl);
+    if ($hours <= 0) return null;
+    return date('Y-m-d H:i:s', time() + $hours * 3600);
+}
+
+// Abgelaufene Raeume aufraeumen
+cleanupExpiredRooms();
+
 // Raum erstellen
 if ($action === 'create') {
     $name = trim($_GET['name'] ?? '');
     if (!$name) $name = 'Raum ' . date('d.m.Y H:i');
+    $ttl = $_GET['ttl'] ?? 'forever';
+    $expiresAt = calcExpiry($ttl);
     $id = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz0123456789'), 0, 8);
     $emptyState = json_encode([
         'version' => 1,
@@ -23,8 +36,24 @@ if ($action === 'create') {
         'showDistances' => false,
         'minimapEnabled' => true,
     ]);
-    $stmt = $pdo->prepare('INSERT INTO rooms (id, name, state_json) VALUES (?, ?, ?)');
-    $stmt->execute([$id, $name, $emptyState]);
+    $stmt = $pdo->prepare('INSERT INTO rooms (id, name, state_json, expires_at) VALUES (?, ?, ?, ?)');
+    $stmt->execute([$id, $name, $emptyState, $expiresAt]);
+    header('Location: admin.php?key=' . urlencode(ADMIN_KEY));
+    exit;
+}
+
+// Ablauf aendern
+if ($action === 'set_ttl') {
+    $id = $_GET['id'] ?? '';
+    $ttl = $_GET['ttl'] ?? 'forever';
+    if ($id) {
+        if ($ttl === 'forever') {
+            $pdo->prepare('UPDATE rooms SET expires_at = NULL WHERE id = ?')->execute([$id]);
+        } else {
+            $expiresAt = calcExpiry($ttl);
+            $pdo->prepare('UPDATE rooms SET expires_at = ? WHERE id = ?')->execute([$expiresAt, $id]);
+        }
+    }
     header('Location: admin.php?key=' . urlencode(ADMIN_KEY));
     exit;
 }
@@ -53,7 +82,7 @@ if ($action === 'delete') {
 }
 
 // Liste aller Raeume
-$stmt = $pdo->query('SELECT id, name, version, created_at, updated_at, last_activity, IFNULL(locked, 0) as locked,
+$stmt = $pdo->query('SELECT id, name, version, created_at, updated_at, last_activity, IFNULL(locked, 0) as locked, expires_at,
     LENGTH(state_json) as state_size,
     (SELECT COUNT(*) FROM room_users ru WHERE ru.room_id = rooms.id AND ru.last_seen > DATE_SUB(NOW(), INTERVAL 30 SECOND)) as online_users
     FROM rooms ORDER BY updated_at DESC');
@@ -136,6 +165,17 @@ h1 {
 .btn-sm { padding: 6px 12px; font-size: 13px; }
 .room-card.locked { border-color: #f59e0b; opacity: 0.8; }
 .lock-badge { font-size: 11px; color: #f59e0b; font-weight: 600; }
+.expiry-badge { font-size: 11px; color: var(--text2); }
+.expiry-badge.soon { color: var(--red); font-weight: 600; }
+.ttl-select {
+    padding: 4px 6px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 12px;
+}
+.create-form { flex-wrap: wrap; }
 
 .room-list { display: flex; flex-direction: column; gap: 10px; }
 
@@ -218,7 +258,16 @@ h1 {
     <form class="create-form">
         <input type="hidden" name="key" value="<?= htmlspecialchars(ADMIN_KEY) ?>">
         <input type="hidden" name="action" value="create">
-        <input type="text" name="name" placeholder="Raumname (optional)">
+        <input type="text" name="name" placeholder="Raumname (optional)" style="flex:1">
+        <select name="ttl" style="padding:10px 8px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface);color:var(--text);font-size:14px">
+            <option value="forever">Unbegrenzt</option>
+            <option value="6">6 Stunden</option>
+            <option value="12">12 Stunden</option>
+            <option value="24" selected>1 Tag</option>
+            <option value="72">3 Tage</option>
+            <option value="168">7 Tage</option>
+            <option value="720">30 Tage</option>
+        </select>
         <button type="submit" class="btn btn-create">+ Erstellen</button>
     </form>
 
@@ -227,7 +276,20 @@ h1 {
         <div class="empty">Noch keine Raeume erstellt.</div>
     <?php endif; ?>
 
-    <?php foreach ($rooms as $r): $isLocked = intval($r['locked']); ?>
+    <?php foreach ($rooms as $r):
+        $isLocked = intval($r['locked']);
+        $expiresAt = $r['expires_at'];
+        $expiresForever = ($expiresAt === null);
+        $expiresSoon = false;
+        $expiryText = 'Unbegrenzt';
+        if (!$expiresForever) {
+            $remaining = strtotime($expiresAt) - time();
+            if ($remaining <= 0) { $expiryText = 'Abgelaufen'; }
+            elseif ($remaining < 3600) { $expiryText = 'Laeuft ab in ' . ceil($remaining/60) . ' Min.'; $expiresSoon = true; }
+            elseif ($remaining < 86400) { $expiryText = 'Laeuft ab in ' . round($remaining/3600, 1) . ' Std.'; $expiresSoon = ($remaining < 7200); }
+            else { $expiryText = 'Laeuft ab am ' . date('d.m.Y H:i', strtotime($expiresAt)); }
+        }
+    ?>
         <div class="room-card <?= $isLocked ? 'locked' : '' ?>">
             <div class="room-header">
                 <span class="room-name"><?= htmlspecialchars($r['name']) ?> <?= $isLocked ? '<span class="lock-badge">GESPERRT</span>' : '' ?></span>
@@ -241,9 +303,20 @@ h1 {
                 <span>v<?= $r['version'] ?></span>
                 <span><?= round($r['state_size'] / 1024, 1) ?> KB</span>
                 <span><?= date('d.m.Y H:i', strtotime($r['last_activity'])) ?></span>
+                <span class="expiry-badge <?= $expiresSoon ? 'soon' : '' ?>"><?= $expiryText ?></span>
             </div>
             <div class="room-actions">
                 <button class="btn btn-link btn-sm" onclick="copyLink('<?= $r['id'] ?>')">Link kopieren</button>
+                <select class="ttl-select" onchange="setTtl('<?= $r['id'] ?>', this.value)">
+                    <option value="" disabled selected>Ablauf...</option>
+                    <option value="forever">Unbegrenzt</option>
+                    <option value="6">6 Std.</option>
+                    <option value="12">12 Std.</option>
+                    <option value="24">1 Tag</option>
+                    <option value="72">3 Tage</option>
+                    <option value="168">7 Tage</option>
+                    <option value="720">30 Tage</option>
+                </select>
                 <?php if ($isLocked): ?>
                     <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=unlock&id=<?= $r['id'] ?>"
                        class="btn btn-unlock btn-sm">Entsperren</a>
@@ -265,8 +338,14 @@ h1 {
 function copyLink(id) {
     const url = location.origin + location.pathname.replace('api/admin.php', '') + '?room=' + id;
     navigator.clipboard.writeText(url);
+    showToast('Link kopiert!');
+}
+function setTtl(id, ttl) {
+    location.href = '?key=<?= urlencode(ADMIN_KEY) ?>&action=set_ttl&id=' + id + '&ttl=' + ttl;
+}
+function showToast(msg) {
     const t = document.getElementById('toast');
-    t.textContent = 'Link kopiert!';
+    t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2000);
 }

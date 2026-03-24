@@ -298,7 +298,7 @@
   "modal.map.cancel": "Abbrechen",
   "collab.title": "Zusammenarbeiten",
   "collab.enterRoom": "Raum-ID eingeben:",
-  "collab.roomNotFound": "Raum nicht gefunden.",
+  "collab.roomNotFound": "Dieser Raum existiert nicht oder ist abgelaufen.",
   "collab.disconnectConfirm": "Verbindung zum Raum trennen?",
   "collab.connected": "verbunden",
   "collab.enterName": "Dein Name fuer die Zusammenarbeit:",

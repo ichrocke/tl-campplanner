@@ -38,6 +38,11 @@ try {
     $pdo->exec("ALTER TABLE rooms ADD COLUMN locked TINYINT(1) DEFAULT 0 AFTER last_activity");
 } catch (Exception $e) {}
 
+// Migration: expires_at-Spalte hinzufuegen
+try {
+    $pdo->exec("ALTER TABLE rooms ADD COLUMN expires_at DATETIME DEFAULT NULL AFTER locked");
+} catch (Exception $e) {}
+
 // Migration: Cursor-Spalten hinzufuegen falls Tabelle schon existiert
 try {
     $pdo->exec("ALTER TABLE room_users ADD COLUMN cursor_x FLOAT DEFAULT 0 AFTER user_name");

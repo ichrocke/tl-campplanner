@@ -23,6 +23,14 @@ function jsonResponse($data, $code = 200) {
     exit;
 }
 
+// Abgelaufene Raeume loeschen
+function cleanupExpiredRooms() {
+    try {
+        $pdo = getDB();
+        $pdo->exec("DELETE FROM rooms WHERE expires_at IS NOT NULL AND expires_at < NOW()");
+    } catch (Exception $e) {}
+}
+
 // Handle CORS preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     header('Access-Control-Allow-Origin: *');

@@ -10,6 +10,7 @@ if (!$roomId || !preg_match('/^[a-z0-9]{4,12}$/', $roomId)) {
 }
 
 $pdo = getDB();
+cleanupExpiredRooms();
 $stmt = $pdo->prepare('SELECT state_json, version, IFNULL(locked, 0) as locked FROM rooms WHERE id = ?');
 $stmt->execute([$roomId]);
 $room = $stmt->fetch(PDO::FETCH_ASSOC);

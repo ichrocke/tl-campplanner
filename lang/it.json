@@ -298,7 +298,7 @@
   "modal.map.cancel": "Annulla",
   "collab.title": "Collabora",
   "collab.enterRoom": "Inserisci ID stanza:",
-  "collab.roomNotFound": "Stanza non trovata.",
+  "collab.roomNotFound": "Questa stanza non esiste o e scaduta.",
   "collab.disconnectConfirm": "Disconnettersi dalla stanza?",
   "collab.connected": "connessi",
   "collab.enterName": "Il tuo nome per la collaborazione:",
