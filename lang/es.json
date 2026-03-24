@@ -306,6 +306,17 @@
   "collab.roomLocked": "Esta sala ha sido bloqueada por el administrador.",
   "collab.roomUnlocked": "La sala ha sido desbloqueada.",
   "collab.roomExpired": "La sala ha caducado y fue cerrada.",
+  "collab.rooms": "Salas",
+  "collab.joinTitle": "Unirse a una sala",
+  "collab.join": "Unirse",
+  "collab.createTitle": "Crear nueva sala",
+  "collab.roomName": "Nombre de la sala",
+  "collab.create": "Crear sala",
+  "collab.createHint": "La sala es valida por 8 horas y se eliminara automaticamente. Para salas mas largas, contacta a marc@tyra-lorena.de",
+  "collab.roomCreated": "Sala creada! Enlace:",
+  "collab.roomCreatedCopied": "(El enlace se ha copiado al portapapeles)",
+  "collab.connectedTo": "Conectado a la sala",
+  "collab.disconnect": "Desconectar",
   "collab.dataWarningOk": "Entendido",
   "collab.dataWarning": "\u26A0 Aviso: Esta herramienta no realiza copias de seguridad automaticas, tampoco en salas. El operador no se responsabiliza de la perdida de datos. Utiliza la funcion de exportacion regularmente."
 }

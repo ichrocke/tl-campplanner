@@ -6,7 +6,7 @@
 - **CSV example download**: Button to download an example CSV file next to the CSV import button
 - **Save as template**: Right-click context menu option to save a placed object as a reusable template in the palette
 - **Dynamic map tiles**: Integrate OpenStreetMap or satellite imagery (ESRI) as background layer. Enter coordinates to load tiles scaled to the world coordinate system. Supports rotation with compass auto-sync
-- **Collaborative editing**: Multiple users can work on the same plan simultaneously. Admin creates rooms, users join via shared link. Real-time sync via Server-Sent Events with polling fallback. Self-hosted PHP + MySQL backend
+- **Collaborative editing**: Multiple users can work on the same plan simultaneously. Create or join rooms directly from the app. Real-time sync with cursor display, room locking, expiry countdown, and archive. Self-hosted PHP + MySQL backend
 
 ## [5.5.0] - 2026-03-21
 

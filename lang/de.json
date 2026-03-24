@@ -306,6 +306,17 @@
   "collab.roomLocked": "Dieser Raum wurde vom Admin gesperrt. Bearbeitung nicht moeglich.",
   "collab.roomUnlocked": "Der Raum wurde wieder freigegeben.",
   "collab.roomExpired": "Der Raum ist abgelaufen und wurde geschlossen.",
+  "collab.rooms": "Raeume",
+  "collab.joinTitle": "Raum beitreten",
+  "collab.join": "Beitreten",
+  "collab.createTitle": "Neuen Raum erstellen",
+  "collab.roomName": "Raumname",
+  "collab.create": "Raum erstellen",
+  "collab.createHint": "Der Raum ist 8 Stunden gueltig und wird danach automatisch geloescht. Fuer laengere Raeume wende dich an marc@tyra-lorena.de",
+  "collab.roomCreated": "Raum wurde erstellt! Link:",
+  "collab.roomCreatedCopied": "(Link wurde in die Zwischenablage kopiert)",
+  "collab.connectedTo": "Verbunden mit Raum",
+  "collab.disconnect": "Trennen",
   "collab.dataWarningOk": "Verstanden",
   "collab.dataWarning": "\u26A0 Hinweis: Dieses Tool fuehrt keine automatische Datensicherung durch - auch nicht in Raeumen. Der Betreiber uebernimmt keine Verantwortung fuer Datenverlust. Bitte nutze regelmaessig die Export-Funktion, um deine Arbeit zu sichern."
 }

@@ -1911,6 +1911,76 @@ const UI = (() => {
             URL.revokeObjectURL(url);
         });
 
+        // Rooms modal
+        document.getElementById('btn-rooms').addEventListener('click', () => {
+            const info = document.getElementById('rooms-connected-info');
+            if (typeof Collab !== 'undefined' && Collab.isConnected()) {
+                info.style.display = 'block';
+                document.getElementById('rooms-connected-text').textContent = I18n.t('collab.connectedTo') + ' ' + Collab.getRoomId();
+            } else {
+                info.style.display = 'none';
+            }
+            document.getElementById('rooms-join-id').value = '';
+            document.getElementById('rooms-create-name').value = '';
+            openModal('modal-rooms');
+        });
+
+        document.getElementById('rooms-join-btn').addEventListener('click', () => {
+            const id = document.getElementById('rooms-join-id').value.trim();
+            if (!id) return;
+            closeModal();
+            if (typeof Collab !== 'undefined') {
+                Collab.joinRoom(id).then(ok => {
+                    if (ok) { updateCollabStatus(); }
+                    else { alert(I18n.t('collab.roomNotFound')); }
+                });
+            }
+        });
+
+        document.getElementById('rooms-join-id').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); document.getElementById('rooms-join-btn').click(); }
+        });
+
+        document.getElementById('rooms-create-btn').addEventListener('click', async () => {
+            const name = document.getElementById('rooms-create-name').value.trim();
+            try {
+                const resp = await fetch('api/room-create.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: name }),
+                });
+                const data = await resp.json();
+                if (data.ok && data.roomId) {
+                    closeModal();
+                    if (typeof Collab !== 'undefined') {
+                        Collab.joinRoom(data.roomId).then(ok => {
+                            if (ok) {
+                                updateCollabStatus();
+                                // Link kopieren und anzeigen
+                                const url = location.origin + location.pathname + '?room=' + data.roomId;
+                                navigator.clipboard.writeText(url).catch(() => {});
+                                alert(I18n.t('collab.roomCreated') + '\n\n' + url + '\n\n' + I18n.t('collab.roomCreatedCopied'));
+                            }
+                        });
+                    }
+                } else {
+                    alert(data.error || 'Fehler beim Erstellen');
+                }
+            } catch (e) {
+                alert('Fehler: ' + e.message);
+            }
+        });
+
+        document.getElementById('rooms-disconnect').addEventListener('click', () => {
+            if (typeof Collab !== 'undefined') {
+                Collab.disconnect();
+                updateCollabStatus();
+            }
+            closeModal();
+        });
+
+        document.getElementById('rooms-close').addEventListener('click', closeModal);
+
         document.getElementById('btn-settings').addEventListener('click', () => {
             syncSettings();
             openModal('modal-settings');

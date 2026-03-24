@@ -306,6 +306,17 @@
   "collab.roomLocked": "Questa stanza e stata bloccata dall'amministratore.",
   "collab.roomUnlocked": "La stanza e stata sbloccata.",
   "collab.roomExpired": "La stanza e scaduta ed e stata chiusa.",
+  "collab.rooms": "Stanze",
+  "collab.joinTitle": "Entra in una stanza",
+  "collab.join": "Entra",
+  "collab.createTitle": "Crea una nuova stanza",
+  "collab.roomName": "Nome della stanza",
+  "collab.create": "Crea stanza",
+  "collab.createHint": "La stanza e valida per 8 ore e verra eliminata automaticamente. Per stanze piu lunghe, contatta marc@tyra-lorena.de",
+  "collab.roomCreated": "Stanza creata! Link:",
+  "collab.roomCreatedCopied": "(Il link e stato copiato negli appunti)",
+  "collab.connectedTo": "Connesso alla stanza",
+  "collab.disconnect": "Disconnetti",
   "collab.dataWarningOk": "Capito",
   "collab.dataWarning": "\u26A0 Avviso: Questo strumento non esegue backup automatici, nemmeno nelle stanze. L'operatore non si assume alcuna responsabilita per la perdita di dati. Utilizza regolarmente la funzione di esportazione."
 }
