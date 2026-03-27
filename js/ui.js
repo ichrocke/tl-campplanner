@@ -1097,15 +1097,6 @@ const UI = (() => {
                 Canvas.render();
             });
         });
-        // Display toggles
-        ['showNames', 'showDimensions', 'showDescriptions'].forEach(key => {
-            const id = 'set-show-' + key.replace('show', '').toLowerCase();
-            const el = document.getElementById(id);
-            if (el) el.addEventListener('change', () => {
-                State.displaySettings[key] = el.checked;
-                Canvas.render();
-            });
-        });
         // Default colors
         document.getElementById('set-ground-color').addEventListener('change', (e) => {
             State.displaySettings.defaultGroundColor = e.target.value;
@@ -1159,9 +1150,6 @@ const UI = (() => {
         document.getElementById('set-linescale').value = ds.lineScale;
         document.getElementById('set-ropescale').value = ds.ropeScale;
         document.getElementById('set-hatchscale').value = ds.hatchScale;
-        document.getElementById('set-show-names').checked = ds.showNames !== false;
-        document.getElementById('set-show-dimensions').checked = ds.showDimensions !== false;
-        document.getElementById('set-show-descriptions').checked = ds.showDescriptions !== false;
         document.getElementById('set-ground-color').value = ds.defaultGroundColor || '#22c55e';
         document.getElementById('set-area-color').value = ds.defaultAreaColor || '#d4a574';
         document.getElementById('lang-select').value = I18n.lang;
@@ -1210,12 +1198,23 @@ const UI = (() => {
             html += `<label>${I18n.t('modal.settings.bgOpacity')} <input type="range" id="prop-opacity" min="0.05" max="1" step="0.05" value="${obj.opacity || (obj.type === 'image' ? 1 : 0.3)}" style="width:100%"></label>`;
             html += `<label style="flex-direction:row !important;align-items:center !important;gap:6px !important"><input type="checkbox" id="prop-keepaspect" ${obj.keepAspectRatio !== false ? 'checked' : ''} style="width:auto"> ${I18n.t('props.keepAspectRatio')}</label>`;
         }
+        if (obj.type === 'image') {
+            html += `<label><button id="prop-change-image" class="btn-secondary" style="width:100%;font-size:12px">${I18n.t('props.changeImage')}</button></label>`;
+            html += `<input type="file" id="prop-image-file" accept="image/*" style="display:none">`;
+        }
         if (obj.type === 'area') {
             let texOpts = '';
             Canvas.AREA_TEXTURES.forEach(t => {
                 texOpts += `<option value="${t.id}" ${(obj.texture || 'solid') === t.id ? 'selected' : ''}>${I18n.t('texture.' + t.id)}</option>`;
             });
             html += `<label>${I18n.t('props.texture')} <select id="prop-texture">${texOpts}</select></label>`;
+        }
+        if (obj.type !== 'guideline' && obj.type !== 'bgimage' && obj.type !== 'image') {
+            html += `<div class="prop-grid" style="margin-top:6px">
+                <label style="flex-direction:row !important;align-items:center !important;gap:4px"><input type="checkbox" id="prop-hide-name" ${obj.hideName ? 'checked' : ''} style="width:auto"> ${I18n.t('props.hideName')}</label>
+                <label style="flex-direction:row !important;align-items:center !important;gap:4px"><input type="checkbox" id="prop-hide-dims" ${obj.hideDimensions ? 'checked' : ''} style="width:auto"> ${I18n.t('props.hideDimensions')}</label>
+                <label style="flex-direction:row !important;align-items:center !important;gap:4px"><input type="checkbox" id="prop-hide-desc" ${obj.hideDescription ? 'checked' : ''} style="width:auto"> ${I18n.t('props.hideDescription')}</label>
+            </div>`;
         }
         html += `</div>`;
 
@@ -1544,6 +1543,36 @@ const UI = (() => {
             keepAspect.addEventListener('change', () => {
                 if (!Canvas.isSelected(obj.id)) return;
                 State.updateObject(obj.id, { keepAspectRatio: keepAspect.checked });
+            });
+        }
+        // Hide name/dimensions/description per object
+        const hideNameCb = document.getElementById('prop-hide-name');
+        if (hideNameCb) hideNameCb.addEventListener('change', () => {
+            State.updateObject(obj.id, { hideName: hideNameCb.checked }); Canvas.render();
+        });
+        const hideDimsCb = document.getElementById('prop-hide-dims');
+        if (hideDimsCb) hideDimsCb.addEventListener('change', () => {
+            State.updateObject(obj.id, { hideDimensions: hideDimsCb.checked }); Canvas.render();
+        });
+        const hideDescCb = document.getElementById('prop-hide-desc');
+        if (hideDescCb) hideDescCb.addEventListener('change', () => {
+            State.updateObject(obj.id, { hideDescription: hideDescCb.checked }); Canvas.render();
+        });
+        // Change image
+        const changeImgBtn = document.getElementById('prop-change-image');
+        const imgFileInput = document.getElementById('prop-image-file');
+        if (changeImgBtn && imgFileInput) {
+            changeImgBtn.addEventListener('click', () => imgFileInput.click());
+            imgFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    State.updateObject(obj.id, { dataUrl: ev.target.result });
+                    Canvas.render();
+                };
+                reader.readAsDataURL(file);
+                e.target.value = '';
             });
         }
         bind('prop-labelsize', 'labelSize', parseFloat);

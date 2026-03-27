@@ -207,9 +207,9 @@ const State = (() => {
                 obj.width = template.width || 1;
                 obj.height = template.height || 1;
             }
-            if (template.type === 'bgimage') {
+            if (template.type === 'bgimage' || template.type === 'image') {
                 obj.dataUrl = template.dataUrl || '';
-                obj.opacity = template.opacity || 0.3;
+                obj.opacity = template.opacity != null ? template.opacity : (template.type === 'image' ? 1 : 0.3);
                 obj.keepAspectRatio = template.keepAspectRatio !== false;
             }
             site.objects.push(obj);

@@ -1139,9 +1139,9 @@ const Canvas = (() => {
         // Name label (rendered after restore = always horizontal)
         const lox = (obj.labelOffsetX || 0) * z;
         const loy = (obj.labelOffsetY || 0) * z;
-        const _showNames = State.displaySettings.showNames !== false;
-        const _showDims = State.displaySettings.showDimensions !== false;
-        const _showDescs = State.displaySettings.showDescriptions !== false;
+        const _showNames = !obj.hideName;
+        const _showDims = !obj.hideDimensions;
+        const _showDescs = !obj.hideDescription;
         if (_treasureMode && _showNames) {
             const tfs = Math.max(10, Math.min(16, z * 0.5)) * fs;
             ctx.font = `${tfs}px 'PirateFont', 'Georgia', serif`;
