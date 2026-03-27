@@ -307,6 +307,7 @@
   "collab.roomLocked": "Questa stanza e stata bloccata dall'amministratore.",
   "collab.roomUnlocked": "La stanza e stata sbloccata.",
   "collab.roomExpired": "La stanza e scaduta ed e stata chiusa.",
+  "tool.insertImage": "Inserisci immagine",
   "props.entrancePos": "Posizione",
   "settings.showNames": "Mostra nomi",
   "settings.showDimensions": "Mostra dimensioni",

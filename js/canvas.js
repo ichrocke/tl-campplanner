@@ -145,7 +145,7 @@ const Canvas = (() => {
         // Permanent distances
         if (State.showDistances) {
             activeSite.objects.forEach(obj => {
-                if (obj.type === 'ground' || obj.type === 'bgimage' || obj.type === 'guideline' || obj.type === 'symbol') return;
+                if (obj.type === 'ground' || obj.type === 'bgimage' || obj.type === 'image' || obj.type === 'guideline' || obj.type === 'symbol') return;
                 computeDistancesForObj(obj.id).forEach(d => {
                     const p1 = w2s(d.x1, d.y1), p2 = w2s(d.x2, d.y2);
                     ctx.strokeStyle = d.color; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
@@ -772,6 +772,41 @@ const Canvas = (() => {
 
         // --- Background image and ground (rendered separately) ---
         if (obj.type === 'bgimage' || obj.type === 'ground') return;
+
+        // --- Image object (like bgimage but in object layer) ---
+        if (obj.type === 'image' && obj.dataUrl) {
+            const img = loadBgImage(obj.dataUrl);
+            if (img) {
+                const pos = w2s(obj.x, obj.y);
+                const w = obj.width * z, h = obj.height * z;
+                ctx.save();
+                ctx.translate(pos.x, pos.y);
+                ctx.rotate((obj.rotation || 0) * Math.PI / 180);
+                ctx.globalAlpha = obj.opacity != null ? obj.opacity : 1;
+                ctx.drawImage(img, -w/2, -h/2, w, h);
+                ctx.globalAlpha = 1;
+                if (isSel) {
+                    ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 2; ctx.setLineDash([5,3]);
+                    ctx.strokeRect(-w/2-2, -h/2-2, w+4, h+4); ctx.setLineDash([]);
+                    // Rotation handle
+                    const handleY = -h/2 - 28;
+                    ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 1.5;
+                    ctx.beginPath(); ctx.moveTo(0, -h/2); ctx.lineTo(0, handleY); ctx.stroke();
+                    ctx.beginPath(); ctx.arc(0, handleY, 5, 0, Math.PI*2);
+                    ctx.fillStyle = '#2563eb'; ctx.fill();
+                    // Resize handles
+                    [[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2]].forEach(([rx,ry]) => {
+                        ctx.fillStyle = '#fff'; ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 1.5;
+                        ctx.fillRect(rx-4, ry-4, 8, 8); ctx.strokeRect(rx-4, ry-4, 8, 8);
+                    });
+                } else if (isHov) {
+                    ctx.strokeStyle = '#93c5fd'; ctx.lineWidth = 1.5; ctx.setLineDash([4,3]);
+                    ctx.strokeRect(-w/2-1, -h/2-1, w+2, h+2); ctx.setLineDash([]);
+                }
+                ctx.restore();
+            }
+            return;
+        }
 
         // Treasure mode: skip symbols, post-its, guidelines
         if (_treasureMode && (obj.type === 'symbol' || obj.type === 'postit' || obj.type === 'guideline')) return;
@@ -2098,13 +2133,13 @@ const Canvas = (() => {
         const obj = site.objects.find(o => o.id === objId);
         if (!obj) return [];
         // No distance measurement for ground, bgimage, guideline, symbol
-        if (obj.type === 'ground' || obj.type === 'bgimage' || obj.type === 'guideline' || obj.type === 'symbol') return [];
+        if (obj.type === 'ground' || obj.type === 'bgimage' || obj.type === 'image' || obj.type === 'guideline' || obj.type === 'symbol') return [];
         const results = [];
         const minD = State.minDistance;
 
         site.objects.forEach(other => {
             if (other.id === obj.id) return;
-            if (other.type === 'ground' || other.type === 'bgimage' || other.type === 'guideline' || other.type === 'symbol') return;
+            if (other.type === 'ground' || other.type === 'bgimage' || other.type === 'image' || other.type === 'guideline' || other.type === 'symbol') return;
             const r = objDistance(obj, other);
             if (r.dist < minD * 2 && r.p1 && r.p2) {
                 let color;

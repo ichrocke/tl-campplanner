@@ -459,6 +459,37 @@ const UI = (() => {
             e.target.value = '';
         });
 
+        // Insert image as object
+        document.getElementById('btn-add-image').addEventListener('click', () => {
+            document.getElementById('image-file-input').click();
+        });
+        document.getElementById('image-file-input').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                const img = new Image();
+                img.onload = () => {
+                    const aspect = img.naturalHeight / img.naturalWidth;
+                    const w = 5; // 5 meter default
+                    const obj = State.addObject({
+                        type: 'image', name: file.name.replace(/\.[^.]+$/, ''),
+                        width: w, height: +(w * aspect).toFixed(2),
+                        guyRopeDistance: 0, color: '#888', shape: 'rect',
+                        dataUrl: ev.target.result, opacity: 1.0, keepAspectRatio: true,
+                    }, 0, 0);
+                    if (obj) {
+                        Canvas.selectedId = obj.id;
+                        showProperties(obj);
+                        Canvas.render();
+                    }
+                };
+                img.src = ev.target.result;
+            };
+            reader.readAsDataURL(file);
+            e.target.value = '';
+        });
+
         // Map tiles
         document.getElementById('btn-maptiles').addEventListener('click', () => {
             const site = State.activeSite;
@@ -1172,11 +1203,11 @@ const UI = (() => {
         if (obj.type === 'text') {
             html += `<label>${I18n.t('props.textSection')} <textarea id="prop-text" rows="2" style="resize:vertical;font-family:var(--font);font-size:12px">${(obj.text || '').replace(/</g, '&lt;')}</textarea></label>`;
         }
-        if (obj.type !== 'bgimage') {
+        if (obj.type !== 'bgimage' && obj.type !== 'image') {
             html += `<label>${I18n.t('props.color')} <input type="color" id="prop-color" value="${obj.color}"></label>`;
         }
-        if (obj.type === 'bgimage') {
-            html += `<label>${I18n.t('modal.settings.bgOpacity')} <input type="range" id="prop-opacity" min="0.05" max="1" step="0.05" value="${obj.opacity || 0.3}" style="width:100%"></label>`;
+        if (obj.type === 'bgimage' || obj.type === 'image') {
+            html += `<label>${I18n.t('modal.settings.bgOpacity')} <input type="range" id="prop-opacity" min="0.05" max="1" step="0.05" value="${obj.opacity || (obj.type === 'image' ? 1 : 0.3)}" style="width:100%"></label>`;
             html += `<label style="flex-direction:row !important;align-items:center !important;gap:6px !important"><input type="checkbox" id="prop-keepaspect" ${obj.keepAspectRatio !== false ? 'checked' : ''} style="width:auto"> ${I18n.t('props.keepAspectRatio')}</label>`;
         }
         if (obj.type === 'area') {
@@ -1198,7 +1229,7 @@ const UI = (() => {
                     <label>${I18n.t('props.width')} <input type="number" id="prop-width" value="${obj.width}" min="0.1" step="0.1"></label>
                     <label>${I18n.t('props.depth')} <input type="number" id="prop-height" value="${obj.height}" min="0.1" step="0.1"></label>
                 </div>
-                ${obj.type === 'bgimage' ? '' : `<label>${I18n.t('props.shape')}
+                ${(obj.type === 'bgimage' || obj.type === 'image') ? '' : `<label>${I18n.t('props.shape')}
                     <select id="prop-shape">
                         <option value="rect" ${obj.shape === 'rect' ? 'selected' : ''}>${I18n.t('props.shape.rect')}</option>
                         <option value="triangle" ${obj.shape === 'triangle' ? 'selected' : ''}>${I18n.t('props.shape.triangle')}</option>
@@ -1296,7 +1327,7 @@ const UI = (() => {
         }
 
         // --- Section: Guy ropes ---
-        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'bgimage' && obj.type !== 'guideline') {
+        if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'bgimage' && obj.type !== 'image' && obj.type !== 'guideline') {
             const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.guyRope')}</div>
