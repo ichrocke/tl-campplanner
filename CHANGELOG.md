@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.8.0] - 2026-03-27
+
+### Added
+- **Entrance free positioning**: Entrance markers can be placed anywhere along the object perimeter via slider (0-100%). Works for all shapes including circles, hexagons, octagons etc.
+- **Per-object visibility**: Name, dimensions, and description can be hidden individually per object via checkboxes in the property panel
+- **Image objects**: Insert arbitrary images as regular canvas objects (movable, rotatable, resizable). Change image later via property panel
+- **Default colors**: Configurable default colors for ground areas and areas in settings
+- **Object-level collab sync**: New room-ops.php endpoint merges individual add/update/remove operations atomically. Two users editing different objects no longer overwrite each other
+
+### Fixed
+- Ground/area/fence preview dashed lines no longer disappear when mouse stops moving (moved to render pipeline)
+
 ## [5.7.0] - 2026-03-24
 
 ### Added
