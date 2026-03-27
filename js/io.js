@@ -956,6 +956,7 @@ ${els}</svg>`;
         const iAbspann = header.indexOf('abspann');
         const iFarbe = header.indexOf('farbe');
         const iDesc = header.indexOf('beschreibung');
+        const iEcken = header.indexOf('ecken');
         if (iName < 0 || iBreite < 0 || iTiefe < 0) {
             alert('CSV-Header muss enthalten: name;breite;tiefe;abspann');
             return;
@@ -984,7 +985,8 @@ ${els}</svg>`;
             if (farbe && !farbe.startsWith('#')) farbe = '#' + farbe;
             if (!/^#[0-9a-fA-F]{6}$/.test(farbe)) farbe = '';
             const beschreibung = iDesc >= 0 ? (parts[iDesc] || '').trim() : '';
-            items.push({ name, breite, tiefe, abspann, farbe, beschreibung });
+            const ecken = iEcken >= 0 ? (parseInt(parts[iEcken]) || 0) : 0;
+            items.push({ name, breite, tiefe, abspann, farbe, beschreibung, ecken });
         }
 
         if (items.length === 0) { alert('Keine Daten in CSV'); return; }
@@ -1005,6 +1007,10 @@ ${els}</svg>`;
             const x = cx + item.breite / 2 + item.abspann;
             const y = rowY + item.tiefe / 2 + item.abspann;
 
+            const eckenToShape = { 0: 'rect', 3: 'triangle', 4: 'rect', 6: 'hexagon', 8: 'octagon', 10: 'decagon', 12: 'dodecagon' };
+            let shape = eckenToShape[item.ecken] || 'rect';
+            if (item.ecken >= 16) shape = 'circle';
+
             State.addObject({
                 type: 'tent',
                 name: item.name,
@@ -1012,7 +1018,7 @@ ${els}</svg>`;
                 height: item.tiefe,
                 guyRopeDistance: item.abspann,
                 color: item.farbe || '#4a90d9',
-                shape: 'rect',
+                shape: shape,
                 description: item.beschreibung || '',
             }, x, y);
 

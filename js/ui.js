@@ -2001,10 +2001,11 @@ const UI = (() => {
 
         // CSV example download
         document.getElementById('btn-csv-example').addEventListener('click', () => {
-            const csv = 'name;breite;tiefe;abspann;farbe;beschreibung\n'
-                + 'Familienzelt;4;3;0.5;#4a90d9;Platz 1\n'
-                + '2-Personen-Zelt;2;1.5;0.3;;\n'
-                + 'Gruppenzelt;6;4;0.8;#e67e22;Leitung\n';
+            const csv = 'name;breite;tiefe;abspann;farbe;beschreibung;ecken\n'
+                + 'Familienzelt;4;3;0.5;#4a90d9;Platz 1;4\n'
+                + '2-Personen-Zelt;2;1.5;0.3;;;4\n'
+                + 'Jurte;5;5;0.3;#8b6914;;6\n'
+                + 'Gruppenzelt;6;4;0.8;#e67e22;Leitung;\n';
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
