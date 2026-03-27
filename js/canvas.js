@@ -110,6 +110,22 @@ const Canvas = (() => {
         ];
     }
 
+    // --- Entrance position helper ---
+    function getEntrancePos(obj) {
+        // New: entrancePos (0-1 along perimeter, -1 = none)
+        if (obj.entrancePos !== undefined) return obj.entrancePos;
+        // Legacy: entranceSide to position
+        const es = obj.entranceSide;
+        if (!es || es === 'none') return -1;
+        const w = obj.width, h = obj.height;
+        const perim = 2 * (w + h);
+        if (es === 'top') return (w / 2) / perim; // center of top edge
+        if (es === 'right') return (w + h / 2) / perim;
+        if (es === 'bottom') return (w + w / 2 + h) / perim;
+        if (es === 'left') return (2 * w + h + h / 2) / perim;
+        return -1;
+    }
+
     // --- Render pipeline ---
     function render() {
         if (!canvas || !ctx) return;
@@ -1008,34 +1024,42 @@ const Canvas = (() => {
         }
 
         // Entrance marker (skip in treasure mode)
-        if (!_treasureMode && obj.entranceSide && obj.entranceSide !== 'none') {
-            const es = obj.entranceSide;
+        // entrancePos: 0-1 along perimeter (0=top-center clockwise), or entranceSide for legacy
+        const ePos = getEntrancePos(obj);
+        if (!_treasureMode && ePos >= 0) {
             const ew = Math.min(w, h) * 0.4;
             const eh = Math.max(8, Math.min(w, h) * 0.12);
+            // Compute position and normal along rect perimeter
+            const perim = 2 * (w + h);
+            let d = ePos * perim;
+            let ex, ey, nx, ny; // position on edge, outward normal
+            if (d < w) { // top edge (left to right)
+                ex = -w/2 + d; ey = -h/2; nx = 0; ny = -1;
+            } else if (d < w + h) { // right edge (top to bottom)
+                d -= w; ex = w/2; ey = -h/2 + d; nx = 1; ny = 0;
+            } else if (d < 2*w + h) { // bottom edge (right to left)
+                d -= w + h; ex = w/2 - d; ey = h/2; nx = 0; ny = 1;
+            } else { // left edge (bottom to top)
+                d -= 2*w + h; ex = -w/2; ey = h/2 - d; nx = -1; ny = 0;
+            }
+            // Tangent direction (perpendicular to normal)
+            const tx = -ny, ty = nx;
             ctx.fillStyle = '#16a34a';
             ctx.strokeStyle = '#fff';
             ctx.lineWidth = 1.5;
             ctx.beginPath();
-            if (es === 'top') {
-                ctx.moveTo(-ew/2, -h/2); ctx.lineTo(0, -h/2 - eh); ctx.lineTo(ew/2, -h/2);
-            } else if (es === 'bottom') {
-                ctx.moveTo(-ew/2, h/2); ctx.lineTo(0, h/2 + eh); ctx.lineTo(ew/2, h/2);
-            } else if (es === 'left') {
-                ctx.moveTo(-w/2, -ew/2); ctx.lineTo(-w/2 - eh, 0); ctx.lineTo(-w/2, ew/2);
-            } else if (es === 'right') {
-                ctx.moveTo(w/2, -ew/2); ctx.lineTo(w/2 + eh, 0); ctx.lineTo(w/2, ew/2);
-            }
+            ctx.moveTo(ex - tx*ew/2, ey - ty*ew/2);
+            ctx.lineTo(ex + nx*eh, ey + ny*eh);
+            ctx.lineTo(ex + tx*ew/2, ey + ty*ew/2);
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
-            // Opening gap (white line on the tent wall)
+            // Opening gap
             ctx.strokeStyle = '#fff';
             ctx.lineWidth = 2.5;
             ctx.beginPath();
-            if (es === 'top') { ctx.moveTo(-ew/2 + 1, -h/2); ctx.lineTo(ew/2 - 1, -h/2); }
-            else if (es === 'bottom') { ctx.moveTo(-ew/2 + 1, h/2); ctx.lineTo(ew/2 - 1, h/2); }
-            else if (es === 'left') { ctx.moveTo(-w/2, -ew/2 + 1); ctx.lineTo(-w/2, ew/2 - 1); }
-            else if (es === 'right') { ctx.moveTo(w/2, -ew/2 + 1); ctx.lineTo(w/2, ew/2 - 1); }
+            ctx.moveTo(ex - tx*(ew/2-1), ey - ty*(ew/2-1));
+            ctx.lineTo(ex + tx*(ew/2-1), ey + ty*(ew/2-1));
             ctx.stroke();
         }
 

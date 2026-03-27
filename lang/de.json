@@ -307,6 +307,7 @@
   "collab.roomLocked": "Dieser Raum wurde vom Admin gesperrt. Bearbeitung nicht moeglich.",
   "collab.roomUnlocked": "Der Raum wurde wieder freigegeben.",
   "collab.roomExpired": "Der Raum ist abgelaufen und wurde geschlossen.",
+  "props.entrancePos": "Position",
   "settings.showNames": "Namen anzeigen",
   "settings.showDimensions": "Masse anzeigen",
   "settings.showDescriptions": "Beschreibungen anzeigen",

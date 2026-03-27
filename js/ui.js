@@ -1284,17 +1284,13 @@ const UI = (() => {
 
         // --- Section: Entrance ---
         if (obj.type === 'tent') {
-            const eSide = obj.entranceSide || 'none';
+            const ePos = obj.entrancePos !== undefined ? obj.entrancePos : -1;
+            const hasEntrance = ePos >= 0;
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.entrance')}</div>
-                <label>${I18n.t('props.entranceSide')}
-                    <select id="prop-entrance">
-                        <option value="none" ${eSide === 'none' ? 'selected' : ''}>${I18n.t('props.entranceSide.none')}</option>
-                        <option value="top" ${eSide === 'top' ? 'selected' : ''}>${I18n.t('props.entranceSide.top')}</option>
-                        <option value="right" ${eSide === 'right' ? 'selected' : ''}>${I18n.t('props.entranceSide.right')}</option>
-                        <option value="bottom" ${eSide === 'bottom' ? 'selected' : ''}>${I18n.t('props.entranceSide.bottom')}</option>
-                        <option value="left" ${eSide === 'left' ? 'selected' : ''}>${I18n.t('props.entranceSide.left')}</option>
-                    </select>
+                <label><input type="checkbox" id="prop-entrance-toggle" ${hasEntrance ? 'checked' : ''}> ${I18n.t('props.entranceSide')}</label>
+                <label style="${hasEntrance ? '' : 'opacity:0.4;pointer-events:none'}" id="prop-entrance-slider-wrap">${I18n.t('props.entrancePos')}
+                    <input type="range" id="prop-entrance-pos" min="0" max="100" step="1" value="${hasEntrance ? Math.round(ePos * 100) : 50}" style="width:100%">
                 </label>
             </div>`;
         }
@@ -1459,7 +1455,30 @@ const UI = (() => {
         bind('prop-texture', 'texture');
         bind('prop-desc-color', 'descColor');
         bind('prop-desc-size', 'descSize', parseFloat);
-        bind('prop-entrance', 'entranceSide');
+        // Entrance position
+        const entrToggle = document.getElementById('prop-entrance-toggle');
+        const entrSlider = document.getElementById('prop-entrance-pos');
+        const entrWrap = document.getElementById('prop-entrance-slider-wrap');
+        if (entrToggle) {
+            entrToggle.addEventListener('change', () => {
+                if (entrToggle.checked) {
+                    const val = parseInt(entrSlider.value) / 100;
+                    State.updateObject(obj.id, { entrancePos: val, entranceSide: undefined });
+                    if (entrWrap) { entrWrap.style.opacity = ''; entrWrap.style.pointerEvents = ''; }
+                } else {
+                    State.updateObject(obj.id, { entrancePos: -1, entranceSide: 'none' });
+                    if (entrWrap) { entrWrap.style.opacity = '0.4'; entrWrap.style.pointerEvents = 'none'; }
+                }
+                Canvas.render();
+            });
+        }
+        if (entrSlider) {
+            entrSlider.addEventListener('input', () => {
+                if (!entrToggle || !entrToggle.checked) return;
+                State.updateObject(obj.id, { entrancePos: parseInt(entrSlider.value) / 100 });
+                Canvas.render();
+            });
+        }
         // Lock checkbox
         const lockCb = document.getElementById('prop-locked');
         if (lockCb) {

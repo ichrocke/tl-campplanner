@@ -306,6 +306,7 @@
   "collab.roomLocked": "Cette salle a ete verrouillee par l'administrateur. Modification desactivee.",
   "collab.roomUnlocked": "La salle a ete deverrouillee.",
   "collab.roomExpired": "La salle a expire et a ete fermee.",
+  "props.entrancePos": "Position",
   "settings.showNames": "Afficher les noms",
   "settings.showDimensions": "Afficher les dimensions",
   "settings.showDescriptions": "Afficher les descriptions",

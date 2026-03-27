@@ -307,6 +307,7 @@
   "collab.roomLocked": "Esta sala ha sido bloqueada por el administrador.",
   "collab.roomUnlocked": "La sala ha sido desbloqueada.",
   "collab.roomExpired": "La sala ha caducado y fue cerrada.",
+  "props.entrancePos": "Posicion",
   "settings.showNames": "Mostrar nombres",
   "settings.showDimensions": "Mostrar dimensiones",
   "settings.showDescriptions": "Mostrar descripciones",
