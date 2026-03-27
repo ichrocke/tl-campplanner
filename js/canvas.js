@@ -1059,25 +1059,42 @@ const Canvas = (() => {
         }
 
         // Entrance marker (skip in treasure mode)
-        // entrancePos: 0-1 along perimeter (0=top-center clockwise), or entranceSide for legacy
         const ePos = getEntrancePos(obj);
         if (!_treasureMode && ePos >= 0) {
             const ew = Math.min(w, h) * 0.4;
             const eh = Math.max(8, Math.min(w, h) * 0.12);
-            // Compute position and normal along rect perimeter
-            const perim = 2 * (w + h);
-            let d = ePos * perim;
-            let ex, ey, nx, ny; // position on edge, outward normal
-            if (d < w) { // top edge (left to right)
-                ex = -w/2 + d; ey = -h/2; nx = 0; ny = -1;
-            } else if (d < w + h) { // right edge (top to bottom)
-                d -= w; ex = w/2; ey = -h/2 + d; nx = 1; ny = 0;
-            } else if (d < 2*w + h) { // bottom edge (right to left)
-                d -= w + h; ex = w/2 - d; ey = h/2; nx = 0; ny = 1;
-            } else { // left edge (bottom to top)
-                d -= 2*w + h; ex = -w/2; ey = h/2 - d; nx = -1; ny = 0;
+            // Get shape polygon scaled to screen size
+            const shapePts = getLocalShapePath({ ...obj, width: w / z, height: h / z }, 0);
+            const sPts = shapePts.map(p => ({ x: p.x * z, y: p.y * z }));
+            // Compute total perimeter length
+            let totalPerim = 0;
+            const segLens = [];
+            for (let i = 0; i < sPts.length; i++) {
+                const j = (i + 1) % sPts.length;
+                const len = Math.sqrt((sPts[j].x - sPts[i].x) ** 2 + (sPts[j].y - sPts[i].y) ** 2);
+                segLens.push(len);
+                totalPerim += len;
             }
-            // Tangent direction (perpendicular to normal)
+            // Walk perimeter to find position and normal
+            let target = ePos * totalPerim;
+            let ex = 0, ey = 0, nx = 0, ny = 0;
+            for (let i = 0; i < sPts.length; i++) {
+                if (target <= segLens[i] || i === sPts.length - 1) {
+                    const j = (i + 1) % sPts.length;
+                    const t = segLens[i] > 0 ? target / segLens[i] : 0;
+                    ex = sPts[i].x + (sPts[j].x - sPts[i].x) * t;
+                    ey = sPts[i].y + (sPts[j].y - sPts[i].y) * t;
+                    // Outward normal (perpendicular to edge, pointing outward)
+                    const dx = sPts[j].x - sPts[i].x;
+                    const dy = sPts[j].y - sPts[i].y;
+                    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+                    // For clockwise polygon, outward normal is (dy, -dx)
+                    nx = dy / len; ny = -dx / len;
+                    break;
+                }
+                target -= segLens[i];
+            }
+            // Tangent direction
             const tx = -ny, ty = nx;
             ctx.fillStyle = '#16a34a';
             ctx.strokeStyle = '#fff';
