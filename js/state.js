@@ -213,6 +213,10 @@ const State = (() => {
                 obj.keepAspectRatio = template.keepAspectRatio !== false;
             }
             site.objects.push(obj);
+            // Collab: Object-Level Op
+            if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
+                Collab.pushOp({ type: 'add', siteIdx: _activeSiteIndex, object: JSON.parse(JSON.stringify(obj)) });
+            }
             notify();
             return obj;
         },
@@ -228,6 +232,9 @@ const State = (() => {
             obj.x += 1;
             obj.y += 1;
             site.objects.push(obj);
+            if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
+                Collab.pushOp({ type: 'add', siteIdx: _activeSiteIndex, object: JSON.parse(JSON.stringify(obj)) });
+            }
             notify();
             return obj;
         },
@@ -236,6 +243,9 @@ const State = (() => {
             const site = this.activeSite;
             if (!site) return;
             site.objects = site.objects.filter(o => o.id !== id);
+            if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
+                Collab.pushOp({ type: 'remove', siteIdx: _activeSiteIndex, objectId: id });
+            }
             notify();
         },
 
@@ -245,6 +255,9 @@ const State = (() => {
             const obj = site.objects.find(o => o.id === id);
             if (!obj) return;
             Object.assign(obj, props);
+            if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
+                Collab.pushOp({ type: 'update', siteIdx: _activeSiteIndex, objectId: id, props });
+            }
             notify();
         },
 

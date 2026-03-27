@@ -295,15 +295,51 @@ const Collab = (() => {
         Canvas.render();
     }
 
-    // --- State pushen (debounced) ---
+    // --- Operations-basierter Sync ---
+
+    let _pendingOps = [];
+    let _opsTimer = null;
 
     function pushState() {
+        // Fallback: wenn keine Ops gesammelt, ganzen State senden
         if (!_roomId || _syncLock || _locked) return;
-        clearTimeout(_pushTimer);
-        _pushTimer = setTimeout(doPush, 400);
+        if (_pendingOps.length > 0) {
+            flushOps();
+        } else {
+            // Full-state push als Fallback (z.B. fuer Site-Aenderungen)
+            clearTimeout(_opsTimer);
+            _opsTimer = setTimeout(doFullPush, 400);
+        }
     }
 
-    async function doPush() {
+    function pushOp(op) {
+        if (!_roomId || _syncLock || _locked) return;
+        _pendingOps.push(op);
+        clearTimeout(_opsTimer);
+        _opsTimer = setTimeout(flushOps, 300);
+    }
+
+    async function flushOps() {
+        if (!_roomId || _syncLock || _pendingOps.length === 0) return;
+        const ops = _pendingOps.splice(0);
+        try {
+            const resp = await fetch(API_BASE + 'room-ops.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roomId: _roomId, ops }),
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                _version = data.version;
+            } else {
+                console.warn('Collab: Ops failed:', data.error);
+            }
+        } catch (e) {
+            console.warn('Collab: Ops push failed:', e);
+        }
+    }
+
+    async function doFullPush() {
         if (!_roomId || _syncLock) return;
         try {
             const resp = await fetch(API_BASE + 'room-update.php', {
@@ -360,6 +396,7 @@ const Collab = (() => {
         onUsersChange,
         onMessage,
         sendMessage,
+        pushOp,
         updateLocalCursor,
         get syncLock() { return _syncLock; },
     };
