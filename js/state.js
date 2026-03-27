@@ -6,7 +6,7 @@ const State = (() => {
     let _sites = [];
     let _activeSiteIndex = 0;
     let _minDistance = 2;
-    let _displaySettings = { fontScale: 1, lineScale: 1, ropeScale: 1, hatchScale: 1 };
+    let _displaySettings = { fontScale: 1, lineScale: 1, ropeScale: 1, hatchScale: 1, showNames: true, showDimensions: true, showDescriptions: true, defaultGroundColor: '#22c55e', defaultAreaColor: '#d4a574' };
     let _listeners = [];
     let _undoStack = [];
     let _undoPointer = -1;

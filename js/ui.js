@@ -1066,6 +1066,22 @@ const UI = (() => {
                 Canvas.render();
             });
         });
+        // Display toggles
+        ['showNames', 'showDimensions', 'showDescriptions'].forEach(key => {
+            const id = 'set-show-' + key.replace('show', '').toLowerCase();
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', () => {
+                State.displaySettings[key] = el.checked;
+                Canvas.render();
+            });
+        });
+        // Default colors
+        document.getElementById('set-ground-color').addEventListener('change', (e) => {
+            State.displaySettings.defaultGroundColor = e.target.value;
+        });
+        document.getElementById('set-area-color').addEventListener('change', (e) => {
+            State.displaySettings.defaultAreaColor = e.target.value;
+        });
         // Language selector (in settings)
         document.getElementById('lang-select').addEventListener('change', (e) => {
             I18n.setLang(e.target.value);
@@ -1112,6 +1128,11 @@ const UI = (() => {
         document.getElementById('set-linescale').value = ds.lineScale;
         document.getElementById('set-ropescale').value = ds.ropeScale;
         document.getElementById('set-hatchscale').value = ds.hatchScale;
+        document.getElementById('set-show-names').checked = ds.showNames !== false;
+        document.getElementById('set-show-dimensions').checked = ds.showDimensions !== false;
+        document.getElementById('set-show-descriptions').checked = ds.showDescriptions !== false;
+        document.getElementById('set-ground-color').value = ds.defaultGroundColor || '#22c55e';
+        document.getElementById('set-area-color').value = ds.defaultAreaColor || '#d4a574';
         document.getElementById('lang-select').value = I18n.lang;
         document.getElementById('autosave-toggle').checked = localStorage.getItem('zeltplaner_autosave_enabled') !== '0';
         document.getElementById('show-distances-toggle').checked = State.showDistances;
@@ -2052,7 +2073,7 @@ const UI = (() => {
                                 const obj = State.addObject({
                                     type: 'ground', name: I18n.t('tool.ground'),
                                     width: 0, height: 0, guyRopeDistance: 0,
-                                    color: '#22c55e', shape: 'rect', points: pts,
+                                    color: State.displaySettings.defaultGroundColor || '#22c55e', shape: 'rect', points: pts,
                                 }, worldPos.x, worldPos.y);
                                 if (obj) obj.points = pts;
                                 // Import contained objects with offset

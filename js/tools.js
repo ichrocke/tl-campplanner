@@ -17,6 +17,8 @@ const Tools = (() => {
         Canvas.dragDistances = [];
         Canvas.placementPreview = null;
         Canvas.pathPreview = [];
+        Canvas.groundCursorPos = null;
+        Canvas.pathCursorPos = null;
         Canvas.selectionRect = null;
         // groundEditVertex removed
         if (name !== 'place') pendingTemplate = null;
@@ -330,7 +332,7 @@ const Tools = (() => {
             const obj = State.addObject({
                 type: 'ground', name: I18n.t('tool.ground'),
                 width: 0, height: 0, guyRopeDistance: 0,
-                color: '#22c55e', shape: 'rect',
+                color: State.displaySettings.defaultGroundColor || '#22c55e', shape: 'rect',
                 points: [...pts],
             }, cx, cy);
             if (obj) obj.points = [...pts];
@@ -381,7 +383,7 @@ const Tools = (() => {
             cx /= pts.length; cy /= pts.length;
             const obj = State.addObject({
                 type: 'area', name: name, width: 0, height: 0,
-                guyRopeDistance: 0, color: '#d4a574', shape: 'rect',
+                guyRopeDistance: 0, color: State.displaySettings.defaultAreaColor || '#d4a574', shape: 'rect',
                 points: [...pts],
             }, cx, cy);
             if (obj) obj.points = [...pts];
@@ -746,34 +748,13 @@ const Tools = (() => {
             }
 
             if (activeTool === 'ground' && Canvas.groundPreview.length > 0) {
+                Canvas.groundCursorPos = { x: snapped.x, y: snapped.y };
                 Canvas.render();
-                const ctx = Canvas.canvas.getContext('2d');
-                const last = Canvas.groundPreview[Canvas.groundPreview.length - 1];
-                const p1 = Canvas.w2s(last.x, last.y);
-                const p2 = Canvas.w2s(snapped.x, snapped.y);
-                ctx.setLineDash([6, 4]);
-                ctx.strokeStyle = '#22c55e88';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-                ctx.setLineDash([]);
-                const dist = Math.sqrt((snapped.x - last.x) ** 2 + (snapped.y - last.y) ** 2);
-                ctx.font = '11px sans-serif';
-                ctx.fillStyle = '#16a34a';
-                ctx.textAlign = 'center';
-                ctx.fillText(dist.toFixed(1) + ' m', (p1.x + p2.x) / 2, (p1.y + p2.y) / 2 - 8);
             }
 
             if ((activeTool === 'area' || activeTool === 'fence') && Canvas.pathPreview.length > 0) {
+                Canvas.pathCursorPos = { pos: { x: snapped.x, y: snapped.y }, tool: activeTool };
                 Canvas.render();
-                const ctx = Canvas.canvas.getContext('2d');
-                const last = Canvas.pathPreview[Canvas.pathPreview.length - 1];
-                const p1 = Canvas.w2s(last.x, last.y);
-                const p2 = Canvas.w2s(snapped.x, snapped.y);
-                ctx.setLineDash([6, 4]);
-                ctx.strokeStyle = activeTool === 'fence' ? '#8B451388' : '#6366f188';
-                ctx.lineWidth = 1.5;
-                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-                ctx.setLineDash([]);
             }
         }
     }
@@ -841,14 +822,14 @@ const Tools = (() => {
                         const obj = State.addObject({
                             type: 'ground', name: I18n.t('tool.ground'),
                             width: 0, height: 0, guyRopeDistance: 0,
-                            color: '#22c55e', shape: 'rect', points: pts,
+                            color: State.displaySettings.defaultGroundColor || '#22c55e', shape: 'rect', points: pts,
                         }, cx, cy);
                         if (obj) obj.points = pts;
                     } else {
                         const name = prompt(I18n.t('msg.nameArea'), I18n.t('msg.defaultArea')) || I18n.t('msg.defaultArea');
                         const obj = State.addObject({
                             type: 'area', name: name, width: 0, height: 0,
-                            guyRopeDistance: 0, color: '#d4a574', shape: 'rect', points: pts,
+                            guyRopeDistance: 0, color: State.displaySettings.defaultAreaColor || '#d4a574', shape: 'rect', points: pts,
                         }, cx, cy);
                         if (obj) obj.points = pts;
                     }

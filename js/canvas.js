@@ -672,6 +672,10 @@ const Canvas = (() => {
         });
     }
 
+    let _groundCursorPos = null; // {x, y} world coords
+    let _pathCursorPos = null;
+    let _pathCursorTool = null; // 'area' or 'fence'
+
     function drawGroundPreview() {
         if (groundPreview.length === 0) return;
         ctx.setLineDash([6, 4]);
@@ -686,6 +690,23 @@ const Canvas = (() => {
         }
         ctx.stroke();
         ctx.setLineDash([]);
+
+        // Cursor-Linie zum Mauszeiger
+        if (_groundCursorPos && groundPreview.length > 0) {
+            const last = groundPreview[groundPreview.length - 1];
+            const p1 = w2s(last.x, last.y);
+            const p2 = w2s(_groundCursorPos.x, _groundCursorPos.y);
+            ctx.setLineDash([6, 4]);
+            ctx.strokeStyle = '#22c55e88';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+            ctx.setLineDash([]);
+            const dist = Math.sqrt((_groundCursorPos.x - last.x) ** 2 + (_groundCursorPos.y - last.y) ** 2);
+            ctx.font = '11px sans-serif';
+            ctx.fillStyle = '#16a34a';
+            ctx.textAlign = 'center';
+            ctx.fillText(dist.toFixed(1) + ' m', (p1.x + p2.x) / 2, (p1.y + p2.y) / 2 - 8);
+        }
 
         groundPreview.forEach(pt => {
             const p = w2s(pt.x, pt.y);
@@ -1059,7 +1080,10 @@ const Canvas = (() => {
         // Name label (rendered after restore = always horizontal)
         const lox = (obj.labelOffsetX || 0) * z;
         const loy = (obj.labelOffsetY || 0) * z;
-        if (_treasureMode) {
+        const _showNames = State.displaySettings.showNames !== false;
+        const _showDims = State.displaySettings.showDimensions !== false;
+        const _showDescs = State.displaySettings.showDescriptions !== false;
+        if (_treasureMode && _showNames) {
             const tfs = Math.max(10, Math.min(16, z * 0.5)) * fs;
             ctx.font = `${tfs}px 'PirateFont', 'Georgia', serif`;
             ctx.fillStyle = '#2a1a0a';
@@ -1068,33 +1092,45 @@ const Canvas = (() => {
             const nameLines = (obj.name || '').split('\n');
             let ny = pos.y + loy - (nameLines.length - 1) * tfs * 0.55;
             nameLines.forEach(line => { ctx.fillText(line, pos.x + lox, ny); ny += tfs * 1.3; });
-        } else {
+        } else if (!_treasureMode && (_showNames || _showDims)) {
             const fontSize = _labelFs;
-            ctx.font = `600 ${fontSize}px sans-serif`;
-            ctx.textAlign = 'center';
-            ctx.fillStyle = '#1e293b';
-            const nameLines = (obj.name || '').split('\n');
-            if (_labelFitsInside) {
+            if (_showNames) {
+                ctx.font = `600 ${fontSize}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.fillStyle = '#1e293b';
+                const nameLines = (obj.name || '').split('\n');
+                if (_labelFitsInside) {
+                    ctx.textBaseline = 'middle';
+                    const nlh = fontSize * 1.1;
+                    let ny = pos.y + loy - fontSize * 0.35 - (nameLines.length - 1) * nlh / 2;
+                    nameLines.forEach(line => { ctx.fillText(line, pos.x + lox, ny); ny += nlh; });
+                    if (_showDims) {
+                        ctx.font = `${Math.max(8, fontSize - 2)}px sans-serif`;
+                        ctx.fillStyle = '#64748b';
+                        ctx.fillText(`${obj.width}\u00d7${obj.height}m`, pos.x + lox, ny - nlh / 2 + fontSize * 0.6);
+                    }
+                } else {
+                    ctx.textBaseline = 'bottom';
+                    let ny = pos.y + loy - h / 2 - 4 - (nameLines.length - 1) * fontSize * 1.1;
+                    nameLines.forEach(line => { ctx.fillText(line, pos.x + lox, ny); ny += fontSize * 1.1; });
+                    if (_showDims) {
+                        ctx.font = `${Math.max(8, fontSize - 2)}px sans-serif`;
+                        ctx.fillStyle = '#64748b';
+                        ctx.textBaseline = 'top';
+                        ctx.fillText(`${obj.width}\u00d7${obj.height}m`, pos.x + lox, pos.y + loy + h / 2 + 3);
+                    }
+                }
+            } else if (_showDims) {
+                ctx.font = `${Math.max(8, _labelFs - 2)}px sans-serif`;
+                ctx.fillStyle = '#64748b';
+                ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                const nlh = fontSize * 1.1;
-                let ny = pos.y + loy - fontSize * 0.35 - (nameLines.length - 1) * nlh / 2;
-                nameLines.forEach(line => { ctx.fillText(line, pos.x + lox, ny); ny += nlh; });
-                ctx.font = `${Math.max(8, fontSize - 2)}px sans-serif`;
-                ctx.fillStyle = '#64748b';
-                ctx.fillText(`${obj.width}\u00d7${obj.height}m`, pos.x + lox, ny - nlh / 2 + fontSize * 0.6);
-            } else {
-                ctx.textBaseline = 'bottom';
-                let ny = pos.y + loy - h / 2 - 4 - (nameLines.length - 1) * fontSize * 1.1;
-                nameLines.forEach(line => { ctx.fillText(line, pos.x + lox, ny); ny += fontSize * 1.1; });
-                ctx.font = `${Math.max(8, fontSize - 2)}px sans-serif`;
-                ctx.fillStyle = '#64748b';
-                ctx.textBaseline = 'top';
-                ctx.fillText(`${obj.width}\u00d7${obj.height}m`, pos.x + lox, pos.y + loy + h / 2 + 3);
+                ctx.fillText(`${obj.width}\u00d7${obj.height}m`, pos.x + lox, pos.y + loy);
             }
         }
 
         // Description (after restore, horizontal)
-        if (obj.description && !_treasureMode) {
+        if (obj.description && !_treasureMode && _showDescs) {
             const fontSize = _labelFs;
             const descFs = obj.descSize ? Math.max(6, obj.descSize * z * 0.4) : Math.max(7, fontSize - 2);
             ctx.font = `italic ${descFs}px sans-serif`;
@@ -1607,6 +1643,19 @@ const Canvas = (() => {
         }
         ctx.stroke();
         ctx.setLineDash([]);
+
+        // Cursor-Linie zum Mauszeiger
+        if (_pathCursorPos && pathPreview.length > 0) {
+            const last = pathPreview[pathPreview.length - 1];
+            const p1 = w2s(last.x, last.y);
+            const p2 = w2s(_pathCursorPos.x, _pathCursorPos.y);
+            ctx.setLineDash([6, 4]);
+            ctx.strokeStyle = _pathCursorTool === 'fence' ? '#8B451388' : '#6366f188';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
         pathPreview.forEach(pt => {
             const p = w2s(pt.x, pt.y);
             ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
@@ -2206,6 +2255,8 @@ const Canvas = (() => {
         set placementPreview(p) { placementPreview = p; },
         get pathPreview() { return pathPreview; },
         set pathPreview(p) { pathPreview = p; },
+        set groundCursorPos(p) { _groundCursorPos = p; },
+        set pathCursorPos(p) { _pathCursorPos = p ? p.pos : null; _pathCursorTool = p ? p.tool : null; },
         renderOffscreen,
         minimapClick, minimapHit, minimapStartDrag, minimapMoveDrag, minimapEndDrag,
         get minimapEnabled() { return _minimapEnabled; },
