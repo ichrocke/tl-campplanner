@@ -8,6 +8,7 @@
 - **Image objects**: Insert arbitrary images as regular canvas objects (movable, rotatable, resizable). Change image later via property panel
 - **Default colors**: Configurable default colors for ground areas and areas in settings
 - **Object-level collab sync**: New room-ops.php endpoint merges individual add/update/remove operations atomically. Two users editing different objects no longer overwrite each other
+- **CSV corner count**: Optional `ecken` column in CSV import to set object shape (3=triangle, 6=hexagon, 8=octagon, etc.)
 
 ### Fixed
 - Ground/area/fence preview dashed lines no longer disappear when mouse stops moving (moved to render pipeline)
