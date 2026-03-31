@@ -99,6 +99,24 @@ if ($action === 'clear_msgs') {
     jsonResponse(['ok' => true]);
 }
 
+// JSON-Export eines Raums
+if ($action === 'export') {
+    $id = $_GET['id'] ?? '';
+    if ($id) {
+        $stmt = $pdo->prepare('SELECT name, state_json FROM rooms WHERE id = ?');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            $name = preg_replace('/[^a-zA-Z0-9äöüÄÖÜß_-]/', '_', $row['name']);
+            header('Content-Type: application/json');
+            header('Content-Disposition: attachment; filename="' . $name . '_' . date('Y-m-d') . '.json"');
+            echo $row['state_json'];
+            exit;
+        }
+    }
+    jsonResponse(['error' => 'Room not found'], 404);
+}
+
 // Nachricht an Raum senden
 if ($action === 'message') {
     $id = $_GET['id'] ?? '';
@@ -420,6 +438,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                 </div>
                 <div class="popup-actions">
                     <button class="btn btn-link" onclick="copyLink('<?= $r['id'] ?>');closePopup()">Link kopieren</button>
+                    <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=export&id=<?= $r['id'] ?>" class="btn btn-link" onclick="event.stopPropagation()">JSON exportieren</a>
                     <?php if ($isLocked): ?>
                         <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=unlock&id=<?= $r['id'] ?>" class="btn btn-unlock">Entsperren</a>
                     <?php else: ?>
