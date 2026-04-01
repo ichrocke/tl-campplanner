@@ -707,7 +707,7 @@ const IO = (() => {
         // Text objects
         site.objects.forEach(obj => {
             if (obj.type !== 'text') return;
-            const fs = (obj.fontSize || 1) * 10;
+            const fs = (obj.fontSize || 1) * s;
             const color = obj.color || '#1a1a2e';
             const textContent = obj.text || obj.name || 'Text';
             const textLines = textContent.split('\n');

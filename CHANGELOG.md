@@ -4,7 +4,7 @@
 
 ### Fixed
 - **SVG export**: Respect per-object `hideName`, `hideDimensions`, and `hideDescription` flags (previously always shown)
-- **SVG export**: Text objects now render multiline text correctly, matching the canvas display
+- **SVG export**: Text objects now render multiline text correctly with correct font size, matching the canvas display
 
 ## [5.8.0] - 2026-03-27
 
