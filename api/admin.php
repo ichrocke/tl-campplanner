@@ -346,14 +346,22 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 
 <!-- Sort bar (hidden by default) -->
 <div id="sort-bar" style="display:none;padding:8px 16px;background:var(--surface);border-bottom:1px solid var(--surface2);display:none">
-    <select id="sort-select" onchange="sortRooms()" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px">
-        <option value="updated">Letzte Aktivitaet</option>
-        <option value="name">Name (A-Z)</option>
-        <option value="name-desc">Name (Z-A)</option>
-        <option value="created">Erstelldatum</option>
-        <option value="online">Online User</option>
-        <option value="expiry">Ablaufzeit</option>
-    </select>
+    <div style="display:flex;gap:8px">
+        <select id="sort-select" onchange="sortRooms()" style="flex:1;padding:10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px">
+            <option value="updated">Letzte Aktivitaet</option>
+            <option value="name">Name (A-Z)</option>
+            <option value="name-desc">Name (Z-A)</option>
+            <option value="created">Erstelldatum</option>
+            <option value="online">Online User</option>
+            <option value="expiry">Ablaufzeit</option>
+        </select>
+        <select id="filter-select" onchange="applyFilter()" style="flex:1;padding:10px;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg);color:var(--text);font-size:14px">
+            <option value="all">Alle anzeigen</option>
+            <option value="unlimited">Nur unbegrenzte</option>
+            <option value="limited">Nur begrenzte</option>
+            <option value="locked">Nur gesperrte</option>
+        </select>
+    </div>
 </div>
 
 <!-- Desktop tab bar -->
@@ -568,13 +576,20 @@ function toggleSort() {
 }
 function filterRooms() {
     const q = document.getElementById('search-input').value.toLowerCase().trim();
+    const f = document.getElementById('filter-select') ? document.getElementById('filter-select').value : 'all';
     document.querySelectorAll('#tab-rooms .room-list .room-card').forEach(card => {
         const name = card.dataset.name || '';
         const id = card.dataset.id || '';
-        // Also hide the associated template
-        card.style.display = (!q || name.includes(q) || id.includes(q)) ? '' : 'none';
+        const expiry = parseInt(card.dataset.expiry || '0');
+        const locked = card.classList.contains('locked');
+        let show = !q || name.includes(q) || id.includes(q);
+        if (show && f === 'unlimited') show = expiry < 0;
+        else if (show && f === 'limited') show = expiry >= 0;
+        else if (show && f === 'locked') show = locked;
+        card.style.display = show ? '' : 'none';
     });
 }
+function applyFilter() { filterRooms(); }
 function sortRooms() {
     const key = document.getElementById('sort-select').value;
     const list = document.querySelector('#tab-rooms .room-list');
