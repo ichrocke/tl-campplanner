@@ -644,7 +644,7 @@ const IO = (() => {
             els += `<polygon points="${polyPoints(obj.points)}" fill="${fill}" fill-opacity="0.08" stroke="${fill}" stroke-width="2"/>\n`;
             const cx = obj.points.reduce((a,p) => a + p.x, 0) / obj.points.length;
             const cy = obj.points.reduce((a,p) => a + p.y, 0) / obj.points.length;
-            if (obj.name) els += `<text x="${(cx*s).toFixed(1)}" y="${(cy*s).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="10" font-weight="bold" fill="${fill}">${esc(obj.name)}</text>\n`;
+            if (obj.name && !obj.hideName) els += `<text x="${(cx*s).toFixed(1)}" y="${(cy*s).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="10" font-weight="bold" fill="${fill}">${esc(obj.name)}</text>\n`;
         });
 
         // Areas
@@ -654,7 +654,7 @@ const IO = (() => {
             els += `<polygon points="${polyPoints(obj.points)}" fill="${fill}" fill-opacity="0.15" stroke="${fill}" stroke-width="1.5" stroke-dasharray="6,4"/>\n`;
             const cx = obj.points.reduce((a,p) => a + p.x, 0) / obj.points.length;
             const cy = obj.points.reduce((a,p) => a + p.y, 0) / obj.points.length;
-            if (obj.name) els += `<text x="${(cx*s).toFixed(1)}" y="${(cy*s).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="bold" fill="${fill}">${esc(obj.name)}</text>\n`;
+            if (obj.name && !obj.hideName) els += `<text x="${(cx*s).toFixed(1)}" y="${(cy*s).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="bold" fill="${fill}">${esc(obj.name)}</text>\n`;
         });
 
         // Fences/Pipes
@@ -668,7 +668,7 @@ const IO = (() => {
                 const r = (obj.vertexSize || 0) + thick / 2;
                 if (r > 0) els += `<circle cx="${(p.x*s).toFixed(1)}" cy="${(p.y*s).toFixed(1)}" r="${r}" fill="${color}"/>\n`;
             });
-            if (obj.name) {
+            if (obj.name && !obj.hideName) {
                 const mx = obj.points.reduce((a,p) => a + p.x, 0) / obj.points.length;
                 const my = obj.points.reduce((a,p) => a + p.y, 0) / obj.points.length;
                 els += `<text x="${(mx*s).toFixed(1)}" y="${(my*s - 6).toFixed(1)}" text-anchor="middle" font-size="9" font-weight="bold" fill="${color}">${esc(obj.name)}</text>\n`;
@@ -709,7 +709,16 @@ const IO = (() => {
             if (obj.type !== 'text') return;
             const fs = (obj.fontSize || 1) * 10;
             const color = obj.color || '#1a1a2e';
-            els += `<text x="${(obj.x*s).toFixed(1)}" y="${(obj.y*s).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${fs}" font-weight="bold" fill="${color}"${obj.rotation ? ` transform="rotate(${obj.rotation},${(obj.x*s).toFixed(1)},${(obj.y*s).toFixed(1)})"` : ''}>${esc(obj.text || obj.name || '')}</text>\n`;
+            const textContent = obj.text || obj.name || 'Text';
+            const textLines = textContent.split('\n');
+            const lineH = fs * 1.2;
+            const totalH = textLines.length * lineH;
+            const rotAttr = obj.rotation ? ` transform="rotate(${obj.rotation},${(obj.x*s).toFixed(1)},${(obj.y*s).toFixed(1)})"` : '';
+            let ty = obj.y * s - totalH / 2 + fs * 0.6;
+            textLines.forEach(line => {
+                els += `<text x="${(obj.x*s).toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="${fs}" font-weight="bold" fill="${color}"${rotAttr}>${esc(line)}</text>\n`;
+                ty += lineH;
+            });
         });
 
         // Symbols - use original SVG files or programmatic SVG
@@ -746,7 +755,7 @@ const IO = (() => {
             } else {
                 els += `<rect x="${sx.toFixed(1)}" y="${sy.toFixed(1)}" width="${sz.toFixed(1)}" height="${sz.toFixed(1)}" fill="#e5e7eb" stroke="#333" stroke-width="1" rx="3"/>\n`;
             }
-            if (obj.name) els += `<text x="${(obj.x*s).toFixed(1)}" y="${(sy + sz + 10).toFixed(1)}" text-anchor="middle" font-size="7" fill="#333">${esc(obj.name)}</text>\n`;
+            if (obj.name && !obj.hideName) els += `<text x="${(obj.x*s).toFixed(1)}" y="${(sy + sz + 10).toFixed(1)}" text-anchor="middle" font-size="7" fill="#333">${esc(obj.name)}</text>\n`;
         });
 
         // Tents & other objects (rect, circle, polygon shapes)
@@ -832,9 +841,25 @@ const IO = (() => {
             }
 
             // Label
-            if (obj.name) {
-                els += `<text x="${(obj.x*s).toFixed(1)}" y="${(obj.y*s).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="600" fill="#1e293b">${esc(obj.name)}</text>\n`;
-                els += `<text x="${(obj.x*s).toFixed(1)}" y="${(obj.y*s + 11).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="7" fill="#64748b">${obj.width}\u00d7${obj.height}m</text>\n`;
+            const _showName = !obj.hideName;
+            const _showDims = !obj.hideDimensions;
+            if (_showName && obj.name) {
+                const nameLines = (obj.name || '').split('\n');
+                const nlh = 11;
+                let ny = obj.y * s - (nameLines.length - 1) * nlh / 2;
+                nameLines.forEach(line => {
+                    els += `<text x="${(obj.x*s).toFixed(1)}" y="${ny.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="9" font-weight="600" fill="#1e293b">${esc(line)}</text>\n`;
+                    ny += nlh;
+                });
+                if (_showDims) {
+                    els += `<text x="${(obj.x*s).toFixed(1)}" y="${ny.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="7" fill="#64748b">${obj.width}\u00d7${obj.height}m</text>\n`;
+                }
+            } else if (_showDims) {
+                els += `<text x="${(obj.x*s).toFixed(1)}" y="${(obj.y*s).toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="7" fill="#64748b">${obj.width}\u00d7${obj.height}m</text>\n`;
+            }
+            if (obj.description && !obj.hideDescription) {
+                const descY = obj.y * s + (obj.name && _showName ? 18 : 11);
+                els += `<text x="${(obj.x*s).toFixed(1)}" y="${descY.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" font-size="7" font-style="italic" fill="${obj.descColor || '#94a3b8'}">${esc(obj.description)}</text>\n`;
             }
         });
 
