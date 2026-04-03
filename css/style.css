@@ -1272,6 +1272,9 @@ body {
 .status-legal a { color: var(--text-secondary); text-decoration: none; }
 .status-legal a:hover { color: var(--primary); text-decoration: underline; }
 
+#modal-changelog { display: flex; flex-direction: column; }
+#modal-changelog.hidden { display: none; }
+
 .changelog-nav-header {
     padding: 8px 12px 4px;
     font-size: 11px;
