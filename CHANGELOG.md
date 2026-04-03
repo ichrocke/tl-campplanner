@@ -7,7 +7,7 @@
 - **Tabs**: Plus-Button für neuen Arbeitsbereich direkt rechts neben dem letzten Tab
 
 ### Added
-- **Changelog-Popup**: Link in der Statusbar öffnet Changelog als Popup mit Versionsnavigation links und Inhalt rechts
+- **Changelog-Popup**: Link in der Statusbar öffnet Changelog als Popup mit Versionsnavigation links (gruppiert nach Hauptversion) und Inhalt rechts
 
 ## [5.8.1] - 2026-04-01
 

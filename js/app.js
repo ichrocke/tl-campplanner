@@ -183,25 +183,50 @@
         return result;
     }
 
+    function getVersion(title) {
+        const m = title.match(/\[(\d+)\.(\d+)\.(\d+)\]/);
+        return m ? { major: parseInt(m[1]), minor: parseInt(m[2]), patch: parseInt(m[3]) } : null;
+    }
+
+    function selectVersion(btn, v) {
+        changelogNav.querySelectorAll('.changelog-nav-item').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        changelogContent.innerHTML = '<h3 style="margin:0 0 12px;font-size:16px">' + v.title + '</h3>' + renderChangelogBody(v.body);
+    }
+
     function showChangelog() {
         fetch('CHANGELOG.md?' + Date.now())
             .then(r => r.text())
             .then(md => {
                 const versions = parseChangelog(md);
                 changelogNav.innerHTML = '';
+                let firstBtn = null;
+
+                // Group by major version
+                let currentMajor = -1;
                 versions.forEach((v, i) => {
+                    const ver = getVersion(v.title);
+                    if (ver && ver.major !== currentMajor) {
+                        currentMajor = ver.major;
+                        const header = document.createElement('div');
+                        header.className = 'changelog-nav-header';
+                        header.textContent = 'Version ' + ver.major;
+                        changelogNav.appendChild(header);
+                    }
+
                     const btn = document.createElement('button');
-                    btn.className = 'changelog-nav-item' + (i === 0 ? ' active' : '');
-                    btn.textContent = v.title.replace(/^\[|\]$/g, '').replace(/\] - /, '  ');
-                    btn.addEventListener('click', () => {
-                        changelogNav.querySelectorAll('.changelog-nav-item').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        changelogContent.innerHTML = '<h3 style="margin:0 0 12px;font-size:16px">' + v.title + '</h3>' + renderChangelogBody(v.body);
-                    });
+                    const isMajor = ver && ver.minor === 0 && ver.patch === 0;
+                    btn.className = 'changelog-nav-item' + (isMajor ? ' major' : '');
+                    // Display: version + date
+                    const display = v.title.replace(/^\[/, '').replace(/\]/, '');
+                    btn.textContent = display.replace(' - ', '  ');
+                    btn.addEventListener('click', () => selectVersion(btn, v));
                     changelogNav.appendChild(btn);
+                    if (i === 0) firstBtn = btn;
                 });
-                if (versions.length > 0) {
-                    changelogContent.innerHTML = '<h3 style="margin:0 0 12px;font-size:16px">' + versions[0].title + '</h3>' + renderChangelogBody(versions[0].body);
+
+                if (firstBtn && versions.length > 0) {
+                    selectVersion(firstBtn, versions[0]);
                 }
                 changelogModal.classList.remove('hidden');
                 legalOverlay.classList.remove('hidden');

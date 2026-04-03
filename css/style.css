@@ -1272,18 +1272,35 @@ body {
 .status-legal a { color: var(--text-secondary); text-decoration: none; }
 .status-legal a:hover { color: var(--primary); text-decoration: underline; }
 
+.changelog-nav-header {
+    padding: 8px 12px 4px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-top: 1px solid var(--border);
+    margin-top: 4px;
+}
+.changelog-nav-header:first-child { border-top: none; margin-top: 0; }
 .changelog-nav-item {
     display: block;
     width: 100%;
-    padding: 6px 14px;
+    padding: 5px 14px 5px 24px;
     border: none;
     background: transparent;
     text-align: left;
-    font-size: 12px;
+    font-size: 11px;
     font-family: var(--font);
     color: var(--text-secondary);
     cursor: pointer;
     white-space: nowrap;
+}
+.changelog-nav-item.major {
+    padding-left: 14px;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--text);
 }
 .changelog-nav-item:hover { background: var(--primary-light); color: var(--primary); }
 .changelog-nav-item.active { background: var(--primary); color: white; font-weight: 600; }
