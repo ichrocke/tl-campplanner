@@ -4,6 +4,7 @@
 
 ### Changed
 - **Tabs**: Bearbeiten/Duplizieren/Schliessen-Buttons erscheinen nicht mehr beim Hover, sondern als Kontextmenü per Rechtsklick
+- **Tabs**: Plus-Button für neuen Arbeitsbereich direkt rechts neben dem letzten Tab
 
 ## [5.8.1] - 2026-04-01
 
