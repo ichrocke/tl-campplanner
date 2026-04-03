@@ -140,6 +140,77 @@
     document.getElementById('link-datenschutz').addEventListener('click', (e) => { e.preventDefault(); showLegal('datenschutz'); });
     document.getElementById('legal-close').addEventListener('click', () => { legalModal.classList.add('hidden'); legalOverlay.classList.add('hidden'); });
 
+    // Changelog modal
+    const changelogModal = document.getElementById('modal-changelog');
+    const changelogNav = document.getElementById('changelog-nav');
+    const changelogContent = document.getElementById('changelog-content');
+
+    function parseChangelog(md) {
+        const versions = [];
+        const parts = md.split(/^## /m);
+        parts.forEach(part => {
+            part = part.trim();
+            if (!part) return;
+            const nlIdx = part.indexOf('\n');
+            const title = part.substring(0, nlIdx !== -1 ? nlIdx : part.length).trim();
+            const body = nlIdx !== -1 ? part.substring(nlIdx + 1).trim() : '';
+            versions.push({ title, body });
+        });
+        return versions;
+    }
+
+    function renderChangelogBody(md) {
+        // Simple markdown to HTML: ### headings, **bold**, - lists, `code`
+        let html = md
+            .replace(/^### (.+)$/gm, '<h4 style="margin:12px 0 6px;color:var(--primary);font-size:13px">$1</h4>')
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            .replace(/`([^`]+)`/g, '<code style="background:var(--bg);padding:1px 4px;border-radius:3px;font-size:12px">$1</code>');
+        // Convert list items
+        const lines = html.split('\n');
+        let inList = false;
+        let result = '';
+        lines.forEach(line => {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('- ')) {
+                if (!inList) { result += '<ul style="margin:4px 0;padding-left:20px">'; inList = true; }
+                result += '<li style="margin:2px 0">' + trimmed.substring(2) + '</li>';
+            } else {
+                if (inList) { result += '</ul>'; inList = false; }
+                if (trimmed) result += '<p style="margin:4px 0">' + trimmed + '</p>';
+            }
+        });
+        if (inList) result += '</ul>';
+        return result;
+    }
+
+    function showChangelog() {
+        fetch('CHANGELOG.md?' + Date.now())
+            .then(r => r.text())
+            .then(md => {
+                const versions = parseChangelog(md);
+                changelogNav.innerHTML = '';
+                versions.forEach((v, i) => {
+                    const btn = document.createElement('button');
+                    btn.className = 'changelog-nav-item' + (i === 0 ? ' active' : '');
+                    btn.textContent = v.title.replace(/^\[|\]$/g, '').replace(/\] - /, '  ');
+                    btn.addEventListener('click', () => {
+                        changelogNav.querySelectorAll('.changelog-nav-item').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        changelogContent.innerHTML = '<h3 style="margin:0 0 12px;font-size:16px">' + v.title + '</h3>' + renderChangelogBody(v.body);
+                    });
+                    changelogNav.appendChild(btn);
+                });
+                if (versions.length > 0) {
+                    changelogContent.innerHTML = '<h3 style="margin:0 0 12px;font-size:16px">' + versions[0].title + '</h3>' + renderChangelogBody(versions[0].body);
+                }
+                changelogModal.classList.remove('hidden');
+                legalOverlay.classList.remove('hidden');
+            });
+    }
+
+    document.getElementById('link-changelog').addEventListener('click', (e) => { e.preventDefault(); showChangelog(); });
+    document.getElementById('changelog-close').addEventListener('click', () => { changelogModal.classList.add('hidden'); legalOverlay.classList.add('hidden'); });
+
     // Daten-Warnung als Modal
     window.showDataWarning = function() {
         if (sessionStorage.getItem('data_warning_shown')) return;

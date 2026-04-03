@@ -1272,6 +1272,22 @@ body {
 .status-legal a { color: var(--text-secondary); text-decoration: none; }
 .status-legal a:hover { color: var(--primary); text-decoration: underline; }
 
+.changelog-nav-item {
+    display: block;
+    width: 100%;
+    padding: 6px 14px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    font-size: 12px;
+    font-family: var(--font);
+    color: var(--text-secondary);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.changelog-nav-item:hover { background: var(--primary-light); color: var(--primary); }
+.changelog-nav-item.active { background: var(--primary); color: white; font-weight: 600; }
+
 .donate-link {
     display: inline-flex;
     align-items: center;
