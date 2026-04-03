@@ -117,6 +117,7 @@
     const legalModal = document.getElementById('modal-legal');
     const legalTitle = document.getElementById('legal-title');
     const legalBody = document.getElementById('legal-body');
+    const changelogModal = document.getElementById('modal-changelog');
     function showLegal(type) {
         if (type === 'impressum') {
             legalTitle.textContent = 'Impressum';
@@ -143,7 +144,6 @@
     document.getElementById('legal-close').addEventListener('click', () => { legalModal.classList.add('hidden'); legalOverlay.classList.add('hidden'); });
 
     // Changelog modal
-    const changelogModal = document.getElementById('modal-changelog');
     const changelogNav = document.getElementById('changelog-nav');
     const changelogContent = document.getElementById('changelog-content');
 
