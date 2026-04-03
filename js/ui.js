@@ -915,41 +915,29 @@ const UI = (() => {
             nameSpan.className = 'tab-name';
             nameSpan.textContent = site.name;
 
-            const editBtn = document.createElement('button');
-            editBtn.className = 'tab-edit';
-            editBtn.title = I18n.t('tab.rename');
-            editBtn.innerHTML = '&#9998;';
-
-            const dupBtn = document.createElement('button');
-            dupBtn.className = 'tab-dup';
-            dupBtn.title = I18n.t('props.duplicate');
-            dupBtn.innerHTML = '&#10697;';
-
-            const closeBtn = document.createElement('button');
-            closeBtn.className = 'tab-close';
-            closeBtn.title = I18n.t('tab.close');
-            closeBtn.innerHTML = '&times;';
-
             tab.appendChild(nameSpan);
-            tab.appendChild(editBtn);
-            tab.appendChild(dupBtn);
-            tab.appendChild(closeBtn);
 
             tab.addEventListener('click', (e) => {
-                if (e.target === closeBtn) {
-                    if (State.sites.length > 1 && confirm(I18n.t('tab.confirmDelete', { name: site.name }))) {
-                        State.deleteSite(i);
-                    }
-                    return;
-                }
-                if (e.target === dupBtn) {
-                    State.duplicateSite(i);
-                    return;
-                }
-                if (e.target === editBtn || e.target.tagName === 'INPUT') return;
+                if (e.target.tagName === 'INPUT') return;
                 Canvas.clearSelection();
                 hideProperties();
                 State.activeSiteIndex = i;
+            });
+
+            tab.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const items = [
+                    { label: I18n.t('tab.rename'), action: () => startRename() },
+                    { label: I18n.t('props.duplicate'), action: () => State.duplicateSite(i) },
+                    { sep: true },
+                    { label: I18n.t('tab.close'), className: 'danger', action: () => {
+                        if (State.sites.length > 1 && confirm(I18n.t('tab.confirmDelete', { name: site.name }))) {
+                            State.deleteSite(i);
+                        }
+                    }}
+                ];
+                createContextMenuAt(e.clientX, e.clientY, items);
             });
 
             function startRename() {
@@ -960,8 +948,7 @@ const UI = (() => {
                 input.className = 'tab-rename-input';
                 input.value = site.name;
                 nameSpan.style.display = 'none';
-                editBtn.style.display = 'none';
-                tab.insertBefore(input, closeBtn);
+                tab.insertBefore(input, nameSpan.nextSibling);
                 input.focus();
                 input.select();
 
@@ -980,7 +967,6 @@ const UI = (() => {
                 });
             }
 
-            editBtn.addEventListener('click', (e) => { e.stopPropagation(); startRename(); });
             nameSpan.addEventListener('dblclick', (e) => { e.stopPropagation(); startRename(); });
 
             container.appendChild(tab);

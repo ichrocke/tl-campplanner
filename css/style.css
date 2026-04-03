@@ -246,32 +246,7 @@ body {
     font-weight: 600;
 }
 
-.tab .tab-close,
-.tab .tab-edit,
-.tab .tab-dup {
-    display: none;
-    width: 16px;
-    height: 16px;
-    border: none;
-    border-radius: 3px;
-    background: transparent;
-    color: var(--text-secondary);
-    font-size: 12px;
-    line-height: 1;
-    cursor: pointer;
-    padding: 0;
-    text-align: center;
-}
-
-.tab:hover .tab-close,
-.tab:hover .tab-edit,
-.tab:hover .tab-dup { display: block; }
-.tab .tab-close:hover { background: var(--danger); color: white; }
-.tab .tab-edit:hover { background: var(--primary-light); color: var(--primary); }
-.tab .tab-dup:hover { background: var(--primary-light); color: var(--primary); }
-
 .tab-name { cursor: pointer; }
-.tab-name:hover { text-decoration: underline dotted; text-underline-offset: 2px; }
 
 .tab-rename-input {
     width: 100px;

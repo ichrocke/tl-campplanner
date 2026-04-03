@@ -1,5 +1,10 @@
 # Changelog
 
+## [5.8.2] - 2026-04-03
+
+### Changed
+- **Tabs**: Bearbeiten/Duplizieren/Schliessen-Buttons erscheinen nicht mehr beim Hover, sondern als Kontextmenü per Rechtsklick
+
 ## [5.8.1] - 2026-04-01
 
 ### Fixed
