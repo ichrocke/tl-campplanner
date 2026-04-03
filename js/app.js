@@ -150,7 +150,7 @@
         const parts = md.split(/^## /m);
         parts.forEach(part => {
             part = part.trim();
-            if (!part) return;
+            if (!part || !part.startsWith('[')) return;
             const nlIdx = part.indexOf('\n');
             const title = part.substring(0, nlIdx !== -1 ? nlIdx : part.length).trim();
             const body = nlIdx !== -1 ? part.substring(nlIdx + 1).trim() : '';
