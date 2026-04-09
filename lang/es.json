@@ -82,6 +82,8 @@
   "texture.water": "Agua",
   "tab.rename": "Renombrar",
   "tab.close": "Cerrar",
+  "tab.export": "Exportar pestaña",
+  "tab.import": "Importar pestaña",
   "tab.confirmDelete": "¿Realmente eliminar \"{name}\"?",
   "modal.customObject.title": "Crear objeto personalizado",
   "modal.customObject.name": "Nombre",

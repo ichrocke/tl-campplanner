@@ -1057,5 +1057,64 @@ ${els}</svg>`;
         alert(items.length + ' Objekte importiert');
     }
 
-    return { exportFile, importFile, print, exportSVG, exportDXF, downloadOffline, importCSV };
+    function exportTab(siteIndex) {
+        const site = State.sites[siteIndex];
+        if (!site) return;
+        const json = JSON.stringify({
+            version: 1,
+            type: 'single-tab',
+            exportDate: new Date().toISOString(),
+            site: site,
+        }, null, 2);
+        const blob = new Blob([json], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const name = site.name.replace(/[^a-zA-Z0-9\u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df_-]/g, '_');
+        a.download = `${name}_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function importTab() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = () => {
+            const file = input.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.type === 'single-tab' && data.site) {
+                        const site = data.site;
+                        // Give new IDs to avoid conflicts
+                        site.id = State.generateId();
+                        site.objects.forEach(o => { o.id = State.generateId(); });
+                        site.layers.forEach(l => {
+                            const oldId = l.id;
+                            const newId = State.generateId();
+                            l.id = newId;
+                            site.objects.forEach(o => { if (o.layerId === oldId) o.layerId = newId; });
+                            if (site.activeLayerId === oldId) site.activeLayerId = newId;
+                        });
+                        State.sites.push(site);
+                        State.activeSiteIndex = State.sites.length - 1;
+                    } else if (data.sites && Array.isArray(data.sites)) {
+                        // Full export file - import all tabs
+                        State.importJSON(e.target.result);
+                    } else {
+                        throw new Error('Unknown format');
+                    }
+                } catch (err) {
+                    alert(I18n.t('msg.importError') + err.message);
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    return { exportFile, importFile, print, exportSVG, exportDXF, downloadOffline, importCSV, exportTab, importTab };
 })();

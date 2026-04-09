@@ -957,6 +957,9 @@ const UI = (() => {
                     { label: I18n.t('tab.rename'), action: () => startRename() },
                     { label: I18n.t('props.duplicate'), action: () => State.duplicateSite(i) },
                     { sep: true },
+                    { label: I18n.t('tab.export'), action: () => IO.exportTab(i) },
+                    { label: I18n.t('tab.import'), action: () => IO.importTab() },
+                    { sep: true },
                     { label: I18n.t('tab.close'), className: 'danger', action: () => {
                         if (State.sites.length > 1 && confirm(I18n.t('tab.confirmDelete', { name: site.name }))) {
                             State.deleteSite(i);

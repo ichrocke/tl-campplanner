@@ -82,6 +82,8 @@
   "texture.water": "Acqua",
   "tab.rename": "Rinomina",
   "tab.close": "Chiudi",
+  "tab.export": "Esporta tab",
+  "tab.import": "Importa tab",
   "tab.confirmDelete": "Eliminare davvero \"{name}\"?",
   "modal.customObject.title": "Crea oggetto personalizzato",
   "modal.customObject.name": "Nome",

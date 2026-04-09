@@ -82,6 +82,8 @@
   "texture.water": "Eau",
   "tab.rename": "Renommer",
   "tab.close": "Fermer",
+  "tab.export": "Exporter l'onglet",
+  "tab.import": "Importer un onglet",
   "tab.confirmDelete": "Vraiment supprimer \"{name}\" ?",
   "modal.customObject.title": "Creer un objet personnalise",
   "modal.customObject.name": "Nom",

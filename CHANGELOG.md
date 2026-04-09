@@ -9,6 +9,7 @@
 
 ### Fixed
 - **Koordinateneingabe**: Komma (`,`) wird jetzt als Dezimaltrennzeichen in Breiten- und Längengrad akzeptiert (neben dem Punkt)
+- **Tabs**: Einzelne Tabs koennen per Rechtsklick exportiert und importiert werden (als separate JSON-Datei)
 
 ## [5.8.2] - 2026-04-03
 

@@ -82,6 +82,8 @@
   "texture.water": "Wasser",
   "tab.rename": "Umbenennen",
   "tab.close": "Schließen",
+  "tab.export": "Tab exportieren",
+  "tab.import": "Tab importieren",
   "tab.confirmDelete": "\"{name}\" wirklich löschen?",
   "modal.customObject.title": "Eigenes Objekt erstellen",
   "modal.customObject.name": "Name",
