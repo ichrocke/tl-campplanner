@@ -10,6 +10,7 @@
 
 ### Fixed
 - **Coordinate input**: Comma (`,`) is now accepted as decimal separator in latitude and longitude fields (in addition to period)
+- **Collab**: Fix objects disappearing when multiple users work simultaneously – pending local operations are now preserved during remote state updates, paste sends individual ops instead of full-state push, conflict resolution reuses merge logic, tab switching no longer triggers unnecessary sync
 
 ## [5.8.2] - 2026-04-03
 

@@ -285,6 +285,10 @@ const Collab = (() => {
 
     function onRemoteUpdate(stateJson, version) {
         _version = version;
+
+        // Save pending ops before overwriting state – they haven't been sent yet
+        const savedOps = _pendingOps.splice(0);
+
         _syncLock = true;
         try {
             State.importJSON(stateJson, true);
@@ -292,6 +296,30 @@ const Collab = (() => {
             console.warn('Collab: Failed to apply remote state:', e);
         }
         _syncLock = false;
+
+        // Re-apply pending ops locally so they aren't lost
+        if (savedOps.length > 0) {
+            savedOps.forEach(op => {
+                const site = State.sites[op.siteIdx];
+                if (!site) return;
+                if (op.type === 'add' && op.object) {
+                    // Only re-add if not already present (server may have it)
+                    if (!site.objects.find(o => o.id === op.object.id)) {
+                        site.objects.push(JSON.parse(JSON.stringify(op.object)));
+                    }
+                } else if (op.type === 'update' && op.objectId && op.props) {
+                    const obj = site.objects.find(o => o.id === op.objectId);
+                    if (obj) Object.assign(obj, op.props);
+                } else if (op.type === 'remove' && op.objectId) {
+                    site.objects = site.objects.filter(o => o.id !== op.objectId);
+                }
+            });
+            // Re-queue ops so they get flushed to server
+            _pendingOps.push(...savedOps);
+            clearTimeout(_opsTimer);
+            _opsTimer = setTimeout(flushOps, 300);
+        }
+
         Canvas.render();
     }
 
@@ -307,8 +335,9 @@ const Collab = (() => {
             flushOps();
         } else {
             // Full-state push als Fallback (z.B. fuer Site-Aenderungen)
+            // Debounce at 150ms to batch rapid changes without losing data
             clearTimeout(_opsTimer);
-            _opsTimer = setTimeout(doFullPush, 400);
+            _opsTimer = setTimeout(doFullPush, 150);
         }
     }
 
@@ -355,11 +384,9 @@ const Collab = (() => {
             if (data.ok) {
                 _version = data.version;
             } else if (data.conflict) {
-                _version = data.currentVersion;
-                _syncLock = true;
-                try { State.importJSON(data.state, true); } catch (e) { /* ignore */ }
-                _syncLock = false;
-                Canvas.render();
+                // Conflict: server has newer version – merge via onRemoteUpdate
+                // which preserves any pending ops
+                onRemoteUpdate(data.state, data.currentVersion);
             }
         } catch (e) {
             console.warn('Collab: Push failed:', e);

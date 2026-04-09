@@ -89,7 +89,7 @@ const State = (() => {
         get activeSiteIndex() { return _activeSiteIndex; },
         set activeSiteIndex(i) {
             _activeSiteIndex = i;
-            notify(true);
+            notify(true, true); // skipUndo=true, skipSync=true (tab switch is local-only)
         },
         get activeSite() { return _sites[_activeSiteIndex]; },
         get defaultTemplates() { return defaultTemplates(); },
@@ -285,7 +285,7 @@ const State = (() => {
             _sites = data.sites;
             _activeSiteIndex = data.activeSiteIndex;
             _minDistance = data.minDistance;
-            _listeners.forEach(fn => fn());
+            _listeners.forEach(fn => fn(false)); // explicit skipSync=false → triggers full push
         },
 
         redo() {
@@ -295,7 +295,7 @@ const State = (() => {
             _sites = data.sites;
             _activeSiteIndex = data.activeSiteIndex;
             _minDistance = data.minDistance;
-            _listeners.forEach(fn => fn());
+            _listeners.forEach(fn => fn(false)); // explicit skipSync=false → triggers full push
         },
 
         // Clipboard
@@ -319,8 +319,12 @@ const State = (() => {
                 obj.layerId = site.activeLayerId;
                 site.objects.push(obj);
                 newIds.push(obj.id);
+                // Collab: send individual ops for each pasted object
+                if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
+                    Collab.pushOp({ type: 'add', siteIdx: _activeSiteIndex, object: JSON.parse(JSON.stringify(obj)) });
+                }
             });
-            notify();
+            notify(false, true); // skipSync=true since ops are sent individually
             return newIds;
         },
 
