@@ -544,8 +544,8 @@ const UI = (() => {
             const site = State.activeSite;
             if (!site) return;
             if (!site.mapLayer) site.mapLayer = {};
-            site.mapLayer.lat = parseFloat(document.getElementById('map-lat').value) || null;
-            site.mapLayer.lng = parseFloat(document.getElementById('map-lng').value) || null;
+            site.mapLayer.lat = parseFloat((document.getElementById('map-lat').value || '').replace(',', '.')) || null;
+            site.mapLayer.lng = parseFloat((document.getElementById('map-lng').value || '').replace(',', '.')) || null;
             site.mapLayer.source = document.getElementById('map-source').value;
             site.mapLayer.opacity = parseFloat(document.getElementById('map-opacity').value);
             site.mapLayer.rotation = parseInt(document.getElementById('map-rotation').value) || 0;

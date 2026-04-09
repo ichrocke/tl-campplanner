@@ -5,8 +5,10 @@
 ### Added
 - **Ebenen**: Rechtsklick auf eine Ebene → "In anderen Tab kopieren" – kopiert die Ebene samt allen Objekten in einen anderen Tab
 - **Karte**: Taste `K` blendet Kartenansicht (Satellit/OSM) ein und aus
-- **Karte**: Taste `.` öffnet Karteneinstellungen mit Fokus auf Breitengrad, Taste `,` auf Längengrad
-- **Shortcuts**: `K`, `.`, `,` in der Shortcut-Übersicht (Einstellungen) ergänzt
+- **Shortcuts**: `K` in der Shortcut-Übersicht (Einstellungen) ergänzt
+
+### Fixed
+- **Koordinateneingabe**: Komma (`,`) wird jetzt als Dezimaltrennzeichen in Breiten- und Längengrad akzeptiert (neben dem Punkt)
 
 ## [5.8.2] - 2026-04-03
 
