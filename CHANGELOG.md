@@ -3,22 +3,22 @@
 ## [5.8.3] - 2026-04-09
 
 ### Added
-- **Ebenen**: Rechtsklick auf eine Ebene → "In anderen Tab kopieren" – kopiert die Ebene samt allen Objekten in einen anderen Tab
-- **Karte**: Taste `K` blendet Kartenansicht (Satellit/OSM) ein und aus
-- **Shortcuts**: `K` in der Shortcut-Übersicht (Einstellungen) ergänzt
+- **Layers**: Right-click on a layer to copy it (including all objects) to another tab
+- **Map**: Press `K` to toggle map layer (satellite/OSM) visibility
+- **Shortcuts**: Added `K` to the shortcuts overview in settings
+- **Tabs**: Individual tabs can be exported and imported as separate JSON files via right-click context menu
 
 ### Fixed
-- **Koordinateneingabe**: Komma (`,`) wird jetzt als Dezimaltrennzeichen in Breiten- und Längengrad akzeptiert (neben dem Punkt)
-- **Tabs**: Einzelne Tabs koennen per Rechtsklick exportiert und importiert werden (als separate JSON-Datei)
+- **Coordinate input**: Comma (`,`) is now accepted as decimal separator in latitude and longitude fields (in addition to period)
 
 ## [5.8.2] - 2026-04-03
 
 ### Changed
-- **Tabs**: Bearbeiten/Duplizieren/Schliessen-Buttons erscheinen nicht mehr beim Hover, sondern als Kontextmenü per Rechtsklick
-- **Tabs**: Plus-Button für neuen Arbeitsbereich direkt rechts neben dem letzten Tab
+- **Tabs**: Edit/Duplicate/Close buttons no longer appear on hover, replaced by right-click context menu
+- **Tabs**: Plus button for new workspace placed directly to the right of the last tab
 
 ### Added
-- **Changelog-Popup**: Link in der Statusbar öffnet Changelog als Popup mit Versionsnavigation links (gruppiert nach Hauptversion) und Inhalt rechts
+- **Changelog popup**: Link in the status bar opens changelog as popup with version navigation on the left (grouped by major version) and content on the right
 
 ## [5.8.1] - 2026-04-01
 
@@ -84,8 +84,8 @@
 ## [5.4.1] - 2026-03-21
 
 ### Added
-- **Impressum & Datenschutz**: Links in der Statusbar, minimaler Inhalt für private Seite, inkl. PayPal-Hinweis
-- **Live-Rotation in Properties**: Rotation wird bei manuellem Drehen (Drag-Handle) live im Properties-Panel angezeigt, sowohl für Einzelobjekte als auch Gruppen
+- **Legal & Privacy**: Links in the status bar, minimal content for private site, including PayPal notice
+- **Live rotation in Properties**: Rotation is displayed live in the Properties panel during manual rotation (drag handle), for both single objects and groups
 
 ### Fixed
 - Group rotation via slider/buttons now rotates polygon points (ground areas, areas, pipes) around group center, matching drag handle behavior
