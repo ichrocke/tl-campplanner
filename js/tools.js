@@ -935,6 +935,23 @@ const Tools = (() => {
                     Canvas.render();
                 }
                 break;
+            case 'k': case 'K':
+                if (!e.ctrlKey && !e.metaKey) {
+                    const site = State.activeSite;
+                    if (site) {
+                        if (!site.mapLayer) site.mapLayer = { enabled: false, lat: null, lng: null, source: 'osm', opacity: 0.5, rotation: 0, anchorWorldX: 0, anchorWorldY: 0 };
+                        site.mapLayer.enabled = !site.mapLayer.enabled;
+                        State.notifyChange(true);
+                        Canvas.render();
+                    }
+                }
+                break;
+            case '.':
+                if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); UI.openMaptilesModal('lat'); }
+                break;
+            case ',':
+                if (!e.ctrlKey && !e.metaKey) { e.preventDefault(); UI.openMaptilesModal('lng'); }
+                break;
             case 'n': case 'N':
                 if (!e.ctrlKey && !e.metaKey) {
                     Tools.setPendingTemplate({ type: 'postit', name: 'Note', width: 3, height: 3, guyRopeDistance: 0, color: '#fef08a', shape: 'rect', text: '' });

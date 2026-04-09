@@ -264,6 +264,8 @@
   "layer.color": "Couleur du calque",
   "layer.merge": "Fusionner vers le bas",
   "layer.flatten": "Aplatir tout",
+  "layer.copyToTab": "Copier dans un autre onglet",
+  "layer.copyToTabPrompt": "Copier dans quel onglet ? (entrer le numéro)",
   "props.pipeLength": "Longueur totale",
   "tool.note": "Note",
   "tool.notebook": "Carnet de notes",

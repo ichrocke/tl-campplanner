@@ -265,6 +265,8 @@
   "layer.color": "Color de capa",
   "layer.merge": "Fusionar abajo",
   "layer.flatten": "Aplanar todo",
+  "layer.copyToTab": "Copiar a otra pestaña",
+  "layer.copyToTabPrompt": "¿Copiar a qué pestaña? (introducir número)",
   "props.pipeLength": "Longitud total",
   "tool.note": "Nota",
   "tool.notebook": "Cuaderno",

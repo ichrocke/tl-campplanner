@@ -265,6 +265,8 @@
   "layer.color": "Ebenen-Farbe",
   "layer.merge": "Nach unten zusammenfuehren",
   "layer.flatten": "Alle zusammenfuehren",
+  "layer.copyToTab": "In anderen Tab kopieren",
+  "layer.copyToTabPrompt": "In welchen Tab kopieren? (Nummer eingeben)",
   "props.pipeLength": "Gesamtlaenge",
   "tool.note": "Notiz",
   "tool.notebook": "Notizbuch",

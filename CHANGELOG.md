@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.8.3] - 2026-04-09
+
+### Added
+- **Ebenen**: Rechtsklick auf eine Ebene → "In anderen Tab kopieren" – kopiert die Ebene samt allen Objekten in einen anderen Tab
+- **Karte**: Taste `K` blendet Kartenansicht (Satellit/OSM) ein und aus
+- **Karte**: Taste `.` öffnet Karteneinstellungen mit Fokus auf Breitengrad, Taste `,` auf Längengrad
+- **Shortcuts**: `K`, `.`, `,` in der Shortcut-Übersicht (Einstellungen) ergänzt
+
 ## [5.8.2] - 2026-04-03
 
 ### Changed

@@ -107,6 +107,32 @@ const UI = (() => {
                         if (o !== null) { layer.opacity = Math.max(0.1, Math.min(1, parseFloat(o) || 1)); State.notifyChange(true); Canvas.render(); }
                     }},
                 ];
+                if (State.sites.length > 1) {
+                    items.push({ label: I18n.t('layer.copyToTab'), action: () => {
+                        const otherSites = State.sites
+                            .map((s, idx) => ({ s, idx }))
+                            .filter(({ idx }) => idx !== State.activeSiteIndex);
+                        const msg = I18n.t('layer.copyToTabPrompt') + '\n' +
+                            otherSites.map((o, n) => (n + 1) + ': ' + o.s.name).join('\n');
+                        const choice = prompt(msg);
+                        if (!choice) return;
+                        const n = parseInt(choice) - 1;
+                        if (isNaN(n) || n < 0 || n >= otherSites.length) return;
+                        const target = otherSites[n].s;
+                        const genId = () => Date.now().toString(36) + '_' + Math.random().toString(36).substr(2, 6);
+                        const newLayerId = genId();
+                        const newLayer = JSON.parse(JSON.stringify(layer));
+                        newLayer.id = newLayerId;
+                        target.layers.push(newLayer);
+                        site.objects.filter(o => o.layerId === layer.id).forEach(o => {
+                            const copy = JSON.parse(JSON.stringify(o));
+                            copy.id = genId();
+                            copy.layerId = newLayerId;
+                            target.objects.push(copy);
+                        });
+                        State.notifyChange();
+                    }});
+                }
                 if (i < site.layers.length - 1) {
                     items.push({ label: I18n.t('layer.merge'), action: () => {
                         const targetId = site.layers[i + 1].id;
@@ -2557,6 +2583,27 @@ const UI = (() => {
         });
     });
 
+    function openMaptilesModal(focusField) {
+        const site = State.activeSite;
+        if (!site) return;
+        const ml = site.mapLayer || {};
+        document.getElementById('map-lat').value = ml.lat || '';
+        document.getElementById('map-lng').value = ml.lng || '';
+        document.getElementById('map-source').value = ml.source || 'osm';
+        document.getElementById('map-opacity').value = ml.opacity != null ? ml.opacity : 0.5;
+        document.getElementById('map-opacity-val').textContent = Math.round((ml.opacity != null ? ml.opacity : 0.5) * 100) + '%';
+        document.getElementById('map-enabled').checked = !!ml.enabled;
+        document.getElementById('map-rotation').value = ml.rotation || 0;
+        document.getElementById('map-rotation-val').textContent = (ml.rotation || 0) + '\u00B0';
+        openModal('modal-maptiles');
+        if (focusField) {
+            setTimeout(() => {
+                const field = document.getElementById('map-' + focusField);
+                if (field) { field.focus(); field.select(); }
+            }, 50);
+        }
+    }
+
     return {
         init, buildTabs, buildPalette, buildPlacedList, buildLayers, syncSettings, translateUI,
         showProperties, hideProperties, getActiveColor,
@@ -2564,6 +2611,6 @@ const UI = (() => {
         showContextMenu, showCanvasContextMenu, showGroundVertexMenu, showGroundEdgeMenu,
         showAreaVertexMenu, showAreaEdgeMenu, showFenceVertexMenu, showFenceEdgeMenu,
         removeContextMenu, openTextModal, showMultiProperties,
-        updateCollabStatus,
+        updateCollabStatus, openMaptilesModal,
     };
 })();
