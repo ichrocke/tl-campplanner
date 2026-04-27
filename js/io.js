@@ -827,17 +827,64 @@ const IO = (() => {
                 els += `<polygon points="${rotRect(obj.x, obj.y, hw, hh, rot)}" fill="${color}" fill-opacity="0.6" stroke="${color}" stroke-width="1.5"/>\n`;
             }
 
-            // Entrance marker
-            if (obj.entranceSide && obj.entranceSide !== 'none') {
+            // Entrance marker (triangle on perimeter, matching canvas rendering)
+            let ePos = -1;
+            if (obj.entrancePos !== undefined) {
+                ePos = obj.entrancePos;
+            } else if (obj.entranceSide && obj.entranceSide !== 'none') {
+                const w = obj.width, h = obj.height;
+                const perim = 2 * (w + h);
+                if (obj.entranceSide === 'top') ePos = (w / 2) / perim;
+                else if (obj.entranceSide === 'right') ePos = (w + h / 2) / perim;
+                else if (obj.entranceSide === 'bottom') ePos = (w + w / 2 + h) / perim;
+                else if (obj.entranceSide === 'left') ePos = (2 * w + h + h / 2) / perim;
+            }
+            if (ePos >= 0) {
+                const shapePts = Canvas.getLocalShapePath(obj, 0);
+                let totalPerim = 0;
+                const segLens = [];
+                for (let i = 0; i < shapePts.length; i++) {
+                    const j = (i + 1) % shapePts.length;
+                    const dx = shapePts[j].x - shapePts[i].x;
+                    const dy = shapePts[j].y - shapePts[i].y;
+                    const len = Math.sqrt(dx * dx + dy * dy);
+                    segLens.push(len);
+                    totalPerim += len;
+                }
+                let target = ePos * totalPerim;
+                let ex = 0, ey = 0, nx = 0, ny = 0;
+                for (let i = 0; i < shapePts.length; i++) {
+                    if (target <= segLens[i] || i === shapePts.length - 1) {
+                        const j = (i + 1) % shapePts.length;
+                        const t = segLens[i] > 0 ? target / segLens[i] : 0;
+                        ex = shapePts[i].x + (shapePts[j].x - shapePts[i].x) * t;
+                        ey = shapePts[i].y + (shapePts[j].y - shapePts[i].y) * t;
+                        const dx = shapePts[j].x - shapePts[i].x;
+                        const dy = shapePts[j].y - shapePts[i].y;
+                        const segLen = Math.sqrt(dx * dx + dy * dy) || 1;
+                        nx = dy / segLen; ny = -dx / segLen;
+                        break;
+                    }
+                    target -= segLens[i];
+                }
+                const tx = -ny, ty = nx;
+                const ew = Math.min(obj.width, obj.height) * 0.4;
+                const eh = Math.max(8 / s, Math.min(obj.width, obj.height) * 0.12);
                 const rad = rot * Math.PI / 180;
-                const cos = Math.cos(rad), sin = Math.sin(rad);
-                let ex = 0, ey = 0, tw = Math.min(hw, hh) * 0.4, th = 0.15;
-                if (obj.entranceSide === 'top') { ey = -hh - th; }
-                else if (obj.entranceSide === 'bottom') { ey = hh + th; }
-                else if (obj.entranceSide === 'left') { ex = -hw - th; }
-                else if (obj.entranceSide === 'right') { ex = hw + th; }
-                const rx = ex * cos - ey * sin, ry = ex * sin + ey * cos;
-                els += `<circle cx="${((obj.x + rx)*s).toFixed(1)}" cy="${((obj.y + ry)*s).toFixed(1)}" r="${(tw*s*0.3).toFixed(1)}" fill="#16a34a"/>\n`;
+                const rcos = Math.cos(rad), rsin = Math.sin(rad);
+                const toSvg = (px, py) => {
+                    const rx = px * rcos - py * rsin;
+                    const ry = px * rsin + py * rcos;
+                    return { x: (obj.x + rx) * s, y: (obj.y + ry) * s };
+                };
+                const p1 = toSvg(ex - tx * ew / 2, ey - ty * ew / 2);
+                const p2 = toSvg(ex + nx * eh, ey + ny * eh);
+                const p3 = toSvg(ex + tx * ew / 2, ey + ty * ew / 2);
+                els += `<polygon points="${p1.x.toFixed(1)},${p1.y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)} ${p3.x.toFixed(1)},${p3.y.toFixed(1)}" fill="#16a34a" stroke="#fff" stroke-width="1"/>\n`;
+                const gap = Math.max(0, ew / 2 - 1 / s);
+                const g1 = toSvg(ex - tx * gap, ey - ty * gap);
+                const g2 = toSvg(ex + tx * gap, ey + ty * gap);
+                els += `<line x1="${g1.x.toFixed(1)}" y1="${g1.y.toFixed(1)}" x2="${g2.x.toFixed(1)}" y2="${g2.y.toFixed(1)}" stroke="#fff" stroke-width="2"/>\n`;
             }
 
             // Label

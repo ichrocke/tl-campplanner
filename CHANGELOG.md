@@ -1,5 +1,10 @@
 # Changelog
 
+## [5.8.4] - 2026-04-27
+
+### Fixed
+- **SVG export**: Tent entrances are now rendered as a green triangle marker on the tent edge (matching the canvas display) instead of a small circle, and respect the new `entrancePos` field allowing arbitrary positions along the perimeter for all shapes (rect, circle, triangle, hexagon, etc.)
+
 ## [5.8.3] - 2026-04-09
 
 ### Added
