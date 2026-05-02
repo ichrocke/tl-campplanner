@@ -164,6 +164,7 @@ const State = (() => {
                 rotation: 0,
                 guyRopeDistance: template.guyRopeDistance || 0,
                 guyRopeSides: template.guyRopeSides || { top: true, right: true, bottom: true, left: true },
+                guyRopeSideDistances: template.guyRopeSideDistances ? { ...template.guyRopeSideDistances } : {},
                 color: template.color,
                 shape: template.shape || 'rect',
                 description: template.description || '',
@@ -412,6 +413,7 @@ const State = (() => {
                 // Migrate: ensure guyRopeSides exists on all objects
                 s.objects.forEach(o => {
                     if (!o.guyRopeSides) o.guyRopeSides = { top: true, right: true, bottom: true, left: true };
+                    if (!o.guyRopeSideDistances) o.guyRopeSideDistances = {};
                     if (!o.layerId) o.layerId = s.layers[0].id;
                 });
             });

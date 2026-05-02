@@ -338,7 +338,16 @@ const IO = (() => {
         });
         (site.grounds || []).forEach(g => g.forEach(p => expand(p.x, p.y))); // legacy
         site.objects.forEach(obj => {
-            const pad = Math.max(obj.width || 0, obj.height || 0) / 2 + (obj.guyRopeDistance || 0) + 0.5;
+            let maxRope = obj.guyRopeDistance || 0;
+            if (obj.shape === 'rect' && Canvas.getEffectiveSideDistance) {
+                maxRope = Math.max(
+                    Canvas.getEffectiveSideDistance(obj, 'top'),
+                    Canvas.getEffectiveSideDistance(obj, 'right'),
+                    Canvas.getEffectiveSideDistance(obj, 'bottom'),
+                    Canvas.getEffectiveSideDistance(obj, 'left'),
+                );
+            }
+            const pad = Math.max(obj.width || 0, obj.height || 0) / 2 + maxRope + 0.5;
             expand(obj.x - pad, obj.y - pad);
             expand(obj.x + pad, obj.y + pad);
             if (obj.points) obj.points.forEach(p => expand(p.x, p.y));
@@ -768,44 +777,52 @@ const IO = (() => {
             const rot = obj.rotation || 0;
 
             // Guy ropes
-            if (obj.guyRopeDistance > 0) {
+            const sideDt = shape === 'rect' && Canvas.getEffectiveSideDistance ? Canvas.getEffectiveSideDistance(obj, 'top') : 0;
+            const sideDr = shape === 'rect' && Canvas.getEffectiveSideDistance ? Canvas.getEffectiveSideDistance(obj, 'right') : 0;
+            const sideDb = shape === 'rect' && Canvas.getEffectiveSideDistance ? Canvas.getEffectiveSideDistance(obj, 'bottom') : 0;
+            const sideDl = shape === 'rect' && Canvas.getEffectiveSideDistance ? Canvas.getEffectiveSideDistance(obj, 'left') : 0;
+            const hasRectRope = shape === 'rect' && (sideDt > 0 || sideDr > 0 || sideDb > 0 || sideDl > 0);
+            if (obj.guyRopeDistance > 0 || hasRectRope) {
                 const gd = obj.guyRopeDistance;
-                if (shape === 'circle') {
-                    els += `<ellipse cx="${(obj.x*s).toFixed(1)}" cy="${(obj.y*s).toFixed(1)}" rx="${((hw + gd)*s).toFixed(1)}" ry="${((hh + gd)*s).toFixed(1)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
-                } else if (shape === 'triangle') {
-                    els += `<polygon points="${regPoly(obj.x, obj.y, hw + gd, hh + gd, 3, rot)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
-                } else if (['hexagon','octagon','decagon','dodecagon'].includes(shape)) {
-                    const sides = shape === 'hexagon' ? 6 : shape === 'octagon' ? 8 : shape === 'decagon' ? 10 : 12;
-                    els += `<polygon points="${regPoly(obj.x, obj.y, hw + gd, hh + gd, sides, rot)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
-                } else {
-                    els += `<polygon points="${rotRect(obj.x, obj.y, hw + gd, hh + gd, rot)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
-                }
-                // Rope lines from body to outer
                 const ropeColor = '#d1d5db';
                 const rad = (rot || 0) * Math.PI / 180;
                 const cos = Math.cos(rad), sin = Math.sin(rad);
                 const rotP = (dx,dy) => ({ x: obj.x + dx*cos - dy*sin, y: obj.y + dx*sin + dy*cos });
+
                 if (shape === 'rect') {
-                    const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
-                    [[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([sx,sy]) => {
-                        const sideH = sy < 0 ? 'top' : 'bottom', sideV = sx < 0 ? 'left' : 'right';
-                        if (sides[sideH] || sides[sideV]) {
-                            const from = rotP(sx*hw, sy*hh), to = rotP(sx*(hw+gd), sy*(hh+gd));
-                            els += `<line x1="${(from.x*s).toFixed(1)}" y1="${(from.y*s).toFixed(1)}" x2="${(to.x*s).toFixed(1)}" y2="${(to.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`;
-                        }
-                    });
-                    if (sides.top) { const f = rotP(0,-hh), t = rotP(0,-hh-gd); els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`; }
-                    if (sides.bottom) { const f = rotP(0,hh), t = rotP(0,hh+gd); els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`; }
-                    if (sides.left) { const f = rotP(-hw,0), t = rotP(-hw-gd,0); els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`; }
-                    if (sides.right) { const f = rotP(hw,0), t = rotP(hw+gd,0); els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`; }
-                } else {
-                    // Radial ropes for circle/polygon shapes (respecting hw/hh stretch)
+                    const lineSeg = (ax, ay, bx, by, dashed) => {
+                        const f = rotP(ax, ay), t = rotP(bx, by);
+                        const dash = dashed ? ' stroke-dasharray="4,4"' : '';
+                        const stroke = dashed ? '#9ca3af' : ropeColor;
+                        els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${stroke}" stroke-width="0.8"${dash}/>\n`;
+                    };
+                    if (sideDt > 0) lineSeg(-hw - sideDl, -hh - sideDt, hw + sideDr, -hh - sideDt, true);
+                    if (sideDr > 0) lineSeg(hw + sideDr, -hh - sideDt, hw + sideDr, hh + sideDb, true);
+                    if (sideDb > 0) lineSeg(hw + sideDr, hh + sideDb, -hw - sideDl, hh + sideDb, true);
+                    if (sideDl > 0) lineSeg(-hw - sideDl, hh + sideDb, -hw - sideDl, -hh - sideDt, true);
+                    if (sideDt > 0 && sideDl > 0) lineSeg(-hw, -hh, -hw - sideDl, -hh - sideDt, false);
+                    if (sideDt > 0 && sideDr > 0) lineSeg(hw, -hh, hw + sideDr, -hh - sideDt, false);
+                    if (sideDb > 0 && sideDr > 0) lineSeg(hw, hh, hw + sideDr, hh + sideDb, false);
+                    if (sideDb > 0 && sideDl > 0) lineSeg(-hw, hh, -hw - sideDl, hh + sideDb, false);
+                    if (sideDt > 0) lineSeg(0, -hh, 0, -hh - sideDt, false);
+                    if (sideDb > 0) lineSeg(0, hh, 0, hh + sideDb, false);
+                    if (sideDl > 0) lineSeg(-hw, 0, -hw - sideDl, 0, false);
+                    if (sideDr > 0) lineSeg(hw, 0, hw + sideDr, 0, false);
+                } else if (gd > 0) {
+                    if (shape === 'circle') {
+                        els += `<ellipse cx="${(obj.x*s).toFixed(1)}" cy="${(obj.y*s).toFixed(1)}" rx="${((hw + gd)*s).toFixed(1)}" ry="${((hh + gd)*s).toFixed(1)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
+                    } else if (shape === 'triangle') {
+                        els += `<polygon points="${regPoly(obj.x, obj.y, hw + gd, hh + gd, 3, rot)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
+                    } else if (['hexagon','octagon','decagon','dodecagon'].includes(shape)) {
+                        const sides = shape === 'hexagon' ? 6 : shape === 'octagon' ? 8 : shape === 'decagon' ? 10 : 12;
+                        els += `<polygon points="${regPoly(obj.x, obj.y, hw + gd, hh + gd, sides, rot)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
+                    }
+                    // Radial ropes
                     const n = shape === 'circle' ? 8 : shape === 'triangle' ? 3 : shape === 'hexagon' ? 6 : shape === 'octagon' ? 8 : shape === 'decagon' ? 10 : shape === 'dodecagon' ? 12 : 8;
                     for (let i = 0; i < n; i++) {
                         const a = (i / n) * Math.PI * 2 - Math.PI / 2;
                         const ca = Math.cos(a), sa = Math.sin(a);
                         const fx = ca * hw, fy = sa * hh;
-                        // Outer point: extend along the same direction by gd
                         const bodyR = Math.sqrt(fx * fx + fy * fy);
                         const dirX = bodyR > 0 ? fx / bodyR : 0, dirY = bodyR > 0 ? fy / bodyR : 0;
                         const tx = fx + dirX * gd, ty = fy + dirY * gd;

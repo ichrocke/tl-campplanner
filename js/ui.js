@@ -1343,17 +1343,30 @@ const UI = (() => {
         // --- Section: Guy ropes ---
         if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'bgimage' && obj.type !== 'image' && obj.type !== 'guideline') {
             const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
+            const sd = obj.guyRopeSideDistances || {};
+            const sdVal = (s) => (sd[s] !== undefined && sd[s] !== null && sd[s] !== '') ? sd[s] : '';
+            const showRectSides = obj.shape === 'rect' && (
+                obj.guyRopeDistance > 0 ||
+                Number(sd.top) > 0 || Number(sd.right) > 0 || Number(sd.bottom) > 0 || Number(sd.left) > 0
+            );
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.guyRope')}</div>
                 <label>${I18n.t('props.guyRope.distance')} <input type="number" id="prop-guyrope" value="${obj.guyRopeDistance}" min="0" step="0.1"></label>
-                ${obj.guyRopeDistance > 0 ? `<label>${I18n.t('props.guyRope.ropeWidth')} <input type="number" id="prop-ropewidth" value="${obj.ropeWidth || ''}" min="0" max="3" step="0.1" placeholder="auto"></label>` : ''}
-                ${obj.guyRopeDistance > 0 && obj.shape === 'rect' ? `
+                ${obj.guyRopeDistance > 0 || showRectSides ? `<label>${I18n.t('props.guyRope.ropeWidth')} <input type="number" id="prop-ropewidth" value="${obj.ropeWidth || ''}" min="0" max="3" step="0.1" placeholder="auto"></label>` : ''}
+                ${showRectSides ? `
                 <div class="prop-section-subtitle">${I18n.t('props.guyRope.sides')}</div>
                 <div class="guyrope-sides">
                     <label><input type="checkbox" id="gr-top" ${sides.top ? 'checked' : ''}> ${I18n.t('props.guyRope.top')}</label>
                     <label><input type="checkbox" id="gr-right" ${sides.right ? 'checked' : ''}> ${I18n.t('props.guyRope.right')}</label>
                     <label><input type="checkbox" id="gr-bottom" ${sides.bottom ? 'checked' : ''}> ${I18n.t('props.guyRope.bottom')}</label>
                     <label><input type="checkbox" id="gr-left" ${sides.left ? 'checked' : ''}> ${I18n.t('props.guyRope.left')}</label>
+                </div>
+                <div class="prop-section-subtitle">${I18n.t('props.guyRope.sideDistance')}</div>
+                <div class="prop-grid">
+                    <label>${I18n.t('props.guyRope.top')} <input type="number" id="grd-top" value="${sdVal('top')}" min="0" step="0.1" placeholder="${obj.guyRopeDistance}"></label>
+                    <label>${I18n.t('props.guyRope.right')} <input type="number" id="grd-right" value="${sdVal('right')}" min="0" step="0.1" placeholder="${obj.guyRopeDistance}"></label>
+                    <label>${I18n.t('props.guyRope.bottom')} <input type="number" id="grd-bottom" value="${sdVal('bottom')}" min="0" step="0.1" placeholder="${obj.guyRopeDistance}"></label>
+                    <label>${I18n.t('props.guyRope.left')} <input type="number" id="grd-left" value="${sdVal('left')}" min="0" step="0.1" placeholder="${obj.guyRopeDistance}"></label>
                 </div>` : ''}
             </div>`;
         }
@@ -1686,6 +1699,27 @@ const UI = (() => {
                     const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
                     sides[side] = cb.checked;
                     State.updateObject(obj.id, { guyRopeSides: { ...sides } });
+                    Canvas.render();
+                });
+            }
+        });
+
+        // Per-side guy rope distance overrides
+        ['top', 'right', 'bottom', 'left'].forEach(side => {
+            const inp = document.getElementById('grd-' + side);
+            if (inp) {
+                inp.addEventListener('change', () => {
+                    if (!Canvas.isSelected(obj.id)) return;
+                    const overrides = { ...(obj.guyRopeSideDistances || {}) };
+                    const raw = inp.value.trim();
+                    if (raw === '') {
+                        delete overrides[side];
+                    } else {
+                        const n = parseFloat(raw);
+                        if (!isNaN(n) && n >= 0) overrides[side] = n;
+                        else delete overrides[side];
+                    }
+                    State.updateObject(obj.id, { guyRopeSideDistances: overrides });
                     Canvas.render();
                 });
             }

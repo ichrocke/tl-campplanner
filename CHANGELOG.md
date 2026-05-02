@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.8.5] - 2026-05-02
+
+### Fixed
+- **Guy ropes**: When disabling individual sides on a rectangular tent (e.g. front/back), the perpendicular side lines no longer extend by the guy rope distance past the body. Each outer dashed line now stops at the body corner if its adjacent side has no guy rope.
+
+### Added
+- **Per-side guy rope distance**: Rectangular objects can now have a custom guy rope distance per side (top/right/bottom/left). Empty input falls back to the global distance, `0` disables that side. The dashed outline and rope lines (canvas, PNG/print, SVG export) all respect the asymmetric setup.
+
 ## [5.8.4] - 2026-04-27
 
 ### Fixed

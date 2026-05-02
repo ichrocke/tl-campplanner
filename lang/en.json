@@ -60,6 +60,7 @@
   "props.guyRope.distance": "Distance (m)",
   "props.guyRope.ropeWidth": "Rope width",
   "props.guyRope.sides": "Sides",
+  "props.guyRope.sideDistance": "Distance per side (m)",
   "props.guyRope.top": "Top",
   "props.guyRope.right": "Right",
   "props.guyRope.bottom": "Bottom",

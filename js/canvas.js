@@ -83,6 +83,20 @@ const Canvas = (() => {
 
     // Get local polygon path for an object shape (unscaled, centered at 0,0)
     // Returns array of {x,y} in local coords scaled to width/height
+    // Effective guy rope distance for a single rect side, considering on/off and per-side override.
+    // Returns 0 when the side is disabled. Otherwise per-side override (if set), else global guyRopeDistance.
+    function getEffectiveSideDistance(obj, side) {
+        const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
+        if (sides[side] === false) return 0;
+        const overrides = obj.guyRopeSideDistances || {};
+        const v = overrides[side];
+        if (v !== undefined && v !== null && v !== '') {
+            const n = Number(v);
+            if (!isNaN(n) && n >= 0) return n;
+        }
+        return obj.guyRopeDistance || 0;
+    }
+
     function getLocalShapePath(obj, extraPad) {
         const pad = extraPad || 0;
         const hw = obj.width / 2 + pad;
@@ -923,38 +937,47 @@ const Canvas = (() => {
         if (_treasureMode && obj.guyRopeDistance > 0) { /* skip */ }
         else
         // Guy ropes (with per-side control for rect)
-        if (obj.guyRopeDistance > 0) {
+        if (obj.guyRopeDistance > 0 || (obj.shape === 'rect' && (
+            getEffectiveSideDistance(obj, 'top') > 0 ||
+            getEffectiveSideDistance(obj, 'right') > 0 ||
+            getEffectiveSideDistance(obj, 'bottom') > 0 ||
+            getEffectiveSideDistance(obj, 'left') > 0
+        ))) {
             const gd = obj.guyRopeDistance;
-            const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
 
             if (obj.shape === 'rect') {
                 const hw = w / 2, hh = h / 2;
-                const ghw = hw + gd * z, ghh = hh + gd * z;
+                const dt = getEffectiveSideDistance(obj, 'top') * z;
+                const dr = getEffectiveSideDistance(obj, 'right') * z;
+                const db = getEffectiveSideDistance(obj, 'bottom') * z;
+                const dl = getEffectiveSideDistance(obj, 'left') * z;
                 ctx.setLineDash([4, 4]);
                 ctx.strokeStyle = '#9ca3af';
                 ctx.lineWidth = 1 * rs;
 
-                // Draw outer dashed lines per side
-                if (sides.top) { ctx.beginPath(); ctx.moveTo(-ghw, -ghh); ctx.lineTo(ghw, -ghh); ctx.stroke(); }
-                if (sides.right) { ctx.beginPath(); ctx.moveTo(ghw, -ghh); ctx.lineTo(ghw, ghh); ctx.stroke(); }
-                if (sides.bottom) { ctx.beginPath(); ctx.moveTo(ghw, ghh); ctx.lineTo(-ghw, ghh); ctx.stroke(); }
-                if (sides.left) { ctx.beginPath(); ctx.moveTo(-ghw, ghh); ctx.lineTo(-ghw, -ghh); ctx.stroke(); }
+                // Outer dashed line per side. Each side ends at the body corner unless
+                // the perpendicular adjacent side also has guy ropes, in which case it
+                // extends to meet that side's outer line.
+                if (dt > 0) { ctx.beginPath(); ctx.moveTo(-hw - dl, -hh - dt); ctx.lineTo(hw + dr, -hh - dt); ctx.stroke(); }
+                if (dr > 0) { ctx.beginPath(); ctx.moveTo(hw + dr, -hh - dt); ctx.lineTo(hw + dr, hh + db); ctx.stroke(); }
+                if (db > 0) { ctx.beginPath(); ctx.moveTo(hw + dr, hh + db); ctx.lineTo(-hw - dl, hh + db); ctx.stroke(); }
+                if (dl > 0) { ctx.beginPath(); ctx.moveTo(-hw - dl, hh + db); ctx.lineTo(-hw - dl, -hh - dt); ctx.stroke(); }
                 ctx.setLineDash([]);
 
                 // Corner and mid-edge ropes
                 ctx.strokeStyle = '#d1d5db';
                 ctx.lineWidth = 0.8 * rs;
-                // Corners: draw if both adjacent sides enabled
-                if (sides.top && sides.left) { ctx.beginPath(); ctx.moveTo(-hw, -hh); ctx.lineTo(-ghw, -ghh); ctx.stroke(); }
-                if (sides.top && sides.right) { ctx.beginPath(); ctx.moveTo(hw, -hh); ctx.lineTo(ghw, -ghh); ctx.stroke(); }
-                if (sides.bottom && sides.right) { ctx.beginPath(); ctx.moveTo(hw, hh); ctx.lineTo(ghw, ghh); ctx.stroke(); }
-                if (sides.bottom && sides.left) { ctx.beginPath(); ctx.moveTo(-hw, hh); ctx.lineTo(-ghw, ghh); ctx.stroke(); }
+                // Corner ropes: only if both adjacent sides have guy ropes
+                if (dt > 0 && dl > 0) { ctx.beginPath(); ctx.moveTo(-hw, -hh); ctx.lineTo(-hw - dl, -hh - dt); ctx.stroke(); }
+                if (dt > 0 && dr > 0) { ctx.beginPath(); ctx.moveTo(hw, -hh); ctx.lineTo(hw + dr, -hh - dt); ctx.stroke(); }
+                if (db > 0 && dr > 0) { ctx.beginPath(); ctx.moveTo(hw, hh); ctx.lineTo(hw + dr, hh + db); ctx.stroke(); }
+                if (db > 0 && dl > 0) { ctx.beginPath(); ctx.moveTo(-hw, hh); ctx.lineTo(-hw - dl, hh + db); ctx.stroke(); }
                 // Mid-edge ropes
-                if (sides.top) { ctx.beginPath(); ctx.moveTo(0, -hh); ctx.lineTo(0, -ghh); ctx.stroke(); }
-                if (sides.right) { ctx.beginPath(); ctx.moveTo(hw, 0); ctx.lineTo(ghw, 0); ctx.stroke(); }
-                if (sides.bottom) { ctx.beginPath(); ctx.moveTo(0, hh); ctx.lineTo(0, ghh); ctx.stroke(); }
-                if (sides.left) { ctx.beginPath(); ctx.moveTo(-hw, 0); ctx.lineTo(-ghw, 0); ctx.stroke(); }
-            } else {
+                if (dt > 0) { ctx.beginPath(); ctx.moveTo(0, -hh); ctx.lineTo(0, -hh - dt); ctx.stroke(); }
+                if (dr > 0) { ctx.beginPath(); ctx.moveTo(hw, 0); ctx.lineTo(hw + dr, 0); ctx.stroke(); }
+                if (db > 0) { ctx.beginPath(); ctx.moveTo(0, hh); ctx.lineTo(0, hh + db); ctx.stroke(); }
+                if (dl > 0) { ctx.beginPath(); ctx.moveTo(-hw, 0); ctx.lineTo(-hw - dl, 0); ctx.stroke(); }
+            } else if (gd > 0) {
                 // Non-rect: draw full outline as before
                 ctx.setLineDash([4, 4]);
                 ctx.strokeStyle = '#9ca3af';
@@ -1951,8 +1974,24 @@ const Canvas = (() => {
 
     // Get world-space corners of object body (no guy rope)
     function getObjCorners(obj, includeRope) {
-        const pad = includeRope ? obj.guyRopeDistance : 0;
-        const localPts = getLocalShapePath(obj, pad);
+        let localPts;
+        if (includeRope && obj.shape === 'rect') {
+            // Asymmetric per-side padding for rect
+            const hw = obj.width / 2, hh = obj.height / 2;
+            const dt = getEffectiveSideDistance(obj, 'top');
+            const dr = getEffectiveSideDistance(obj, 'right');
+            const db = getEffectiveSideDistance(obj, 'bottom');
+            const dl = getEffectiveSideDistance(obj, 'left');
+            localPts = [
+                { x: -hw - dl, y: -hh - dt },
+                { x:  hw + dr, y: -hh - dt },
+                { x:  hw + dr, y:  hh + db },
+                { x: -hw - dl, y:  hh + db },
+            ];
+        } else {
+            const pad = includeRope ? (obj.guyRopeDistance || 0) : 0;
+            localPts = getLocalShapePath(obj, pad);
+        }
         const rad = obj.rotation * Math.PI / 180;
         const cos = Math.cos(rad), sin = Math.sin(rad);
         return localPts.map(p => ({
@@ -2299,7 +2338,7 @@ const Canvas = (() => {
     return {
         init, render, resize, w2s, s2w, zoom, snapToGrid, snapObjToGrid,
         pointInObj, pointOnRotHandle, pointOnResizeHandle, computeDistancesForObj,
-        getLocalShapePath, getShapeSides,
+        getLocalShapePath, getShapeSides, getEffectiveSideDistance,
         get canvas() { return canvas; },
         get selectedIds() { return selectedIds; },
         // Compat: single selectedId getter/setter

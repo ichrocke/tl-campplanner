@@ -60,6 +60,7 @@
   "props.guyRope.distance": "Abstand (m)",
   "props.guyRope.ropeWidth": "Schnurdicke",
   "props.guyRope.sides": "Seiten",
+  "props.guyRope.sideDistance": "Abstand pro Seite (m)",
   "props.guyRope.top": "Oben",
   "props.guyRope.right": "Rechts",
   "props.guyRope.bottom": "Unten",

@@ -60,6 +60,7 @@
   "props.guyRope.distance": "Distance (m)",
   "props.guyRope.ropeWidth": "Largeur du hauban",
   "props.guyRope.sides": "Cotes",
+  "props.guyRope.sideDistance": "Distance par cote (m)",
   "props.guyRope.top": "Haut",
   "props.guyRope.right": "Droite",
   "props.guyRope.bottom": "Bas",

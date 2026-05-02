@@ -60,6 +60,7 @@
   "props.guyRope.distance": "Distanza (m)",
   "props.guyRope.ropeWidth": "Spessore corda",
   "props.guyRope.sides": "Lati",
+  "props.guyRope.sideDistance": "Distanza per lato (m)",
   "props.guyRope.top": "Sopra",
   "props.guyRope.right": "Destra",
   "props.guyRope.bottom": "Sotto",
