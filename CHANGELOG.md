@@ -1,61 +1,20 @@
 # Changelog
 
-## [5.9.7] - 2026-05-02
+## [6.0.0] - 2026-05-02
 
 ### Added
-- **Tutorial language switcher**: The welcome step shows the language flags so users can pick their language right away. Switching the language anywhere (top toolbar, welcome flags, settings) re-renders the running tutorial in the new language live.
-
-## [5.9.6] - 2026-05-02
-
-### Changed
-- **Tutorial promoted out of experimental**: Removed the EXPERIMENTAL badge and moved the "Tutorial starten" button to the very top of the settings panel.
-- **Tutorial auto-start**: The tutorial now opens automatically on a fresh visit (no saved data) and after using "Clear all". Returning users with existing camps are not interrupted.
-
-## [5.9.5] - 2026-05-02
-
-### Changed
-- **Area tool**: No longer prompts for a name when finishing a polygon or alt-drag rectangle. The default name "Area" is used; rename anytime in the properties panel.
-- **Tutorial**: The "place a tent" step is now split in two — first picking the tent from the palette, then the spotlight switches to the canvas to actually drop it. Avoids leaving the highlight on the palette while the user already needs to click the canvas.
-
-## [5.9.4] - 2026-05-02
+- **Interactive tutorial**: New step-by-step tour for first-time users. Welcomes the user, walks them through picking the ground tool, drawing a ground area and placing a tent (each interactive step auto-advances when the action is performed), then introduces properties, placed-objects sidebar, layers, tabs, tools, save & export and settings. Auto-starts on a fresh visit and after "Clear all"; can be relaunched anytime via the button at the top of the settings panel. Welcome step has language flags so the user can pick their language right away, and the tutorial re-renders live when the language is switched.
+- **Sidebar search & sort**: Magnifier icon next to "Placed Objects" reveals a filter input; sort dropdown to order by Name, Size or Layer.
+- **Zoom to object**: Double-click on a sidebar entry centers the canvas on the object and selects it.
+- **Hover tooltip**: Hovering an object on the canvas shows its name, dimensions and guy rope distance. Ground and area polygons additionally show their surface in m².
+- **Color eyedropper**: Pipette button next to the color input — single-selection and multi-selection — copies the color from any other canvas object onto the selected one(s). ESC cancels.
+- **Per-side guy ropes for polygons**: Triangle, hexagon, octagon, decagon and dodecagon shapes now support enabling/disabling each side individually. Outline is computed as a true offset polygon with proper corner intersections.
+- **Configurable peg count per rect side**: Each rectangle side accepts 0..20 evenly distributed mid-edge pegs; combined with the corner ropes this supports wall tents with multiple stake points per side.
+- **Peg visualization**: Small dots are drawn at the end of every guy rope (corner and mid-edge) on canvas, print/PNG and SVG export. Toggleable per object.
 
 ### Changed
-- **Drawing tools stay active**: After finishing a ground area, area or placing an object from the palette the tool now stays active so you can immediately draw or place another. Press ESC or click the select arrow to leave the tool.
-- **Tutorial revamp**: The experimental tutorial was rewritten as an interactive walkthrough. New flow: pick the ground tool → draw a ground area → place a tent (each step auto-advances when you actually do it) → properties → placed-objects → layers → tabs → tools → SAVE & EXPORT (emphasized: auto-save is local only, use Export for real backups) → settings → done. Steps with an action show a "waiting for you" hint and a "Skip step" button.
-
-## [5.9.3] - 2026-05-02
-
-### Added
-- **Tutorial mode (experimental)**: New "Tutorial starten" button in the settings panel (marked EXPERIMENTAL) launches a 10-step guided overlay that highlights the main UI areas (palette, canvas, placed objects, properties, layers, tabs, tools, settings). Navigate with Next/Back buttons, arrow keys or skip with ESC.
-
-## [5.9.2] - 2026-05-02
-
-### Fixed
-- **Polygon guy ropes**: Disabling a single polygon side no longer makes mid-edge pegs appear on every other side. Polygons now default to corner-only ropes (0 mid-edge pegs per side), matching the previous look. Rectangles still default to one mid-edge peg per side as before.
-
-## [5.9.1] - 2026-05-02
-
-### Fixed
-- **Hover tooltip**: Tooltip now uses fixed positioning so it appears next to the mouse cursor instead of being offset by the canvas container's position.
-
-### Changed
-- **Polygon per-side guy ropes**: Simplified the polygon side controls — only on/off toggles per side are exposed now. Per-side distance overrides and peg-count inputs were removed for polygons (they remain available for rectangles, where the layout is more intuitive).
-
-### Added
-- **Multi-selection eyedropper**: The bulk color picker in the multi-selection panel now also has a pipette button to copy a color from another canvas object onto all selected objects.
-- **Ground/area tooltip**: Hovering over a ground or area polygon shows its surface in m² in the tooltip.
-
-## [5.9.0] - 2026-05-02
-
-### Added
-- **Sidebar search**: Magnifier icon next to "Placed Objects" reveals a filter input that narrows the list as you type. Escape clears and closes the search.
-- **Sidebar sort**: Dropdown to sort placed objects by Name, Size or Layer (in addition to default insertion order). Non-default sort flattens the list (no group folding).
-- **Zoom to object**: Double-click on any item in the placed-objects sidebar centers the canvas on that object and selects it.
-- **Hover tooltip**: Hovering an object on the canvas now shows a small tooltip with the object name, dimensions and guy rope distance.
-- **Color eyedropper**: Pipette button next to the color input lets you pick the color from another object on the canvas. Escape cancels.
-- **Per-side guy ropes for polygons**: Triangle, hexagon, octagon, decagon and dodecagon shapes now support per-side enable, distance override and peg count. The dashed outline is computed as a true offset polygon (with proper corner intersections) instead of a uniformly scaled outline.
-- **Configurable peg count per side**: Each side can have 0..20 mid-edge pegs evenly distributed (default 1 = current single mid-edge rope). Combined with corner ropes this lets you model wall tents with multiple stake points per side.
-- **Peg visualization**: Small dots are drawn at the end of every guy rope (corner and mid-edge) on canvas, in print/PNG and in SVG export. Toggleable per object via "Heringe anzeigen".
+- **Drawing tools stay active**: Ground, area and place tools no longer return to "select" after one action. Draw or place several in a row; press ESC or click the select arrow to leave the tool.
+- **Area tool**: No longer prompts for a name when finishing a polygon — uses the default "Area" which can be renamed in the properties panel.
 
 ## [5.8.6] - 2026-05-02
 
