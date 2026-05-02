@@ -1,5 +1,11 @@
 # Changelog
 
+## [5.9.6] - 2026-05-02
+
+### Changed
+- **Tutorial promoted out of experimental**: Removed the EXPERIMENTAL badge and moved the "Tutorial starten" button to the very top of the settings panel.
+- **Tutorial auto-start**: The tutorial now opens automatically on a fresh visit (no saved data) and after using "Clear all". Returning users with existing camps are not interrupted.
+
 ## [5.9.5] - 2026-05-02
 
 ### Changed

@@ -101,6 +101,11 @@
     // Prevent browser context menu on canvas
     c.addEventListener('contextmenu', (e) => e.preventDefault());
 
+    // Auto-start tutorial for fresh users (no saved data, no objects)
+    if (typeof Tutorial !== 'undefined' && !_isCollabRoom) {
+        Tutorial.maybeAutoStart();
+    }
+
     // Save and remind before leaving
     window.addEventListener('beforeunload', (e) => {
         try {

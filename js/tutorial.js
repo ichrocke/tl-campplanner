@@ -160,7 +160,6 @@ const Tutorial = (() => {
         popup.id = 'tutorial-popup';
         popup.className = 'tutorial-popup hidden';
         popup.innerHTML = `
-            <div class="tutorial-badge">EXPERIMENTAL</div>
             <h3 id="tutorial-title"></h3>
             <p id="tutorial-text"></p>
             <div id="tutorial-hint" class="tutorial-hint"></div>
@@ -267,5 +266,18 @@ const Tutorial = (() => {
         popup.style.top = top + 'px';
     }
 
-    return { start, stop, next, prev, get isRunning() { return _running; } };
+    function isStateEmpty() {
+        const sites = State.sites || [];
+        if (sites.length === 0) return true;
+        return sites.every(s => !s.objects || s.objects.length === 0);
+    }
+
+    function maybeAutoStart() {
+        if (_running) return;
+        if (!isStateEmpty()) return;
+        // Defer slightly so the UI is fully rendered first
+        setTimeout(() => { if (isStateEmpty() && !_running) start(); }, 600);
+    }
+
+    return { start, stop, next, prev, maybeAutoStart, isStateEmpty, get isRunning() { return _running; } };
 })();

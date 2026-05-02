@@ -1134,6 +1134,8 @@ const UI = (() => {
                 Canvas.clearSelection();
                 hideProperties();
                 State.clear();
+                closeModal();
+                if (typeof Tutorial !== 'undefined') Tutorial.maybeAutoStart();
             }
         });
 
