@@ -4,6 +4,7 @@
 
 ### Changed
 - **Area tool**: No longer prompts for a name when finishing a polygon or alt-drag rectangle. The default name "Area" is used; rename anytime in the properties panel.
+- **Tutorial**: The "place a tent" step is now split in two — first picking the tent from the palette, then the spotlight switches to the canvas to actually drop it. Avoids leaving the highlight on the palette while the user already needs to click the canvas.
 
 ## [5.9.4] - 2026-05-02
 

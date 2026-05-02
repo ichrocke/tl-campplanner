@@ -44,6 +44,12 @@ const Tutorial = (() => {
                 title: I18n.t('tutorial.step4.title'),
                 text: I18n.t('tutorial.step4.text'),
                 onEnter() { _baseline = snapshotCounts(); },
+                check() { return Tools.activeTool === 'place'; },
+            },
+            {
+                target: '#canvas',
+                title: I18n.t('tutorial.step4b.title'),
+                text: I18n.t('tutorial.step4b.text'),
                 check() {
                     const c = snapshotCounts();
                     return _baseline && c.nonGround > _baseline.nonGround;
