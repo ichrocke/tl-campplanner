@@ -160,6 +160,13 @@ const Tutorial = (() => {
         popup.id = 'tutorial-popup';
         popup.className = 'tutorial-popup hidden';
         popup.innerHTML = `
+            <div id="tutorial-langs" class="tutorial-langs hidden">
+                <button class="tutorial-lang" data-lang="de" title="Deutsch"><svg width="20" height="14" viewBox="0 0 5 3"><rect width="5" height="1" fill="#000"/><rect y="1" width="5" height="1" fill="#D00"/><rect y="2" width="5" height="1" fill="#FFCE00"/></svg></button>
+                <button class="tutorial-lang" data-lang="en" title="English"><svg width="20" height="14" viewBox="0 0 60 30"><clipPath id="ts"><path d="M0 0v30h60V0z"/></clipPath><clipPath id="tt"><path d="M30 15h30v15zv15H0zH0V0zV0h30z"/></clipPath><g clip-path="url(#ts)"><path d="M0 0v30h60V0z" fill="#012169"/><path d="M0 0l60 30m0-30L0 30" stroke="#fff" stroke-width="6"/><path d="M0 0l60 30m0-30L0 30" clip-path="url(#tt)" stroke="#C8102E" stroke-width="4"/><path d="M30 0v30M0 15h60" stroke="#fff" stroke-width="10"/><path d="M30 0v30M0 15h60" stroke="#C8102E" stroke-width="6"/></g></svg></button>
+                <button class="tutorial-lang" data-lang="es" title="Espanol"><svg width="20" height="14" viewBox="0 0 6 4"><rect width="6" height="1" fill="#AA151B"/><rect y="1" width="6" height="2" fill="#F1BF00"/><rect y="3" width="6" height="1" fill="#AA151B"/></svg></button>
+                <button class="tutorial-lang" data-lang="it" title="Italiano"><svg width="20" height="14" viewBox="0 0 3 2"><rect width="1" height="2" fill="#009246"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#CE2B37"/></svg></button>
+                <button class="tutorial-lang" data-lang="fr" title="Francais"><svg width="20" height="14" viewBox="0 0 3 2"><rect width="1" height="2" fill="#002395"/><rect x="1" width="1" height="2" fill="#fff"/><rect x="2" width="1" height="2" fill="#ED2939"/></svg></button>
+            </div>
             <h3 id="tutorial-title"></h3>
             <p id="tutorial-text"></p>
             <div id="tutorial-hint" class="tutorial-hint"></div>
@@ -176,6 +183,12 @@ const Tutorial = (() => {
         document.getElementById('tutorial-skip').addEventListener('click', stop);
         document.getElementById('tutorial-prev').addEventListener('click', prev);
         document.getElementById('tutorial-next').addEventListener('click', next);
+        document.querySelectorAll('.tutorial-lang').forEach(btn => {
+            btn.addEventListener('click', () => {
+                I18n.setLang(btn.dataset.lang);
+                document.querySelectorAll('.lang-flag').forEach(b => b.classList.toggle('active', b.dataset.lang === btn.dataset.lang));
+            });
+        });
         document.addEventListener('keydown', (e) => {
             if (!_running) return;
             if (e.key === 'Escape') stop();
@@ -202,6 +215,11 @@ const Tutorial = (() => {
         overlay.classList.remove('hidden');
         popup.classList.remove('hidden');
         popup.classList.toggle('emphasize', !!step.emphasize);
+        const langs = document.getElementById('tutorial-langs');
+        if (langs) {
+            langs.classList.toggle('hidden', _stepIdx !== 0);
+            langs.querySelectorAll('.tutorial-lang').forEach(b => b.classList.toggle('active', b.dataset.lang === I18n.lang));
+        }
         titleEl.textContent = step.title;
         textEl.textContent = step.text;
         if (step.check) {
@@ -279,5 +297,9 @@ const Tutorial = (() => {
         setTimeout(() => { if (isStateEmpty() && !_running) start(); }, 600);
     }
 
-    return { start, stop, next, prev, maybeAutoStart, isStateEmpty, get isRunning() { return _running; } };
+    function refresh() {
+        if (_running) render();
+    }
+
+    return { start, stop, next, prev, refresh, maybeAutoStart, isStateEmpty, get isRunning() { return _running; } };
 })();

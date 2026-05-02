@@ -1,5 +1,10 @@
 # Changelog
 
+## [5.9.7] - 2026-05-02
+
+### Added
+- **Tutorial language switcher**: The welcome step shows the language flags so users can pick their language right away. Switching the language anywhere (top toolbar, welcome flags, settings) re-renders the running tutorial in the new language live.
+
 ## [5.9.6] - 2026-05-02
 
 ### Changed

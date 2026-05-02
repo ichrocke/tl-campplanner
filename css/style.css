@@ -718,6 +718,24 @@ body {
 }
 .tutorial-popup.hidden { display: none; }
 .tutorial-popup h3 { margin: 0 0 8px; font-size: 15px; color: var(--primary); }
+.tutorial-langs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+.tutorial-langs.hidden { display: none; }
+.tutorial-lang {
+    background: transparent;
+    border: 2px solid transparent;
+    padding: 1px;
+    border-radius: 3px;
+    cursor: pointer;
+    line-height: 0;
+}
+.tutorial-lang:hover { border-color: var(--border); }
+.tutorial-lang.active { border-color: var(--primary); }
 .tutorial-popup p { margin: 0 0 14px; line-height: 1.5; }
 .tutorial-badge {
     display: inline-block;

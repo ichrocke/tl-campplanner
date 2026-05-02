@@ -65,6 +65,7 @@
         UI.translateUI();
         UI.syncSettings();
         Canvas.render();
+        if (typeof Tutorial !== 'undefined') Tutorial.refresh();
     });
 
     // State change handler
