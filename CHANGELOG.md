@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.9.1] - 2026-05-02
+
+### Fixed
+- **Hover tooltip**: Tooltip now uses fixed positioning so it appears next to the mouse cursor instead of being offset by the canvas container's position.
+
+### Changed
+- **Polygon per-side guy ropes**: Simplified the polygon side controls — only on/off toggles per side are exposed now. Per-side distance overrides and peg-count inputs were removed for polygons (they remain available for rectangles, where the layout is more intuitive).
+
+### Added
+- **Multi-selection eyedropper**: The bulk color picker in the multi-selection panel now also has a pipette button to copy a color from another canvas object onto all selected objects.
+- **Ground/area tooltip**: Hovering over a ground or area polygon shows its surface in m² in the tooltip.
+
 ## [5.9.0] - 2026-05-02
 
 ### Added

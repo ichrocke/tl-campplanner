@@ -1431,13 +1431,7 @@ const UI = (() => {
             if (showPolySides) {
                 for (let i = 0; i < polyN; i++) {
                     const enabled = polySides[i] !== false;
-                    const dv = (polyDist[i] !== undefined && polyDist[i] !== null && polyDist[i] !== '') ? polyDist[i] : '';
-                    const pv = (polyPegs[i] !== undefined && polyPegs[i] !== null && polyPegs[i] !== '') ? polyPegs[i] : '';
-                    polyRows += `<div class="poly-side-row">
-                        <label class="poly-side-cb"><input type="checkbox" data-poly-side="${i}" ${enabled ? 'checked' : ''}> ${i + 1}</label>
-                        <input type="number" data-poly-dist="${i}" value="${dv}" min="0" step="0.1" placeholder="${obj.guyRopeDistance}" title="${I18n.t('props.guyRope.distance')}">
-                        <input type="number" data-poly-pegs="${i}" value="${pv}" min="0" max="20" step="1" placeholder="1" title="${I18n.t('props.guyRope.pegs')}">
-                    </div>`;
+                    polyRows += `<label class="poly-side-cb"><input type="checkbox" data-poly-side="${i}" ${enabled ? 'checked' : ''}> ${i + 1}</label>`;
                 }
             }
 
@@ -1469,7 +1463,7 @@ const UI = (() => {
                     <label>${I18n.t('props.guyRope.left')} <input type="number" id="grp-left" value="${pgVal('left')}" min="0" max="20" step="1" placeholder="1"></label>
                 </div>` : ''}
                 ${showPolySides ? `
-                <div class="prop-section-subtitle">${I18n.t('props.guyRope.sides')} / ${I18n.t('props.guyRope.distance')} / ${I18n.t('props.guyRope.pegs')}</div>
+                <div class="prop-section-subtitle">${I18n.t('props.guyRope.sides')}</div>
                 <div class="poly-sides-grid">${polyRows}</div>` : ''}
             </div>`;
         }
@@ -1875,55 +1869,22 @@ const UI = (() => {
             });
         }
 
-        // Polygon per-side controls
+        // Polygon per-side enable/disable
         const polyN = Canvas.getShapeSides(obj.shape);
         if (polyN >= 3) {
-            const _ensurePolyArrays = () => {
-                let sides = obj.polyGuyRopeSides ? [...obj.polyGuyRopeSides] : new Array(polyN).fill(true);
-                let dists = obj.polyGuyRopeSideDistances ? [...obj.polyGuyRopeSideDistances] : new Array(polyN).fill(undefined);
-                let pegs = obj.polyGuyRopePegs ? [...obj.polyGuyRopePegs] : new Array(polyN).fill(undefined);
-                if (sides.length !== polyN) { const n = new Array(polyN).fill(true); sides.forEach((v, i) => { if (i < polyN) n[i] = v; }); sides = n; }
-                if (dists.length !== polyN) { const n = new Array(polyN); dists.forEach((v, i) => { if (i < polyN) n[i] = v; }); dists = n; }
-                if (pegs.length !== polyN) { const n = new Array(polyN); pegs.forEach((v, i) => { if (i < polyN) n[i] = v; }); pegs = n; }
-                return { sides, dists, pegs };
-            };
             document.querySelectorAll('[data-poly-side]').forEach(cb => {
                 cb.addEventListener('change', () => {
                     if (!Canvas.isSelected(obj.id)) return;
                     const i = parseInt(cb.dataset.polySide, 10);
-                    const { sides, dists, pegs } = _ensurePolyArrays();
+                    const sides = obj.polyGuyRopeSides ? [...obj.polyGuyRopeSides] : new Array(polyN).fill(true);
+                    if (sides.length !== polyN) {
+                        const n = new Array(polyN).fill(true);
+                        sides.forEach((v, j) => { if (j < polyN) n[j] = v; });
+                        sides.length = 0;
+                        n.forEach(v => sides.push(v));
+                    }
                     sides[i] = cb.checked;
-                    State.updateObject(obj.id, { polyGuyRopeSides: sides, polyGuyRopeSideDistances: dists, polyGuyRopePegs: pegs });
-                    Canvas.render();
-                });
-            });
-            document.querySelectorAll('[data-poly-dist]').forEach(inp => {
-                inp.addEventListener('change', () => {
-                    if (!Canvas.isSelected(obj.id)) return;
-                    const i = parseInt(inp.dataset.polyDist, 10);
-                    const { sides, dists, pegs } = _ensurePolyArrays();
-                    const raw = inp.value.trim();
-                    if (raw === '') dists[i] = undefined;
-                    else {
-                        const n = parseFloat(raw);
-                        dists[i] = (!isNaN(n) && n >= 0) ? n : undefined;
-                    }
-                    State.updateObject(obj.id, { polyGuyRopeSides: sides, polyGuyRopeSideDistances: dists, polyGuyRopePegs: pegs });
-                    Canvas.render();
-                });
-            });
-            document.querySelectorAll('[data-poly-pegs]').forEach(inp => {
-                inp.addEventListener('change', () => {
-                    if (!Canvas.isSelected(obj.id)) return;
-                    const i = parseInt(inp.dataset.polyPegs, 10);
-                    const { sides, dists, pegs } = _ensurePolyArrays();
-                    const raw = inp.value.trim();
-                    if (raw === '') pegs[i] = undefined;
-                    else {
-                        const n = parseInt(raw, 10);
-                        pegs[i] = (!isNaN(n) && n >= 0 && n <= 20) ? n : undefined;
-                    }
-                    State.updateObject(obj.id, { polyGuyRopeSides: sides, polyGuyRopeSideDistances: dists, polyGuyRopePegs: pegs });
+                    State.updateObject(obj.id, { polyGuyRopeSides: sides });
                     Canvas.render();
                 });
             });
@@ -1995,7 +1956,7 @@ const UI = (() => {
 
         // Bulk color
         html += `<div class="prop-section">
-            <label>${I18n.t('props.bulkColor')} <input type="color" id="prop-bulk-color" value="#4a90d9"></label>
+            <label>${I18n.t('props.bulkColor')} <span style="display:inline-flex;align-items:center;gap:4px"><input type="color" id="prop-bulk-color" value="#4a90d9"><button type="button" id="prop-bulk-color-pick" class="eyedropper-btn" title="${I18n.t('props.color.eyedropper')}">&#127777;&#65039;</button></span></label>
         </div>`;
 
         // Align buttons
@@ -2085,7 +2046,23 @@ const UI = (() => {
         document.getElementById('prop-bulk-color').addEventListener('change', (e) => {
             [...Canvas.selectedIds].forEach(id => State.updateObject(id, { color: e.target.value }));
             Canvas.render();
+            buildPlacedList();
         });
+        const bulkPickBtn = document.getElementById('prop-bulk-color-pick');
+        if (bulkPickBtn) {
+            bulkPickBtn.addEventListener('click', () => {
+                if (Tools.eyedropperActive) { Tools.cancelEyedropper(); return; }
+                bulkPickBtn.classList.add('active');
+                const targets = [...Canvas.selectedIds];
+                Tools.startEyedropper((color) => {
+                    targets.forEach(id => State.updateObject(id, { color }));
+                    const ci = document.getElementById('prop-bulk-color');
+                    if (ci) ci.value = color;
+                    Canvas.render();
+                    buildPlacedList();
+                });
+            });
+        }
 
         // Alignment
         document.getElementById('align-left').addEventListener('click', () => {
@@ -2849,13 +2826,18 @@ const UI = (() => {
         const tip = document.getElementById('hover-tooltip');
         if (!tip) return;
         if (!obj) { tip.classList.add('hidden'); return; }
-        const dimsLine = (obj.type === 'area' || obj.type === 'ground' || obj.type === 'fence' || obj.type === 'guideline' || obj.type === 'text' || obj.type === 'bgimage' || obj.type === 'image' || obj.type === 'symbol' || obj.type === 'postit')
-            ? obj.type
-            : `${(obj.width || 0).toFixed(1)} × ${(obj.height || 0).toFixed(1)} m`;
+        let dimsLine;
+        if ((obj.type === 'ground' || obj.type === 'area') && obj.points && obj.points.length >= 3) {
+            const a = Canvas.polygonArea(obj.points);
+            dimsLine = `${a.toFixed(1)} m²`;
+        } else if (obj.type === 'fence' || obj.type === 'guideline' || obj.type === 'text' || obj.type === 'bgimage' || obj.type === 'image' || obj.type === 'symbol' || obj.type === 'postit') {
+            dimsLine = obj.type;
+        } else {
+            dimsLine = `${(obj.width || 0).toFixed(1)} × ${(obj.height || 0).toFixed(1)} m`;
+        }
         const ropeLine = obj.guyRopeDistance > 0 ? `<div class="hover-tooltip-dim">${I18n.t('props.guyRope.distance')}: ${obj.guyRopeDistance} m</div>` : '';
         tip.innerHTML = `<div class="hover-tooltip-name">${obj.name || ''}</div><div class="hover-tooltip-dim">${dimsLine}</div>${ropeLine}`;
         tip.classList.remove('hidden');
-        // Position near cursor, but keep inside viewport
         const tw = tip.offsetWidth || 0, th = tip.offsetHeight || 0;
         const ww = window.innerWidth, wh = window.innerHeight;
         let left = clientX + 14, top = clientY + 14;

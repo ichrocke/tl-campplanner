@@ -641,7 +641,7 @@ body {
 .placed-search-input.hidden { display: none; }
 
 .hover-tooltip {
-    position: absolute;
+    position: fixed;
     background: rgba(15, 23, 42, 0.92);
     color: #fff;
     padding: 5px 9px;
@@ -660,33 +660,19 @@ body {
 
 .poly-sides-grid {
     display: flex;
-    flex-direction: column;
-    gap: 4px;
-    max-height: 200px;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    max-height: 160px;
     overflow-y: auto;
 }
-.poly-side-row {
-    display: grid;
-    grid-template-columns: 60px 1fr 1fr;
-    gap: 4px;
-    align-items: center;
-}
-.poly-side-row .poly-side-cb {
+.poly-side-cb {
     font-size: 11px;
-    display: flex;
+    display: inline-flex !important;
     align-items: center;
     gap: 4px;
+    flex-direction: row !important;
 }
-.poly-side-row input[type="number"] {
-    width: 100%;
-    padding: 3px 4px;
-    font-size: 11px;
-    border: 1px solid var(--border);
-    border-radius: 3px;
-    background: var(--card);
-    color: var(--text);
-    box-sizing: border-box;
-}
+.poly-side-cb input[type="checkbox"] { width: auto; }
 
 .eyedropper-btn {
     background: transparent;
