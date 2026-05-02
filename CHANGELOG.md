@@ -1,5 +1,10 @@
 # Changelog
 
+## [5.8.6] - 2026-05-02
+
+### Changed
+- **Changelog**: Major version groups in the changelog modal are now collapsible. The current major is expanded by default, older majors start collapsed and can be opened with a chevron header.
+
 ## [5.8.5] - 2026-05-02
 
 ### Fixed

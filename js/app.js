@@ -204,27 +204,44 @@
                 changelogNav.innerHTML = '';
                 let firstBtn = null;
 
-                // Group by major version
-                let currentMajor = -1;
+                // Group versions by major (preserving order; first major encountered is the most recent)
+                const groups = new Map();
                 versions.forEach((v, i) => {
                     const ver = getVersion(v.title);
-                    if (ver && ver.major !== currentMajor) {
-                        currentMajor = ver.major;
-                        const header = document.createElement('div');
-                        header.className = 'changelog-nav-header';
-                        header.textContent = 'Version ' + ver.major;
-                        changelogNav.appendChild(header);
-                    }
+                    const major = ver ? ver.major : 0;
+                    if (!groups.has(major)) groups.set(major, []);
+                    groups.get(major).push({ v, i });
+                });
+                const activeMajor = groups.keys().next().value;
 
-                    const btn = document.createElement('button');
-                    const isMajor = ver && ver.minor === 0 && ver.patch === 0;
-                    btn.className = 'changelog-nav-item' + (isMajor ? ' major' : '');
-                    // Display: version + date
-                    const display = v.title.replace(/^\[/, '').replace(/\]/, '');
-                    btn.textContent = display.replace(' - ', '  ');
-                    btn.addEventListener('click', () => selectVersion(btn, v));
-                    changelogNav.appendChild(btn);
-                    if (i === 0) firstBtn = btn;
+                groups.forEach((items, major) => {
+                    const header = document.createElement('div');
+                    header.className = 'changelog-nav-header';
+                    header.textContent = 'Version ' + major;
+                    const group = document.createElement('div');
+                    group.className = 'changelog-nav-group';
+                    if (major !== activeMajor) {
+                        header.classList.add('collapsed');
+                        group.classList.add('collapsed');
+                    }
+                    header.addEventListener('click', () => {
+                        header.classList.toggle('collapsed');
+                        group.classList.toggle('collapsed');
+                    });
+                    changelogNav.appendChild(header);
+                    changelogNav.appendChild(group);
+
+                    items.forEach(({ v, i }) => {
+                        const ver = getVersion(v.title);
+                        const btn = document.createElement('button');
+                        const isMajor = ver && ver.minor === 0 && ver.patch === 0;
+                        btn.className = 'changelog-nav-item' + (isMajor ? ' major' : '');
+                        const display = v.title.replace(/^\[/, '').replace(/\]/, '');
+                        btn.textContent = display.replace(' - ', '  ');
+                        btn.addEventListener('click', () => selectVersion(btn, v));
+                        group.appendChild(btn);
+                        if (i === 0) firstBtn = btn;
+                    });
                 });
 
                 if (firstBtn && versions.length > 0) {

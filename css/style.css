@@ -1284,8 +1284,22 @@ body {
     letter-spacing: 0.5px;
     border-top: 1px solid var(--border);
     margin-top: 4px;
+    cursor: pointer;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 .changelog-nav-header:first-child { border-top: none; margin-top: 0; }
+.changelog-nav-header::before {
+    content: '\25BE';
+    font-size: 10px;
+    transition: transform 0.15s;
+    display: inline-block;
+}
+.changelog-nav-header.collapsed::before { transform: rotate(-90deg); }
+.changelog-nav-header:hover { color: var(--primary); }
+.changelog-nav-group.collapsed { display: none; }
 .changelog-nav-item {
     display: block;
     width: 100%;
