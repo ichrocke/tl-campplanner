@@ -390,7 +390,7 @@ const Tools = (() => {
     function finishArea(site) {
         const pts = Canvas.pathPreview;
         if (pts.length >= 3) {
-            const name = prompt(I18n.t('msg.nameArea'), I18n.t('msg.defaultArea')) || I18n.t('msg.defaultArea');
+            const name = I18n.t('msg.defaultArea');
             let cx = 0, cy = 0;
             pts.forEach(p => { cx += p.x; cy += p.y; });
             cx /= pts.length; cy /= pts.length;
@@ -841,7 +841,7 @@ const Tools = (() => {
                         }, cx, cy);
                         if (obj) obj.points = pts;
                     } else {
-                        const name = prompt(I18n.t('msg.nameArea'), I18n.t('msg.defaultArea')) || I18n.t('msg.defaultArea');
+                        const name = I18n.t('msg.defaultArea');
                         const obj = State.addObject({
                             type: 'area', name: name, width: 0, height: 0,
                             guyRopeDistance: 0, color: State.displaySettings.defaultAreaColor || '#d4a574', shape: 'rect', points: pts,

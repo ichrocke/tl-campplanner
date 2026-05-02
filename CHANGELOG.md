@@ -1,5 +1,10 @@
 # Changelog
 
+## [5.9.5] - 2026-05-02
+
+### Changed
+- **Area tool**: No longer prompts for a name when finishing a polygon or alt-drag rectangle. The default name "Area" is used; rename anytime in the properties panel.
+
 ## [5.9.4] - 2026-05-02
 
 ### Changed
