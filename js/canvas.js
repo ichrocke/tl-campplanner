@@ -967,11 +967,17 @@ const Canvas = (() => {
                 // Corner and mid-edge ropes
                 ctx.strokeStyle = '#d1d5db';
                 ctx.lineWidth = 0.8 * rs;
-                // Corner ropes: only if both adjacent sides have guy ropes
-                if (dt > 0 && dl > 0) { ctx.beginPath(); ctx.moveTo(-hw, -hh); ctx.lineTo(-hw - dl, -hh - dt); ctx.stroke(); }
-                if (dt > 0 && dr > 0) { ctx.beginPath(); ctx.moveTo(hw, -hh); ctx.lineTo(hw + dr, -hh - dt); ctx.stroke(); }
-                if (db > 0 && dr > 0) { ctx.beginPath(); ctx.moveTo(hw, hh); ctx.lineTo(hw + dr, hh + db); ctx.stroke(); }
-                if (db > 0 && dl > 0) { ctx.beginPath(); ctx.moveTo(-hw, hh); ctx.lineTo(-hw - dl, hh + db); ctx.stroke(); }
+                // Corner ropes: diagonal if both adjacent sides have ropes,
+                // else perpendicular to whichever single adjacent side is active.
+                const cornerRope = (cx, cy, sideH, sideV, dh, dv) => {
+                    if (dh > 0 && dv > 0) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + sideV * dv, cy + sideH * dh); ctx.stroke(); }
+                    else if (dh > 0)      { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx,                cy + sideH * dh); ctx.stroke(); }
+                    else if (dv > 0)      { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + sideV * dv, cy               ); ctx.stroke(); }
+                };
+                cornerRope(-hw, -hh, -1, -1, dt, dl); // top-left
+                cornerRope( hw, -hh, -1,  1, dt, dr); // top-right
+                cornerRope( hw,  hh,  1,  1, db, dr); // bottom-right
+                cornerRope(-hw,  hh,  1, -1, db, dl); // bottom-left
                 // Mid-edge ropes
                 if (dt > 0) { ctx.beginPath(); ctx.moveTo(0, -hh); ctx.lineTo(0, -hh - dt); ctx.stroke(); }
                 if (dr > 0) { ctx.beginPath(); ctx.moveTo(hw, 0); ctx.lineTo(hw + dr, 0); ctx.stroke(); }

@@ -800,10 +800,15 @@ const IO = (() => {
                     if (sideDr > 0) lineSeg(hw + sideDr, -hh - sideDt, hw + sideDr, hh + sideDb, true);
                     if (sideDb > 0) lineSeg(hw + sideDr, hh + sideDb, -hw - sideDl, hh + sideDb, true);
                     if (sideDl > 0) lineSeg(-hw - sideDl, hh + sideDb, -hw - sideDl, -hh - sideDt, true);
-                    if (sideDt > 0 && sideDl > 0) lineSeg(-hw, -hh, -hw - sideDl, -hh - sideDt, false);
-                    if (sideDt > 0 && sideDr > 0) lineSeg(hw, -hh, hw + sideDr, -hh - sideDt, false);
-                    if (sideDb > 0 && sideDr > 0) lineSeg(hw, hh, hw + sideDr, hh + sideDb, false);
-                    if (sideDb > 0 && sideDl > 0) lineSeg(-hw, hh, -hw - sideDl, hh + sideDb, false);
+                    const cornerRope = (cx, cy, sH, sV, dh, dv) => {
+                        if (dh > 0 && dv > 0) lineSeg(cx, cy, cx + sV * dv, cy + sH * dh, false);
+                        else if (dh > 0)      lineSeg(cx, cy, cx,            cy + sH * dh, false);
+                        else if (dv > 0)      lineSeg(cx, cy, cx + sV * dv, cy,            false);
+                    };
+                    cornerRope(-hw, -hh, -1, -1, sideDt, sideDl);
+                    cornerRope( hw, -hh, -1,  1, sideDt, sideDr);
+                    cornerRope( hw,  hh,  1,  1, sideDb, sideDr);
+                    cornerRope(-hw,  hh,  1, -1, sideDb, sideDl);
                     if (sideDt > 0) lineSeg(0, -hh, 0, -hh - sideDt, false);
                     if (sideDb > 0) lineSeg(0, hh, 0, hh + sideDb, false);
                     if (sideDl > 0) lineSeg(-hw, 0, -hw - sideDl, 0, false);
