@@ -126,7 +126,7 @@ const Canvas = (() => {
             const n = parseInt(arr[i], 10);
             if (!isNaN(n) && n >= 0 && n <= 20) return n;
         }
-        return 1;
+        return 0;
     }
 
     function hasPolyPerSideRopes(obj) {

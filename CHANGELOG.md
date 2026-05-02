@@ -1,5 +1,10 @@
 # Changelog
 
+## [5.9.2] - 2026-05-02
+
+### Fixed
+- **Polygon guy ropes**: Disabling a single polygon side no longer makes mid-edge pegs appear on every other side. Polygons now default to corner-only ropes (0 mid-edge pegs per side), matching the previous look. Rectangles still default to one mid-edge peg per side as before.
+
 ## [5.9.1] - 2026-05-02
 
 ### Fixed
