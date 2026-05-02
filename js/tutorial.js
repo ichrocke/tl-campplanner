@@ -5,6 +5,16 @@ const Tutorial = (() => {
     let _stepIdx = 0;
     let _running = false;
     let _resizeHandler = null;
+    let _pollHandle = null;
+    let _baseline = null; // snapshot of state used by interactive steps
+
+    function snapshotCounts() {
+        const site = State.activeSite;
+        if (!site) return { ground: 0, nonGround: 0 };
+        let g = 0, n = 0;
+        site.objects.forEach(o => { if (o.type === 'ground') g++; else n++; });
+        return { ground: g, nonGround: n };
+    }
 
     function steps() {
         return [
@@ -14,19 +24,30 @@ const Tutorial = (() => {
                 text: I18n.t('tutorial.step1.text'),
             },
             {
-                target: '#object-palette .palette-item:first-child',
+                target: '[data-tool="ground"]',
                 title: I18n.t('tutorial.step2.title'),
                 text: I18n.t('tutorial.step2.text'),
+                onEnter() { _baseline = snapshotCounts(); },
+                check() { return Tools.activeTool === 'ground'; },
             },
             {
                 target: '#canvas',
                 title: I18n.t('tutorial.step3.title'),
                 text: I18n.t('tutorial.step3.text'),
+                check() {
+                    const c = snapshotCounts();
+                    return _baseline && c.ground > _baseline.ground;
+                },
             },
             {
-                target: '#placed-objects-list',
+                target: '#object-palette',
                 title: I18n.t('tutorial.step4.title'),
                 text: I18n.t('tutorial.step4.text'),
+                onEnter() { _baseline = snapshotCounts(); },
+                check() {
+                    const c = snapshotCounts();
+                    return _baseline && c.nonGround > _baseline.nonGround;
+                },
             },
             {
                 target: '#properties',
@@ -34,29 +55,40 @@ const Tutorial = (() => {
                 text: I18n.t('tutorial.step5.text'),
             },
             {
-                target: '#layers-list',
+                target: '#placed-objects-list',
                 title: I18n.t('tutorial.step6.title'),
                 text: I18n.t('tutorial.step6.text'),
             },
             {
-                target: '#tabs-container',
+                target: '#layers-list',
                 title: I18n.t('tutorial.step7.title'),
                 text: I18n.t('tutorial.step7.text'),
             },
             {
-                target: '#floating-tools',
+                target: '#tabs-container',
                 title: I18n.t('tutorial.step8.title'),
                 text: I18n.t('tutorial.step8.text'),
             },
             {
-                target: '#btn-settings',
+                target: '#floating-tools',
                 title: I18n.t('tutorial.step9.title'),
                 text: I18n.t('tutorial.step9.text'),
             },
             {
-                target: null,
+                target: '#btn-exportmenu',
                 title: I18n.t('tutorial.step10.title'),
                 text: I18n.t('tutorial.step10.text'),
+                emphasize: true,
+            },
+            {
+                target: '#btn-settings',
+                title: I18n.t('tutorial.step11.title'),
+                text: I18n.t('tutorial.step11.text'),
+            },
+            {
+                target: null,
+                title: I18n.t('tutorial.step12.title'),
+                text: I18n.t('tutorial.step12.text'),
             },
         ];
     }
@@ -79,17 +111,35 @@ const Tutorial = (() => {
         if (popup) popup.classList.add('hidden');
         if (_resizeHandler) window.removeEventListener('resize', _resizeHandler);
         _resizeHandler = null;
+        stopPolling();
     }
 
     function next() {
+        stopPolling();
         _stepIdx++;
         if (_stepIdx >= steps().length) { stop(); return; }
         render();
     }
 
     function prev() {
+        stopPolling();
         if (_stepIdx > 0) _stepIdx--;
         render();
+    }
+
+    function startPolling() {
+        stopPolling();
+        const step = steps()[_stepIdx];
+        if (!step || !step.check) return;
+        _pollHandle = setInterval(() => {
+            try {
+                if (step.check()) next();
+            } catch (e) { /* swallow */ }
+        }, 300);
+    }
+
+    function stopPolling() {
+        if (_pollHandle) { clearInterval(_pollHandle); _pollHandle = null; }
     }
 
     function ensureDom() {
@@ -107,6 +157,7 @@ const Tutorial = (() => {
             <div class="tutorial-badge">EXPERIMENTAL</div>
             <h3 id="tutorial-title"></h3>
             <p id="tutorial-text"></p>
+            <div id="tutorial-hint" class="tutorial-hint"></div>
             <div class="tutorial-footer">
                 <span id="tutorial-counter"></span>
                 <div class="tutorial-actions">
@@ -137,6 +188,7 @@ const Tutorial = (() => {
         const popup = document.getElementById('tutorial-popup');
         const titleEl = document.getElementById('tutorial-title');
         const textEl = document.getElementById('tutorial-text');
+        const hintEl = document.getElementById('tutorial-hint');
         const counter = document.getElementById('tutorial-counter');
         const skipBtn = document.getElementById('tutorial-skip');
         const prevBtn = document.getElementById('tutorial-prev');
@@ -144,13 +196,24 @@ const Tutorial = (() => {
 
         overlay.classList.remove('hidden');
         popup.classList.remove('hidden');
+        popup.classList.toggle('emphasize', !!step.emphasize);
         titleEl.textContent = step.title;
         textEl.textContent = step.text;
+        if (step.check) {
+            hintEl.textContent = I18n.t('tutorial.waitingHint');
+            hintEl.classList.remove('hidden');
+        } else {
+            hintEl.classList.add('hidden');
+        }
         counter.textContent = `${_stepIdx + 1} / ${all.length}`;
         skipBtn.textContent = I18n.t('tutorial.skip');
         prevBtn.textContent = I18n.t('tutorial.prev');
-        nextBtn.textContent = (_stepIdx === all.length - 1) ? I18n.t('tutorial.finish') : I18n.t('tutorial.next');
+        nextBtn.textContent = step.check ? I18n.t('tutorial.skipStep') : ((_stepIdx === all.length - 1) ? I18n.t('tutorial.finish') : I18n.t('tutorial.next'));
         prevBtn.style.visibility = _stepIdx === 0 ? 'hidden' : 'visible';
+
+        if (typeof step.onEnter === 'function') {
+            try { step.onEnter(); } catch (e) {}
+        }
 
         let rect = null;
         if (step.target) {
@@ -164,7 +227,6 @@ const Tutorial = (() => {
             spotlight.style.width = (rect.width + pad * 2) + 'px';
             spotlight.style.height = (rect.height + pad * 2) + 'px';
             spotlight.style.display = 'block';
-            // Position popup near the highlighted element
             positionPopupNear(popup, rect);
         } else {
             spotlight.style.display = 'none';
@@ -172,6 +234,8 @@ const Tutorial = (() => {
             popup.style.top = '50%';
             popup.style.transform = 'translate(-50%, -50%)';
         }
+
+        if (step.check) startPolling();
     }
 
     function positionPopupNear(popup, rect) {
@@ -180,7 +244,6 @@ const Tutorial = (() => {
         const pw = popup.offsetWidth, ph = popup.offsetHeight;
         const margin = 16;
         let left, top;
-        // Prefer right
         if (rect.right + margin + pw <= ww - 8) {
             left = rect.right + margin;
             top = Math.max(8, Math.min(wh - ph - 8, rect.top));

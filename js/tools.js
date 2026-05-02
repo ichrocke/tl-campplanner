@@ -350,7 +350,8 @@ const Tools = (() => {
             if (obj) obj.points = [...pts];
         }
         Canvas.groundPreview = [];
-        setTool('select');
+        // Stay in ground tool to allow drawing more areas
+        Canvas.render();
     }
 
     function onPlaceClick(pos, site) {
@@ -366,9 +367,9 @@ const Tools = (() => {
             Canvas.selectedId = obj.id;
             UI.showProperties(obj);
         }
-        // Single placement: return to select after placing
-        Canvas.placementPreview = null;
-        setTool('select');
+        // Stay in place tool with same template so the user can place more.
+        // Esc or clicking the select tool returns to select.
+        Canvas.render();
     }
 
     // --- Area tool ---
@@ -401,7 +402,8 @@ const Tools = (() => {
             if (obj) obj.points = [...pts];
         }
         Canvas.pathPreview = [];
-        setTool('select');
+        // Stay in area tool to allow drawing more areas
+        Canvas.render();
     }
 
     // --- Fence tool ---
@@ -848,7 +850,7 @@ const Tools = (() => {
                     }
                 }
                 Canvas.groundPreview = [];
-                setTool('select');
+                Canvas.render();
             }
             if (drag.type === 'rectSelect') {
                 const site = State.activeSite;

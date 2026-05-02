@@ -1,5 +1,11 @@
 # Changelog
 
+## [5.9.4] - 2026-05-02
+
+### Changed
+- **Drawing tools stay active**: After finishing a ground area, area or placing an object from the palette the tool now stays active so you can immediately draw or place another. Press ESC or click the select arrow to leave the tool.
+- **Tutorial revamp**: The experimental tutorial was rewritten as an interactive walkthrough. New flow: pick the ground tool → draw a ground area → place a tent (each step auto-advances when you actually do it) → properties → placed-objects → layers → tabs → tools → SAVE & EXPORT (emphasized: auto-save is local only, use Export for real backups) → settings → done. Steps with an action show a "waiting for you" hint and a "Skip step" button.
+
 ## [5.9.3] - 2026-05-02
 
 ### Added
