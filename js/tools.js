@@ -6,6 +6,8 @@ const Tools = (() => {
     let activeTool = 'select';
     let drag = null;
     let pendingTemplate = null;
+    let _eyedropperMode = false;
+    let _eyedropperCallback = null;
     // groundEditVertex removed - grounds are objects now
     let lastClickTime = 0;
 
@@ -145,6 +147,16 @@ const Tools = (() => {
         }
 
         if (e.button !== 0) return;
+
+        // Eyedropper: pick color from clicked object, return it via callback
+        if (_eyedropperMode) {
+            const hit = [...site.objects].reverse().find(o => Canvas.pointInObj(world.x, world.y, o));
+            if (hit && hit.color) {
+                if (_eyedropperCallback) _eyedropperCallback(hit.color);
+            }
+            Tools.cancelEyedropper();
+            return;
+        }
 
         // Minimap drag or click
         const rect = Canvas.canvas.getBoundingClientRect();
@@ -734,7 +746,8 @@ const Tools = (() => {
                     Canvas.hoveredId = newHov;
                     Canvas.render();
                 }
-                Canvas.canvas.style.cursor = hit ? 'move' : 'default';
+                Canvas.canvas.style.cursor = _eyedropperMode ? 'crosshair' : (hit ? 'move' : 'default');
+                UI.updateHoverTooltip(hit, e.clientX, e.clientY);
             }
             if (activeTool === 'place' && pendingTemplate) {
                 Canvas.canvas.style.cursor = 'crosshair';
@@ -966,6 +979,7 @@ const Tools = (() => {
                 }
                 break;
             case 'Escape':
+                if (_eyedropperMode) { Tools.cancelEyedropper(); break; }
                 if (activeTool === 'ground') {
                     Canvas.groundPreview = [];
                     setTool('select');
@@ -1162,9 +1176,23 @@ const Tools = (() => {
         }
     }
 
+    function startEyedropper(callback) {
+        _eyedropperMode = true;
+        _eyedropperCallback = callback;
+        if (Canvas.canvas) Canvas.canvas.style.cursor = 'crosshair';
+    }
+    function cancelEyedropper() {
+        _eyedropperMode = false;
+        _eyedropperCallback = null;
+        if (Canvas.canvas) Canvas.canvas.style.cursor = 'default';
+        if (typeof UI !== 'undefined' && UI.notifyEyedropperEnded) UI.notifyEyedropperEnded();
+    }
+
     return {
         get activeTool() { return activeTool; },
+        get eyedropperActive() { return _eyedropperMode; },
         setTool, setPendingTemplate,
+        startEyedropper, cancelEyedropper,
         onMouseDown, onMouseMove, onMouseUp, onWheel, onKeyDown, onContextMenu, onDblClick,
     };
 })();

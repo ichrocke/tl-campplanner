@@ -32,6 +32,7 @@ const UI = (() => {
         buildColorSwatches();
         bindSidebarDivider();
         bindLayers();
+        bindPlacedSearchSort();
         // (responsive sidebar removed)
     }
 
@@ -837,6 +838,59 @@ const UI = (() => {
     }
 
     // --- Placed Objects List ---
+    let _placedSearch = '';
+    let _placedSort = 'default';
+
+    function bindPlacedSearchSort() {
+        const toggle = document.getElementById('placed-search-toggle');
+        const input = document.getElementById('placed-search-input');
+        const sort = document.getElementById('placed-sort');
+        if (toggle && input) {
+            toggle.addEventListener('click', () => {
+                const wasHidden = input.classList.contains('hidden');
+                input.classList.toggle('hidden');
+                toggle.classList.toggle('active', wasHidden);
+                if (wasHidden) input.focus();
+                else { input.value = ''; _placedSearch = ''; buildPlacedList(); }
+            });
+            input.addEventListener('input', () => { _placedSearch = input.value; buildPlacedList(); });
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    input.value = '';
+                    _placedSearch = '';
+                    input.classList.add('hidden');
+                    toggle.classList.remove('active');
+                    buildPlacedList();
+                }
+            });
+        }
+        if (sort) {
+            sort.addEventListener('change', () => { _placedSort = sort.value; buildPlacedList(); });
+        }
+    }
+
+    function _matchesSearch(obj, q) {
+        if (!q) return true;
+        const hay = (obj.name || '') + ' ' + (obj.description || '') + ' ' + (obj.type || '');
+        return hay.toLowerCase().includes(q);
+    }
+
+    function _sortObjs(arr) {
+        const site = State.activeSite;
+        if (_placedSort === 'name') {
+            return [...arr].sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        }
+        if (_placedSort === 'size') {
+            return [...arr].sort((a, b) => ((b.width || 0) * (b.height || 0)) - ((a.width || 0) * (a.height || 0)));
+        }
+        if (_placedSort === 'layer') {
+            const layerOrder = {};
+            (site && site.layers || []).forEach((l, i) => { layerOrder[l.id] = i; });
+            return [...arr].sort((a, b) => (layerOrder[a.layerId] ?? 999) - (layerOrder[b.layerId] ?? 999));
+        }
+        return arr;
+    }
+
     function buildPlacedList() {
         const container = document.getElementById('placed-objects-list');
         container.innerHTML = '';
@@ -844,11 +898,21 @@ const UI = (() => {
         const site = State.activeSite;
         if (!site) return;
 
+        const q = _placedSearch.trim().toLowerCase();
+        const filtered = site.objects.filter(o => _matchesSearch(o, q));
+
+        // When searching or non-default sort: flat list, no grouping
+        if (q || _placedSort !== 'default') {
+            const sorted = _sortObjs(filtered);
+            sorted.forEach(obj => container.appendChild(buildPlacedItem(obj, false)));
+            return;
+        }
+
         // Group objects by groupId
         const groups = {};
         const ungrouped = [];
         const groupOrder = [];
-        site.objects.forEach(obj => {
+        filtered.forEach(obj => {
             if (obj.groupId) {
                 if (!groups[obj.groupId]) {
                     groups[obj.groupId] = [];
@@ -921,6 +985,10 @@ const UI = (() => {
             }
             Canvas.render();
             buildPlacedList();
+        });
+        el.addEventListener('dblclick', (e) => {
+            e.preventDefault();
+            Canvas.zoomToObject(obj);
         });
         return el;
     }
@@ -1207,7 +1275,7 @@ const UI = (() => {
             html += `<label>${I18n.t('props.textSection')} <textarea id="prop-text" rows="2" style="resize:vertical;font-family:var(--font);font-size:12px">${(obj.text || '').replace(/</g, '&lt;')}</textarea></label>`;
         }
         if (obj.type !== 'bgimage' && obj.type !== 'image') {
-            html += `<label>${I18n.t('props.color')} <input type="color" id="prop-color" value="${obj.color}"></label>`;
+            html += `<label>${I18n.t('props.color')} <span style="display:inline-flex;align-items:center;gap:4px"><input type="color" id="prop-color" value="${obj.color}"><button type="button" id="prop-color-pick" class="eyedropper-btn" title="${I18n.t('props.color.eyedropper')}">&#127777;&#65039;</button></span></label>`;
         }
         if (obj.type === 'bgimage' || obj.type === 'image') {
             html += `<label>${I18n.t('modal.settings.bgOpacity')} <input type="range" id="prop-opacity" min="0.05" max="1" step="0.05" value="${obj.opacity || (obj.type === 'image' ? 1 : 0.3)}" style="width:100%"></label>`;
@@ -1344,15 +1412,40 @@ const UI = (() => {
         if (obj.type !== 'area' && obj.type !== 'text' && obj.type !== 'fence' && obj.type !== 'bgimage' && obj.type !== 'image' && obj.type !== 'guideline') {
             const sides = obj.guyRopeSides || { top: true, right: true, bottom: true, left: true };
             const sd = obj.guyRopeSideDistances || {};
+            const pg = obj.guyRopePegs || {};
             const sdVal = (s) => (sd[s] !== undefined && sd[s] !== null && sd[s] !== '') ? sd[s] : '';
+            const pgVal = (s) => (pg[s] !== undefined && pg[s] !== null && pg[s] !== '') ? pg[s] : '';
             const showRectSides = obj.shape === 'rect' && (
                 obj.guyRopeDistance > 0 ||
                 Number(sd.top) > 0 || Number(sd.right) > 0 || Number(sd.bottom) > 0 || Number(sd.left) > 0
             );
+            const polyN = Canvas.getShapeSides(obj.shape);
+            const isPoly = polyN >= 3;
+            const showPolySides = isPoly && (obj.guyRopeDistance > 0 || (obj.polyGuyRopeSideDistances && obj.polyGuyRopeSideDistances.some(v => Number(v) > 0)) || (obj.polyGuyRopeSides && obj.polyGuyRopeSides.some(v => v === false)));
+            const polyDist = obj.polyGuyRopeSideDistances || [];
+            const polySides = obj.polyGuyRopeSides || [];
+            const polyPegs = obj.polyGuyRopePegs || [];
+            const showPegsChecked = obj.showPegs !== false;
+
+            let polyRows = '';
+            if (showPolySides) {
+                for (let i = 0; i < polyN; i++) {
+                    const enabled = polySides[i] !== false;
+                    const dv = (polyDist[i] !== undefined && polyDist[i] !== null && polyDist[i] !== '') ? polyDist[i] : '';
+                    const pv = (polyPegs[i] !== undefined && polyPegs[i] !== null && polyPegs[i] !== '') ? polyPegs[i] : '';
+                    polyRows += `<div class="poly-side-row">
+                        <label class="poly-side-cb"><input type="checkbox" data-poly-side="${i}" ${enabled ? 'checked' : ''}> ${i + 1}</label>
+                        <input type="number" data-poly-dist="${i}" value="${dv}" min="0" step="0.1" placeholder="${obj.guyRopeDistance}" title="${I18n.t('props.guyRope.distance')}">
+                        <input type="number" data-poly-pegs="${i}" value="${pv}" min="0" max="20" step="1" placeholder="1" title="${I18n.t('props.guyRope.pegs')}">
+                    </div>`;
+                }
+            }
+
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('props.guyRope')}</div>
                 <label>${I18n.t('props.guyRope.distance')} <input type="number" id="prop-guyrope" value="${obj.guyRopeDistance}" min="0" step="0.1"></label>
-                ${obj.guyRopeDistance > 0 || showRectSides ? `<label>${I18n.t('props.guyRope.ropeWidth')} <input type="number" id="prop-ropewidth" value="${obj.ropeWidth || ''}" min="0" max="3" step="0.1" placeholder="auto"></label>` : ''}
+                ${obj.guyRopeDistance > 0 || showRectSides || showPolySides ? `<label>${I18n.t('props.guyRope.ropeWidth')} <input type="number" id="prop-ropewidth" value="${obj.ropeWidth || ''}" min="0" max="3" step="0.1" placeholder="auto"></label>
+                <label style="flex-direction:row !important;align-items:center !important;gap:6px !important"><input type="checkbox" id="prop-show-pegs" ${showPegsChecked ? 'checked' : ''} style="width:auto"> ${I18n.t('props.guyRope.showPegs')}</label>` : ''}
                 ${showRectSides ? `
                 <div class="prop-section-subtitle">${I18n.t('props.guyRope.sides')}</div>
                 <div class="guyrope-sides">
@@ -1367,7 +1460,17 @@ const UI = (() => {
                     <label>${I18n.t('props.guyRope.right')} <input type="number" id="grd-right" value="${sdVal('right')}" min="0" step="0.1" placeholder="${obj.guyRopeDistance}"></label>
                     <label>${I18n.t('props.guyRope.bottom')} <input type="number" id="grd-bottom" value="${sdVal('bottom')}" min="0" step="0.1" placeholder="${obj.guyRopeDistance}"></label>
                     <label>${I18n.t('props.guyRope.left')} <input type="number" id="grd-left" value="${sdVal('left')}" min="0" step="0.1" placeholder="${obj.guyRopeDistance}"></label>
+                </div>
+                <div class="prop-section-subtitle">${I18n.t('props.guyRope.pegs')}</div>
+                <div class="prop-grid">
+                    <label>${I18n.t('props.guyRope.top')} <input type="number" id="grp-top" value="${pgVal('top')}" min="0" max="20" step="1" placeholder="1"></label>
+                    <label>${I18n.t('props.guyRope.right')} <input type="number" id="grp-right" value="${pgVal('right')}" min="0" max="20" step="1" placeholder="1"></label>
+                    <label>${I18n.t('props.guyRope.bottom')} <input type="number" id="grp-bottom" value="${pgVal('bottom')}" min="0" max="20" step="1" placeholder="1"></label>
+                    <label>${I18n.t('props.guyRope.left')} <input type="number" id="grp-left" value="${pgVal('left')}" min="0" max="20" step="1" placeholder="1"></label>
                 </div>` : ''}
+                ${showPolySides ? `
+                <div class="prop-section-subtitle">${I18n.t('props.guyRope.sides')} / ${I18n.t('props.guyRope.distance')} / ${I18n.t('props.guyRope.pegs')}</div>
+                <div class="poly-sides-grid">${polyRows}</div>` : ''}
             </div>`;
         }
 
@@ -1690,6 +1793,23 @@ const UI = (() => {
         bind('prop-color', 'color');
         bind('prop-shape', 'shape');
 
+        // Eyedropper: pick color from another canvas object
+        const pickBtn = document.getElementById('prop-color-pick');
+        if (pickBtn) {
+            pickBtn.addEventListener('click', () => {
+                if (Tools.eyedropperActive) { Tools.cancelEyedropper(); return; }
+                pickBtn.classList.add('active');
+                Tools.startEyedropper((color) => {
+                    if (!Canvas.isSelected(obj.id)) return;
+                    State.updateObject(obj.id, { color });
+                    const ci = document.getElementById('prop-color');
+                    if (ci) ci.value = color;
+                    Canvas.render();
+                    buildPlacedList();
+                });
+            });
+        }
+
         // Guy rope sides checkboxes
         ['top', 'right', 'bottom', 'left'].forEach(side => {
             const cb = document.getElementById('gr-' + side);
@@ -1724,6 +1844,90 @@ const UI = (() => {
                 });
             }
         });
+
+        // Per-side peg counts (rect)
+        ['top', 'right', 'bottom', 'left'].forEach(side => {
+            const inp = document.getElementById('grp-' + side);
+            if (inp) {
+                inp.addEventListener('change', () => {
+                    if (!Canvas.isSelected(obj.id)) return;
+                    const pegs = { ...(obj.guyRopePegs || {}) };
+                    const raw = inp.value.trim();
+                    if (raw === '') delete pegs[side];
+                    else {
+                        const n = parseInt(raw, 10);
+                        if (!isNaN(n) && n >= 0 && n <= 20) pegs[side] = n;
+                        else delete pegs[side];
+                    }
+                    State.updateObject(obj.id, { guyRopePegs: pegs });
+                    Canvas.render();
+                });
+            }
+        });
+
+        // Show pegs toggle
+        const spc = document.getElementById('prop-show-pegs');
+        if (spc) {
+            spc.addEventListener('change', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                State.updateObject(obj.id, { showPegs: spc.checked });
+                Canvas.render();
+            });
+        }
+
+        // Polygon per-side controls
+        const polyN = Canvas.getShapeSides(obj.shape);
+        if (polyN >= 3) {
+            const _ensurePolyArrays = () => {
+                let sides = obj.polyGuyRopeSides ? [...obj.polyGuyRopeSides] : new Array(polyN).fill(true);
+                let dists = obj.polyGuyRopeSideDistances ? [...obj.polyGuyRopeSideDistances] : new Array(polyN).fill(undefined);
+                let pegs = obj.polyGuyRopePegs ? [...obj.polyGuyRopePegs] : new Array(polyN).fill(undefined);
+                if (sides.length !== polyN) { const n = new Array(polyN).fill(true); sides.forEach((v, i) => { if (i < polyN) n[i] = v; }); sides = n; }
+                if (dists.length !== polyN) { const n = new Array(polyN); dists.forEach((v, i) => { if (i < polyN) n[i] = v; }); dists = n; }
+                if (pegs.length !== polyN) { const n = new Array(polyN); pegs.forEach((v, i) => { if (i < polyN) n[i] = v; }); pegs = n; }
+                return { sides, dists, pegs };
+            };
+            document.querySelectorAll('[data-poly-side]').forEach(cb => {
+                cb.addEventListener('change', () => {
+                    if (!Canvas.isSelected(obj.id)) return;
+                    const i = parseInt(cb.dataset.polySide, 10);
+                    const { sides, dists, pegs } = _ensurePolyArrays();
+                    sides[i] = cb.checked;
+                    State.updateObject(obj.id, { polyGuyRopeSides: sides, polyGuyRopeSideDistances: dists, polyGuyRopePegs: pegs });
+                    Canvas.render();
+                });
+            });
+            document.querySelectorAll('[data-poly-dist]').forEach(inp => {
+                inp.addEventListener('change', () => {
+                    if (!Canvas.isSelected(obj.id)) return;
+                    const i = parseInt(inp.dataset.polyDist, 10);
+                    const { sides, dists, pegs } = _ensurePolyArrays();
+                    const raw = inp.value.trim();
+                    if (raw === '') dists[i] = undefined;
+                    else {
+                        const n = parseFloat(raw);
+                        dists[i] = (!isNaN(n) && n >= 0) ? n : undefined;
+                    }
+                    State.updateObject(obj.id, { polyGuyRopeSides: sides, polyGuyRopeSideDistances: dists, polyGuyRopePegs: pegs });
+                    Canvas.render();
+                });
+            });
+            document.querySelectorAll('[data-poly-pegs]').forEach(inp => {
+                inp.addEventListener('change', () => {
+                    if (!Canvas.isSelected(obj.id)) return;
+                    const i = parseInt(inp.dataset.polyPegs, 10);
+                    const { sides, dists, pegs } = _ensurePolyArrays();
+                    const raw = inp.value.trim();
+                    if (raw === '') pegs[i] = undefined;
+                    else {
+                        const n = parseInt(raw, 10);
+                        pegs[i] = (!isNaN(n) && n >= 0 && n <= 20) ? n : undefined;
+                    }
+                    State.updateObject(obj.id, { polyGuyRopeSides: sides, polyGuyRopeSideDistances: dists, polyGuyRopePegs: pegs });
+                    Canvas.render();
+                });
+            });
+        }
 
         document.getElementById('prop-duplicate').addEventListener('click', () => {
             const dup = State.duplicateObject(obj.id);
@@ -2641,6 +2845,30 @@ const UI = (() => {
         }
     }
 
+    function updateHoverTooltip(obj, clientX, clientY) {
+        const tip = document.getElementById('hover-tooltip');
+        if (!tip) return;
+        if (!obj) { tip.classList.add('hidden'); return; }
+        const dimsLine = (obj.type === 'area' || obj.type === 'ground' || obj.type === 'fence' || obj.type === 'guideline' || obj.type === 'text' || obj.type === 'bgimage' || obj.type === 'image' || obj.type === 'symbol' || obj.type === 'postit')
+            ? obj.type
+            : `${(obj.width || 0).toFixed(1)} × ${(obj.height || 0).toFixed(1)} m`;
+        const ropeLine = obj.guyRopeDistance > 0 ? `<div class="hover-tooltip-dim">${I18n.t('props.guyRope.distance')}: ${obj.guyRopeDistance} m</div>` : '';
+        tip.innerHTML = `<div class="hover-tooltip-name">${obj.name || ''}</div><div class="hover-tooltip-dim">${dimsLine}</div>${ropeLine}`;
+        tip.classList.remove('hidden');
+        // Position near cursor, but keep inside viewport
+        const tw = tip.offsetWidth || 0, th = tip.offsetHeight || 0;
+        const ww = window.innerWidth, wh = window.innerHeight;
+        let left = clientX + 14, top = clientY + 14;
+        if (left + tw > ww - 4) left = clientX - tw - 14;
+        if (top + th > wh - 4) top = clientY - th - 14;
+        tip.style.left = left + 'px';
+        tip.style.top = top + 'px';
+    }
+
+    function notifyEyedropperEnded() {
+        document.querySelectorAll('.eyedropper-btn.active').forEach(b => b.classList.remove('active'));
+    }
+
     return {
         init, buildTabs, buildPalette, buildPlacedList, buildLayers, syncSettings, translateUI,
         showProperties, hideProperties, getActiveColor,
@@ -2649,5 +2877,6 @@ const UI = (() => {
         showAreaVertexMenu, showAreaEdgeMenu, showFenceVertexMenu, showFenceEdgeMenu,
         removeContextMenu, openTextModal, showMultiProperties,
         updateCollabStatus, openMaptilesModal,
+        updateHoverTooltip, notifyEyedropperEnded,
     };
 })();

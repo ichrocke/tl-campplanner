@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.9.0] - 2026-05-02
+
+### Added
+- **Sidebar search**: Magnifier icon next to "Placed Objects" reveals a filter input that narrows the list as you type. Escape clears and closes the search.
+- **Sidebar sort**: Dropdown to sort placed objects by Name, Size or Layer (in addition to default insertion order). Non-default sort flattens the list (no group folding).
+- **Zoom to object**: Double-click on any item in the placed-objects sidebar centers the canvas on that object and selects it.
+- **Hover tooltip**: Hovering an object on the canvas now shows a small tooltip with the object name, dimensions and guy rope distance.
+- **Color eyedropper**: Pipette button next to the color input lets you pick the color from another object on the canvas. Escape cancels.
+- **Per-side guy ropes for polygons**: Triangle, hexagon, octagon, decagon and dodecagon shapes now support per-side enable, distance override and peg count. The dashed outline is computed as a true offset polygon (with proper corner intersections) instead of a uniformly scaled outline.
+- **Configurable peg count per side**: Each side can have 0..20 mid-edge pegs evenly distributed (default 1 = current single mid-edge rope). Combined with corner ropes this lets you model wall tents with multiple stake points per side.
+- **Peg visualization**: Small dots are drawn at the end of every guy rope (corner and mid-edge) on canvas, in print/PNG and in SVG export. Toggleable per object via "Heringe anzeigen".
+
 ## [5.8.6] - 2026-05-02
 
 ### Changed

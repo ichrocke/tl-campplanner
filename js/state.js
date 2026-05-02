@@ -165,6 +165,11 @@ const State = (() => {
                 guyRopeDistance: template.guyRopeDistance || 0,
                 guyRopeSides: template.guyRopeSides || { top: true, right: true, bottom: true, left: true },
                 guyRopeSideDistances: template.guyRopeSideDistances ? { ...template.guyRopeSideDistances } : {},
+                guyRopePegs: template.guyRopePegs ? { ...template.guyRopePegs } : {},
+                polyGuyRopeSides: template.polyGuyRopeSides ? [...template.polyGuyRopeSides] : null,
+                polyGuyRopeSideDistances: template.polyGuyRopeSideDistances ? [...template.polyGuyRopeSideDistances] : null,
+                polyGuyRopePegs: template.polyGuyRopePegs ? [...template.polyGuyRopePegs] : null,
+                showPegs: template.showPegs !== undefined ? template.showPegs : true,
                 color: template.color,
                 shape: template.shape || 'rect',
                 description: template.description || '',
@@ -414,6 +419,8 @@ const State = (() => {
                 s.objects.forEach(o => {
                     if (!o.guyRopeSides) o.guyRopeSides = { top: true, right: true, bottom: true, left: true };
                     if (!o.guyRopeSideDistances) o.guyRopeSideDistances = {};
+                    if (!o.guyRopePegs) o.guyRopePegs = {};
+                    if (o.showPegs === undefined) o.showPegs = true;
                     if (!o.layerId) o.layerId = s.layers[0].id;
                 });
             });

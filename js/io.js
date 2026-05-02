@@ -346,6 +346,9 @@ const IO = (() => {
                     Canvas.getEffectiveSideDistance(obj, 'bottom'),
                     Canvas.getEffectiveSideDistance(obj, 'left'),
                 );
+            } else if (Canvas.hasPolyPerSideRopes && Canvas.hasPolyPerSideRopes(obj)) {
+                const N = Canvas.getShapeSides(obj.shape);
+                for (let i = 0; i < N; i++) maxRope = Math.max(maxRope, Canvas.getEffectivePolySideDistance(obj, i));
             }
             const pad = Math.max(obj.width || 0, obj.height || 0) / 2 + maxRope + 0.5;
             expand(obj.x - pad, obj.y - pad);
@@ -782,37 +785,117 @@ const IO = (() => {
             const sideDb = shape === 'rect' && Canvas.getEffectiveSideDistance ? Canvas.getEffectiveSideDistance(obj, 'bottom') : 0;
             const sideDl = shape === 'rect' && Canvas.getEffectiveSideDistance ? Canvas.getEffectiveSideDistance(obj, 'left') : 0;
             const hasRectRope = shape === 'rect' && (sideDt > 0 || sideDr > 0 || sideDb > 0 || sideDl > 0);
-            if (obj.guyRopeDistance > 0 || hasRectRope) {
+            const hasPolyRope = Canvas.hasPolyPerSideRopes && Canvas.hasPolyPerSideRopes(obj);
+            const showPegs = obj.showPegs !== false;
+            if (obj.guyRopeDistance > 0 || hasRectRope || hasPolyRope) {
                 const gd = obj.guyRopeDistance;
                 const ropeColor = '#d1d5db';
+                const pegColor = '#9ca3af';
                 const rad = (rot || 0) * Math.PI / 180;
                 const cos = Math.cos(rad), sin = Math.sin(rad);
                 const rotP = (dx,dy) => ({ x: obj.x + dx*cos - dy*sin, y: obj.y + dx*sin + dy*cos });
+                const pegRadius = 0.04; // world units
+                const pegPts = [];
+                const lineSeg = (ax, ay, bx, by, dashed) => {
+                    const f = rotP(ax, ay), t = rotP(bx, by);
+                    const dash = dashed ? ' stroke-dasharray="4,4"' : '';
+                    const stroke = dashed ? '#9ca3af' : ropeColor;
+                    els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${stroke}" stroke-width="0.8"${dash}/>\n`;
+                };
+                const addPeg = (lx, ly) => { pegPts.push(rotP(lx, ly)); };
 
                 if (shape === 'rect') {
-                    const lineSeg = (ax, ay, bx, by, dashed) => {
-                        const f = rotP(ax, ay), t = rotP(bx, by);
-                        const dash = dashed ? ' stroke-dasharray="4,4"' : '';
-                        const stroke = dashed ? '#9ca3af' : ropeColor;
-                        els += `<line x1="${(f.x*s).toFixed(1)}" y1="${(f.y*s).toFixed(1)}" x2="${(t.x*s).toFixed(1)}" y2="${(t.y*s).toFixed(1)}" stroke="${stroke}" stroke-width="0.8"${dash}/>\n`;
-                    };
                     if (sideDt > 0) lineSeg(-hw - sideDl, -hh - sideDt, hw + sideDr, -hh - sideDt, true);
                     if (sideDr > 0) lineSeg(hw + sideDr, -hh - sideDt, hw + sideDr, hh + sideDb, true);
                     if (sideDb > 0) lineSeg(hw + sideDr, hh + sideDb, -hw - sideDl, hh + sideDb, true);
                     if (sideDl > 0) lineSeg(-hw - sideDl, hh + sideDb, -hw - sideDl, -hh - sideDt, true);
                     const cornerRope = (cx, cy, sH, sV, dh, dv) => {
-                        if (dh > 0 && dv > 0) lineSeg(cx, cy, cx + sV * dv, cy + sH * dh, false);
-                        else if (dh > 0)      lineSeg(cx, cy, cx,            cy + sH * dh, false);
-                        else if (dv > 0)      lineSeg(cx, cy, cx + sV * dv, cy,            false);
+                        let ex, ey;
+                        if (dh > 0 && dv > 0) { ex = cx + sV * dv; ey = cy + sH * dh; }
+                        else if (dh > 0)      { ex = cx;            ey = cy + sH * dh; }
+                        else if (dv > 0)      { ex = cx + sV * dv; ey = cy;            }
+                        else return;
+                        lineSeg(cx, cy, ex, ey, false);
+                        addPeg(ex, ey);
                     };
                     cornerRope(-hw, -hh, -1, -1, sideDt, sideDl);
                     cornerRope( hw, -hh, -1,  1, sideDt, sideDr);
                     cornerRope( hw,  hh,  1,  1, sideDb, sideDr);
                     cornerRope(-hw,  hh,  1, -1, sideDb, sideDl);
-                    if (sideDt > 0) lineSeg(0, -hh, 0, -hh - sideDt, false);
-                    if (sideDb > 0) lineSeg(0, hh, 0, hh + sideDb, false);
-                    if (sideDl > 0) lineSeg(-hw, 0, -hw - sideDl, 0, false);
-                    if (sideDr > 0) lineSeg(hw, 0, hw + sideDr, 0, false);
+                    const midRopes = (sideName, d) => {
+                        if (d <= 0) return;
+                        const n = (Canvas.getRectPegsForSide ? Canvas.getRectPegsForSide(obj, sideName) : 1);
+                        for (let i = 1; i <= n; i++) {
+                            const t = i / (n + 1);
+                            let bx, by, ex, ey;
+                            if (sideName === 'top')         { bx = -hw + t * 2 * hw; by = -hh; ex = bx; ey = -hh - d; }
+                            else if (sideName === 'right')  { bx = hw; by = -hh + t * 2 * hh; ex = hw + d; ey = by; }
+                            else if (sideName === 'bottom') { bx = -hw + t * 2 * hw; by = hh; ex = bx; ey = hh + d; }
+                            else                            { bx = -hw; by = -hh + t * 2 * hh; ex = -hw - d; ey = by; }
+                            lineSeg(bx, by, ex, ey, false);
+                            addPeg(ex, ey);
+                        }
+                    };
+                    midRopes('top', sideDt);
+                    midRopes('right', sideDr);
+                    midRopes('bottom', sideDb);
+                    midRopes('left', sideDl);
+                } else if (hasPolyRope) {
+                    const N = Canvas.getShapeSides(shape);
+                    const baseRing = Canvas.regularPolygonPoints(N);
+                    const pts = baseRing.map(p => ({ x: p.x * hw, y: p.y * hh }));
+                    const dists = [], normals = [];
+                    for (let i = 0; i < N; i++) {
+                        const a = pts[i], b = pts[(i + 1) % N];
+                        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+                        const len = Math.hypot(mx, my) || 1;
+                        normals.push({ x: mx / len, y: my / len });
+                        dists.push(Canvas.getEffectivePolySideDistance(obj, i));
+                    }
+                    const intersect = (p1, d1, p2, d2) => {
+                        const det = d1.x * (-d2.y) - d1.y * (-d2.x);
+                        if (Math.abs(det) < 1e-9) return null;
+                        const dx = p2.x - p1.x, dy = p2.y - p1.y;
+                        const tt = (dx * (-d2.y) - dy * (-d2.x)) / det;
+                        return { x: p1.x + tt * d1.x, y: p1.y + tt * d1.y };
+                    };
+                    const outer = [];
+                    for (let k = 0; k < N; k++) {
+                        const prev = (k - 1 + N) % N, cur = k;
+                        const dp = dists[prev], dc = dists[cur];
+                        if (dp > 0 && dc > 0) {
+                            const a1 = { x: pts[prev].x + normals[prev].x * dp, y: pts[prev].y + normals[prev].y * dp };
+                            const dir1 = { x: pts[(prev + 1) % N].x - pts[prev].x, y: pts[(prev + 1) % N].y - pts[prev].y };
+                            const a2 = { x: pts[cur].x + normals[cur].x * dc, y: pts[cur].y + normals[cur].y * dc };
+                            const dir2 = { x: pts[(cur + 1) % N].x - pts[cur].x, y: pts[(cur + 1) % N].y - pts[cur].y };
+                            outer.push(intersect(a1, dir1, a2, dir2) || { x: pts[k].x + normals[cur].x * dc, y: pts[k].y + normals[cur].y * dc });
+                        } else if (dc > 0) outer.push({ x: pts[k].x + normals[cur].x * dc, y: pts[k].y + normals[cur].y * dc });
+                        else if (dp > 0) outer.push({ x: pts[k].x + normals[prev].x * dp, y: pts[k].y + normals[prev].y * dp });
+                        else outer.push({ x: pts[k].x, y: pts[k].y });
+                    }
+                    for (let k = 0; k < N; k++) {
+                        if (dists[k] <= 0) continue;
+                        const o1 = outer[k], o2 = outer[(k + 1) % N];
+                        lineSeg(o1.x, o1.y, o2.x, o2.y, true);
+                    }
+                    for (let k = 0; k < N; k++) {
+                        const prev = (k - 1 + N) % N;
+                        if (dists[prev] <= 0 && dists[k] <= 0) continue;
+                        lineSeg(pts[k].x, pts[k].y, outer[k].x, outer[k].y, false);
+                        addPeg(outer[k].x, outer[k].y);
+                    }
+                    for (let k = 0; k < N; k++) {
+                        if (dists[k] <= 0) continue;
+                        const a = pts[k], b = pts[(k + 1) % N];
+                        const n = Canvas.getPolyPegsForSide(obj, k);
+                        for (let i = 1; i <= n; i++) {
+                            const t = i / (n + 1);
+                            const bx = a.x + (b.x - a.x) * t, by = a.y + (b.y - a.y) * t;
+                            const ex = bx + normals[k].x * dists[k], ey = by + normals[k].y * dists[k];
+                            lineSeg(bx, by, ex, ey, false);
+                            addPeg(ex, ey);
+                        }
+                    }
                 } else if (gd > 0) {
                     if (shape === 'circle') {
                         els += `<ellipse cx="${(obj.x*s).toFixed(1)}" cy="${(obj.y*s).toFixed(1)}" rx="${((hw + gd)*s).toFixed(1)}" ry="${((hh + gd)*s).toFixed(1)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
@@ -822,7 +905,6 @@ const IO = (() => {
                         const sides = shape === 'hexagon' ? 6 : shape === 'octagon' ? 8 : shape === 'decagon' ? 10 : 12;
                         els += `<polygon points="${regPoly(obj.x, obj.y, hw + gd, hh + gd, sides, rot)}" fill="none" stroke="#9ca3af" stroke-width="0.8" stroke-dasharray="4,4"/>\n`;
                     }
-                    // Radial ropes
                     const n = shape === 'circle' ? 8 : shape === 'triangle' ? 3 : shape === 'hexagon' ? 6 : shape === 'octagon' ? 8 : shape === 'decagon' ? 10 : shape === 'dodecagon' ? 12 : 8;
                     for (let i = 0; i < n; i++) {
                         const a = (i / n) * Math.PI * 2 - Math.PI / 2;
@@ -831,9 +913,15 @@ const IO = (() => {
                         const bodyR = Math.sqrt(fx * fx + fy * fy);
                         const dirX = bodyR > 0 ? fx / bodyR : 0, dirY = bodyR > 0 ? fy / bodyR : 0;
                         const tx = fx + dirX * gd, ty = fy + dirY * gd;
-                        const from = rotP(fx, fy), to = rotP(tx, ty);
-                        els += `<line x1="${(from.x*s).toFixed(1)}" y1="${(from.y*s).toFixed(1)}" x2="${(to.x*s).toFixed(1)}" y2="${(to.y*s).toFixed(1)}" stroke="${ropeColor}" stroke-width="0.8"/>\n`;
+                        lineSeg(fx, fy, tx, ty, false);
+                        addPeg(tx, ty);
                     }
+                }
+
+                if (showPegs) {
+                    pegPts.forEach(p => {
+                        els += `<circle cx="${(p.x*s).toFixed(1)}" cy="${(p.y*s).toFixed(1)}" r="${(pegRadius*s).toFixed(1)}" fill="${pegColor}"/>\n`;
+                    });
                 }
             }
 

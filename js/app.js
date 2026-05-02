@@ -90,6 +90,7 @@
     c.addEventListener('wheel', (e) => Tools.onWheel(e), { passive: false });
     c.addEventListener('contextmenu', (e) => Tools.onContextMenu(e));
     c.addEventListener('dblclick', (e) => Tools.onDblClick(e));
+    c.addEventListener('mouseleave', () => UI.updateHoverTooltip && UI.updateHoverTooltip(null, 0, 0));
 
     // Touch events (tablet)
     if (typeof Touch !== 'undefined') Touch.init(c);

@@ -97,6 +97,54 @@ const Canvas = (() => {
         return obj.guyRopeDistance || 0;
     }
 
+    function getRectPegsForSide(obj, side) {
+        const p = obj.guyRopePegs && obj.guyRopePegs[side];
+        if (p !== undefined && p !== null && p !== '') {
+            const n = parseInt(p, 10);
+            if (!isNaN(n) && n >= 0 && n <= 20) return n;
+        }
+        return 1;
+    }
+
+    function getEffectivePolySideDistance(obj, i) {
+        const sides = obj.polyGuyRopeSides;
+        if (sides && sides[i] === false) return 0;
+        const overrides = obj.polyGuyRopeSideDistances;
+        if (overrides) {
+            const v = overrides[i];
+            if (v !== undefined && v !== null && v !== '') {
+                const n = Number(v);
+                if (!isNaN(n) && n >= 0) return n;
+            }
+        }
+        return obj.guyRopeDistance || 0;
+    }
+
+    function getPolyPegsForSide(obj, i) {
+        const arr = obj.polyGuyRopePegs;
+        if (arr && arr[i] !== undefined && arr[i] !== null && arr[i] !== '') {
+            const n = parseInt(arr[i], 10);
+            if (!isNaN(n) && n >= 0 && n <= 20) return n;
+        }
+        return 1;
+    }
+
+    function hasPolyPerSideRopes(obj) {
+        const N = getShapeSides(obj.shape);
+        if (N < 3) return false;
+        if (!obj.polyGuyRopeSides && !obj.polyGuyRopeSideDistances && !obj.polyGuyRopePegs) return false;
+        for (let i = 0; i < N; i++) if (getEffectivePolySideDistance(obj, i) > 0) return true;
+        return false;
+    }
+
+    // Draw a small filled circle peg at the end of a rope (in local coords; ctx already translated/rotated)
+    function drawPeg(x, y, rs) {
+        const r = Math.max(1.2, 1.8 * rs);
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
     function getLocalShapePath(obj, extraPad) {
         const pad = extraPad || 0;
         const hw = obj.width / 2 + pad;
@@ -942,8 +990,9 @@ const Canvas = (() => {
             getEffectiveSideDistance(obj, 'right') > 0 ||
             getEffectiveSideDistance(obj, 'bottom') > 0 ||
             getEffectiveSideDistance(obj, 'left') > 0
-        ))) {
+        )) || hasPolyPerSideRopes(obj)) {
             const gd = obj.guyRopeDistance;
+            const showPegs = obj.showPegs !== false;
 
             if (obj.shape === 'rect') {
                 const hw = w / 2, hh = h / 2;
@@ -955,36 +1004,151 @@ const Canvas = (() => {
                 ctx.strokeStyle = '#9ca3af';
                 ctx.lineWidth = 1 * rs;
 
-                // Outer dashed line per side. Each side ends at the body corner unless
-                // the perpendicular adjacent side also has guy ropes, in which case it
-                // extends to meet that side's outer line.
                 if (dt > 0) { ctx.beginPath(); ctx.moveTo(-hw - dl, -hh - dt); ctx.lineTo(hw + dr, -hh - dt); ctx.stroke(); }
                 if (dr > 0) { ctx.beginPath(); ctx.moveTo(hw + dr, -hh - dt); ctx.lineTo(hw + dr, hh + db); ctx.stroke(); }
                 if (db > 0) { ctx.beginPath(); ctx.moveTo(hw + dr, hh + db); ctx.lineTo(-hw - dl, hh + db); ctx.stroke(); }
                 if (dl > 0) { ctx.beginPath(); ctx.moveTo(-hw - dl, hh + db); ctx.lineTo(-hw - dl, -hh - dt); ctx.stroke(); }
                 ctx.setLineDash([]);
 
-                // Corner and mid-edge ropes
+                // Collect rope endpoints to draw pegs at
+                const pegPts = [];
                 ctx.strokeStyle = '#d1d5db';
+                ctx.fillStyle = '#9ca3af';
                 ctx.lineWidth = 0.8 * rs;
-                // Corner ropes: diagonal if both adjacent sides have ropes,
-                // else perpendicular to whichever single adjacent side is active.
+
                 const cornerRope = (cx, cy, sideH, sideV, dh, dv) => {
-                    if (dh > 0 && dv > 0) { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + sideV * dv, cy + sideH * dh); ctx.stroke(); }
-                    else if (dh > 0)      { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx,                cy + sideH * dh); ctx.stroke(); }
-                    else if (dv > 0)      { ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx + sideV * dv, cy               ); ctx.stroke(); }
+                    let ex, ey;
+                    if (dh > 0 && dv > 0) { ex = cx + sideV * dv; ey = cy + sideH * dh; }
+                    else if (dh > 0)      { ex = cx;              ey = cy + sideH * dh; }
+                    else if (dv > 0)      { ex = cx + sideV * dv; ey = cy;              }
+                    else return;
+                    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(ex, ey); ctx.stroke();
+                    pegPts.push({ x: ex, y: ey });
                 };
-                cornerRope(-hw, -hh, -1, -1, dt, dl); // top-left
-                cornerRope( hw, -hh, -1,  1, dt, dr); // top-right
-                cornerRope( hw,  hh,  1,  1, db, dr); // bottom-right
-                cornerRope(-hw,  hh,  1, -1, db, dl); // bottom-left
-                // Mid-edge ropes
-                if (dt > 0) { ctx.beginPath(); ctx.moveTo(0, -hh); ctx.lineTo(0, -hh - dt); ctx.stroke(); }
-                if (dr > 0) { ctx.beginPath(); ctx.moveTo(hw, 0); ctx.lineTo(hw + dr, 0); ctx.stroke(); }
-                if (db > 0) { ctx.beginPath(); ctx.moveTo(0, hh); ctx.lineTo(0, hh + db); ctx.stroke(); }
-                if (dl > 0) { ctx.beginPath(); ctx.moveTo(-hw, 0); ctx.lineTo(-hw - dl, 0); ctx.stroke(); }
+                cornerRope(-hw, -hh, -1, -1, dt, dl);
+                cornerRope( hw, -hh, -1,  1, dt, dr);
+                cornerRope( hw,  hh,  1,  1, db, dr);
+                cornerRope(-hw,  hh,  1, -1, db, dl);
+
+                // Mid-edge ropes (configurable count per side)
+                const midEdgeRopes = (sideName, d) => {
+                    if (d <= 0) return;
+                    const n = getRectPegsForSide(obj, sideName);
+                    for (let i = 1; i <= n; i++) {
+                        const t = i / (n + 1);
+                        let bx, by, ex, ey;
+                        if (sideName === 'top')    { bx = -hw + t * 2 * hw; by = -hh; ex = bx; ey = -hh - d; }
+                        else if (sideName === 'right')  { bx = hw; by = -hh + t * 2 * hh; ex = hw + d; ey = by; }
+                        else if (sideName === 'bottom') { bx = -hw + t * 2 * hw; by = hh; ex = bx; ey = hh + d; }
+                        else                            { bx = -hw; by = -hh + t * 2 * hh; ex = -hw - d; ey = by; }
+                        ctx.beginPath(); ctx.moveTo(bx, by); ctx.lineTo(ex, ey); ctx.stroke();
+                        pegPts.push({ x: ex, y: ey });
+                    }
+                };
+                midEdgeRopes('top', dt);
+                midEdgeRopes('right', dr);
+                midEdgeRopes('bottom', db);
+                midEdgeRopes('left', dl);
+
+                if (showPegs) pegPts.forEach(p => drawPeg(p.x, p.y, rs));
+            } else if (hasPolyPerSideRopes(obj)) {
+                // Polygon with per-side rope distances
+                const N = getShapeSides(obj.shape);
+                const hw = obj.width / 2, hh = obj.height / 2; // world units
+                const baseRing = regularPolygonPoints(N); // unit ring
+                const pts = baseRing.map(p => ({ x: p.x * hw, y: p.y * hh })); // world coords
+                // outward normals = normalized midpoints (since regular polygon centered at origin)
+                const dists = []; const normals = []; const mids = [];
+                for (let i = 0; i < N; i++) {
+                    const a = pts[i], b = pts[(i + 1) % N];
+                    const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+                    const len = Math.hypot(mx, my) || 1;
+                    normals.push({ x: mx / len, y: my / len });
+                    mids.push({ x: mx, y: my });
+                    dists.push(getEffectivePolySideDistance(obj, i));
+                }
+                // Compute outer corner intersections
+                // For corner k (between side k-1 and side k):
+                // outer_k = pts[k] + (depending on which adjacents have d > 0)
+                const intersect = (p1, d1, p2, d2) => {
+                    // Solve p1 + t * d1 = p2 + s * d2
+                    const det = d1.x * (-d2.y) - d1.y * (-d2.x);
+                    if (Math.abs(det) < 1e-9) return null;
+                    const dx = p2.x - p1.x, dy = p2.y - p1.y;
+                    const t = (dx * (-d2.y) - dy * (-d2.x)) / det;
+                    return { x: p1.x + t * d1.x, y: p1.y + t * d1.y };
+                };
+                const outer = [];
+                for (let k = 0; k < N; k++) {
+                    const prev = (k - 1 + N) % N;
+                    const cur = k;
+                    const dp = dists[prev], dc = dists[cur];
+                    if (dp > 0 && dc > 0) {
+                        // intersection of two offset lines
+                        const a1 = { x: pts[prev].x + normals[prev].x * dp, y: pts[prev].y + normals[prev].y * dp };
+                        const dir1 = { x: pts[(prev + 1) % N].x - pts[prev].x, y: pts[(prev + 1) % N].y - pts[prev].y };
+                        const a2 = { x: pts[cur].x + normals[cur].x * dc, y: pts[cur].y + normals[cur].y * dc };
+                        const dir2 = { x: pts[(cur + 1) % N].x - pts[cur].x, y: pts[(cur + 1) % N].y - pts[cur].y };
+                        const ix = intersect(a1, dir1, a2, dir2);
+                        outer.push(ix || { x: pts[k].x + normals[cur].x * dc, y: pts[k].y + normals[cur].y * dc });
+                    } else if (dc > 0) {
+                        outer.push({ x: pts[k].x + normals[cur].x * dc, y: pts[k].y + normals[cur].y * dc });
+                    } else if (dp > 0) {
+                        outer.push({ x: pts[k].x + normals[prev].x * dp, y: pts[k].y + normals[prev].y * dp });
+                    } else {
+                        outer.push({ x: pts[k].x, y: pts[k].y });
+                    }
+                }
+
+                // Outer dashed lines per side
+                ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = '#9ca3af';
+                ctx.lineWidth = 1 * rs;
+                for (let k = 0; k < N; k++) {
+                    if (dists[k] <= 0) continue;
+                    const o1 = outer[k], o2 = outer[(k + 1) % N];
+                    ctx.beginPath();
+                    ctx.moveTo(o1.x * z, o1.y * z);
+                    ctx.lineTo(o2.x * z, o2.y * z);
+                    ctx.stroke();
+                }
+                ctx.setLineDash([]);
+
+                // Ropes
+                ctx.strokeStyle = '#d1d5db';
+                ctx.fillStyle = '#9ca3af';
+                ctx.lineWidth = 0.8 * rs;
+                const pegPts = [];
+                // Corner ropes
+                for (let k = 0; k < N; k++) {
+                    const prev = (k - 1 + N) % N;
+                    if (dists[prev] <= 0 && dists[k] <= 0) continue;
+                    const o = outer[k];
+                    ctx.beginPath();
+                    ctx.moveTo(pts[k].x * z, pts[k].y * z);
+                    ctx.lineTo(o.x * z, o.y * z);
+                    ctx.stroke();
+                    pegPts.push({ x: o.x * z, y: o.y * z });
+                }
+                // Mid-edge ropes (configurable count)
+                for (let k = 0; k < N; k++) {
+                    if (dists[k] <= 0) continue;
+                    const a = pts[k], b = pts[(k + 1) % N];
+                    const n = getPolyPegsForSide(obj, k);
+                    for (let i = 1; i <= n; i++) {
+                        const t = i / (n + 1);
+                        const bx = a.x + (b.x - a.x) * t, by = a.y + (b.y - a.y) * t;
+                        const ex = bx + normals[k].x * dists[k], ey = by + normals[k].y * dists[k];
+                        ctx.beginPath();
+                        ctx.moveTo(bx * z, by * z);
+                        ctx.lineTo(ex * z, ey * z);
+                        ctx.stroke();
+                        pegPts.push({ x: ex * z, y: ey * z });
+                    }
+                }
+                if (showPegs) pegPts.forEach(p => drawPeg(p.x, p.y, rs));
             } else if (gd > 0) {
-                // Non-rect: draw full outline as before
+                // Non-rect, no per-side: draw full outline as before
                 ctx.setLineDash([4, 4]);
                 ctx.strokeStyle = '#9ca3af';
                 ctx.lineWidth = 1 * rs;
@@ -993,6 +1157,7 @@ const Canvas = (() => {
                 ctx.setLineDash([]);
 
                 ctx.strokeStyle = '#d1d5db';
+                ctx.fillStyle = '#9ca3af';
                 ctx.lineWidth = 0.8 * rs;
                 const bodyPts = getLocalShapePath(obj, 0);
                 const ropePts = getLocalShapePath(obj, gd);
@@ -1002,6 +1167,9 @@ const Canvas = (() => {
                     ctx.moveTo(bodyPts[i].x * z, bodyPts[i].y * z);
                     ctx.lineTo(ropePts[i].x * z, ropePts[i].y * z);
                     ctx.stroke();
+                }
+                if (showPegs) {
+                    for (let i = 0; i < count; i++) drawPeg(ropePts[i].x * z, ropePts[i].y * z, rs);
                 }
             }
         }
@@ -2239,6 +2407,29 @@ const Canvas = (() => {
         };
     }
 
+    // Center the view on an object and select it. Optionally zoom in if the object is small relative to the viewport.
+    function zoomToObject(obj) {
+        const site = State.activeSite;
+        if (!site || !obj || !canvas) return;
+        // Determine target zoom: aim for the object (incl. ropes) to fill ~40% of the smaller canvas dimension
+        let halfMax = (Math.max(obj.width || 0, obj.height || 0) / 2) + (obj.guyRopeDistance || 0);
+        if (obj.points && obj.points.length) {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            obj.points.forEach(p => { if (p.x < minX) minX = p.x; if (p.y < minY) minY = p.y; if (p.x > maxX) maxX = p.x; if (p.y > maxY) maxY = p.y; });
+            halfMax = Math.max(halfMax, (maxX - minX) / 2, (maxY - minY) / 2);
+        }
+        const targetSpanWorld = Math.max(2, halfMax * 2 + 4);
+        const minSide = Math.min(canvas.width, canvas.height);
+        const targetZoom = (minSide * 0.5) / (targetSpanWorld * PPM);
+        site.view.zoom = Math.max(0.1, Math.min(10, targetZoom));
+        site.view.panX = -obj.x;
+        site.view.panY = -obj.y;
+        // Select the object
+        selectedIds.clear();
+        selectedIds.add(obj.id);
+        render();
+    }
+
     // Render the current site onto an offscreen canvas
     // pxW/pxH: logical pixel dimensions (96 DPI equivalent)
     // options: { showGrid, showDistances, margin, dpiScale }
@@ -2344,7 +2535,8 @@ const Canvas = (() => {
     return {
         init, render, resize, w2s, s2w, zoom, snapToGrid, snapObjToGrid,
         pointInObj, pointOnRotHandle, pointOnResizeHandle, computeDistancesForObj,
-        getLocalShapePath, getShapeSides, getEffectiveSideDistance,
+        getLocalShapePath, getShapeSides, getEffectiveSideDistance, zoomToObject,
+        getRectPegsForSide, getEffectivePolySideDistance, getPolyPegsForSide, hasPolyPerSideRopes, regularPolygonPoints,
         get canvas() { return canvas; },
         get selectedIds() { return selectedIds; },
         // Compat: single selectedId getter/setter

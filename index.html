@@ -80,7 +80,19 @@
                 </div>
                 <div id="sidebar-divider" class="sidebar-divider"></div>
                 <div class="sidebar-section">
-                    <h3 data-i18n="sidebar.placedObjects">Placed Objects</h3>
+                    <div class="placed-section-header">
+                        <h3 data-i18n="sidebar.placedObjects">Placed Objects</h3>
+                        <div class="placed-section-controls">
+                            <select id="placed-sort" class="placed-sort" title="Sortierung">
+                                <option value="default" data-i18n="placed.sort.default">Standard</option>
+                                <option value="name" data-i18n="placed.sort.name">Name</option>
+                                <option value="size" data-i18n="placed.sort.size">Groesse</option>
+                                <option value="layer" data-i18n="placed.sort.layer">Layer</option>
+                            </select>
+                            <button id="placed-search-toggle" class="placed-icon-btn" title="Suchen">&#128269;</button>
+                        </div>
+                    </div>
+                    <input type="text" id="placed-search-input" class="placed-search-input hidden" placeholder="Suchen...">
                     <div id="placed-objects-list"></div>
                 </div>
                 <div id="sidebar-divider2" class="sidebar-divider"></div>
@@ -95,6 +107,9 @@
 
             <div id="canvas-container">
                 <canvas id="canvas"></canvas>
+
+                <!-- Hover tooltip -->
+                <div id="hover-tooltip" class="hover-tooltip hidden"></div>
 
                 <!-- Collab status indicator -->
                 <div id="collab-indicator" style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);color:#fff;padding:4px 10px;border-radius:12px;font-size:11px;align-items:center;gap:6px;z-index:50;pointer-events:none;display:none">
