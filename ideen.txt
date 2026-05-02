@@ -1,0 +1,111 @@
+Ideen fuer den Zeltplatzplaner
+================================
+
+Zusammenstellung moeglicher Verbesserungen und neuer Features.
+Sortiert grob nach Aufwand/Nutzen, ohne Anspruch auf Vollstaendigkeit.
+
+
+--- Quick Wins (kleine Aenderungen, sichtbarer Effekt) ---
+
+- Snap an andere Objekt-Kanten/Mittelpunkte beim Verschieben (nicht nur Grid).
+- Verteilen-Werkzeug: gleichmaessige Abstaende zwischen ausgewaehlten Objekten.
+- Ausrichten-Werkzeug: linksbuendig, rechtsbuendig, mittig, etc.
+- Massgenaues Verschieben: Pfeiltasten + Shift fuer kleinere/groessere Schritte.
+- "Zuletzt verwendet"-Liste der platzierten Vorlagen.
+- Mehrere Objekte gleichzeitig drehen um gemeinsamen Mittelpunkt.
+- Massstabs-Lineal direkt im Canvas (Drag, um Abstand zu messen) erweitern um Mehrfach-Messung mit Summe.
+
+
+--- Abspannung / Geometrie ---
+
+- Asymmetrische Zeltformen (L-Form, T-Form) als eigene Shape.
+- Zelt-Eingang zeigt Oeffnungsrichtung und Schwenkbereich der Tuer.
+- Vordach/Tarp als verbundenes Objekt (Body + zusaetzlicher Zeltteil).
+
+
+--- Layer & Organisation ---
+
+- Layer-Gruppen (z.B. "Schlafzelte", "Funktionsbereich").
+- Layer aus anderem Tab kopieren (existiert) -> auch verlinken (Live-Update).
+- Layer faerben/Tinten zur visuellen Unterscheidung.
+- Layer per Drag & Drop neu ordnen.
+- Layer-Filter beim Export (nur sichtbare Layer drucken).
+- Vorlagen aus Auswahl erstellen (Gruppe von Zelten als wiederverwendbare Konfiguration).
+
+
+--- Collaboration ---
+
+- Live-Cursor anderer Nutzer im Canvas.
+- Kommentare/Notizen auf Objekten (kleine Pin-Marker).
+- Aenderungs-Historie mit Autor und Zeitstempel.
+- Lock auf Objektebene mit Nutzer (nur ich darf das verschieben).
+- Chat / Aktivitaets-Feed im Sidebar.
+
+
+--- Karten-Integration ---
+
+- GPX-Import fuer Wege/Tracks.
+- Adresse statt Koordinaten eingeben (Geocoding).
+- Maptiles-Cache fuer Offline-Nutzung.
+- Hoehenlinien-Layer (USGS / OSM topographic).
+- Route-Drawing: Wege auf der Karte einzeichnen (z.B. Pfade vom Eingang zu den Zelten).
+
+
+--- Zeltplatz-spezifisch ---
+
+- Real-World Zeltkatalog (Marken/Modelle mit korrekten Massen und Abspannungen).
+- Personenzaehler pro Zelt -> Gesamt-Kapazitaet im Status anzeigen.
+- Brandschutz-Modus: Min-Abstand 5m als Warnung, Fluchtwege markieren.
+- Steckdosen / Wasseranschluesse / Feuerstellen als Symbole mit Reichweite/Radius.
+- Sanitaer-Bereiche mit Mindestabstand-Pruefung zu Schlafzelten.
+- Wind-Richtung als globaler Pfeil; Warnung wenn Eingaenge gegen Wind zeigen.
+- Sonnenstand-Simulation: Schattenwurf zur eingestellten Tageszeit.
+- Slope/Gefaelle-Indikator pro Bereich (manuelle Eingabe oder aus Hoehendaten).
+
+
+--- Export / Import / Druck ---
+
+- DXF-Export ist Stub - implementieren fuer CAD-Workflow.
+- PDF mit echtem Vektor-Output (statt PNG-im-PDF) fuer scharfen Ausdruck.
+- Mehrseiten-Druck mit automatischer Aufteilung nach Layer/Bereich.
+- QR-Code mit Share-Link auf Druck (Live-Plan auf dem Handy).
+- Excel/ODS-Export der Objektliste.
+- Backup automatisch in Cloud (Dropbox / Google Drive Connector).
+
+
+--- Performance ---
+
+- Spatial Index (Quadtree) fuer Distanzberechnung bei vielen Objekten.
+- Render-Throttling beim Pan/Zoom.
+- Web Worker fuer schwere Berechnungen (Distanzen, Bounds).
+- Map-Tiles mit Lazy Loading nur fuer sichtbaren Bereich.
+- Inkrementelles Speichern statt vollstaendiger State-Push bei Collab.
+
+
+--- Mobile / Touch ---
+
+- Bessere Touch-Gesten: Pinch-Zoom, Zwei-Finger-Pan (existiert teilweise).
+- Touch-optimierte Resize/Rotate-Handles (groesser, leichter zu treffen).
+- Kontextmenue per Long-Press.
+- Mobile Layout fuer schmale Screens (collapsible Sidebar).
+
+
+--- Misc / Quality of Life ---
+
+- Tastatur-Navigation: Tab durch Objekte, Enter zum Bearbeiten.
+- Erweitertes Undo/Redo: Anzeige der Aktion (z.B. "Zelt verschoben").
+- Snapshot-Vergleich: zwei Versionen nebeneinander zeigen.
+- Tag-System fuer Objekte (z.B. "Familie", "Crew").
+- Checkliste pro Camp (Strom/Wasser/Gas/Genehmigung) im Sidebar.
+- Time-Travel: verschiedene Tage als Varianten desselben Plans.
+- Print-Preview als Modal vor dem eigentlichen Druck.
+- Custom Symbols: User kann eigene SVG-Icons hochladen (Symboltyp).
+
+
+--- Technik / Code ---
+
+- TypeScript-Migration (oder JSDoc-Annotationen) fuer bessere IDE-Unterstuetzung.
+- Tests fuer Geometrie-Funktionen (Distanz, Hit-Test, Snap).
+- Service Worker fuer vollstaendige Offline-Faehigkeit (PWA).
+- Push-Notifications bei Collab-Aenderungen.
+- API/Endpoint zum programmatischen Anlegen von Zeltplaenen (z.B. aus Buchungssystem).

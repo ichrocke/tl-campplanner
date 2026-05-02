@@ -1,5 +1,10 @@
 # Changelog
 
+## [5.9.3] - 2026-05-02
+
+### Added
+- **Tutorial mode (experimental)**: New "Tutorial starten" button in the settings panel (marked EXPERIMENTAL) launches a 10-step guided overlay that highlights the main UI areas (palette, canvas, placed objects, properties, layers, tabs, tools, settings). Navigate with Next/Back buttons, arrow keys or skip with ESC.
+
 ## [5.9.2] - 2026-05-02
 
 ### Fixed

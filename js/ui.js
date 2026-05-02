@@ -2319,6 +2319,12 @@ const UI = (() => {
         });
         document.getElementById('settings-ok').addEventListener('click', closeModal);
 
+        const tutBtn = document.getElementById('btn-tutorial');
+        if (tutBtn) tutBtn.addEventListener('click', () => {
+            closeModal();
+            if (typeof Tutorial !== 'undefined') Tutorial.start();
+        });
+
         document.getElementById('text-cancel').addEventListener('click', () => {
             closeModal();
             Tools.setTool('select');
