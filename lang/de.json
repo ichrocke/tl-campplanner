@@ -55,6 +55,7 @@
   "props.shape.circle": "Kreis",
   "props.shape.stadium": "Sachsenzelt",
   "props.vorbauExtended": "Vorbau ausgeklappt",
+  "props.vorbauLength": "Vorbau-Länge (m)",
   "props.textSection": "Text",
   "props.fontSize": "Schriftgröße (m)",
   "props.rotation": "Drehung",

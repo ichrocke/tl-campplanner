@@ -55,6 +55,7 @@
   "props.shape.circle": "Circle",
   "props.shape.stadium": "Saxon tent",
   "props.vorbauExtended": "Awning extended",
+  "props.vorbauLength": "Awning length (m)",
   "props.textSection": "Text",
   "props.fontSize": "Font size (m)",
   "props.rotation": "Rotation",

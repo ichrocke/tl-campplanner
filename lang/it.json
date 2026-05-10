@@ -55,6 +55,7 @@
   "props.shape.circle": "Cerchio",
   "props.shape.stadium": "Tenda sassone",
   "props.vorbauExtended": "Tettoia estesa",
+  "props.vorbauLength": "Lunghezza tettoia (m)",
   "props.textSection": "Testo",
   "props.fontSize": "Dimensione carattere (m)",
   "props.rotation": "Rotazione",

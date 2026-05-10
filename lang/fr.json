@@ -55,6 +55,7 @@
   "props.shape.circle": "Cercle",
   "props.shape.stadium": "Tente saxonne",
   "props.vorbauExtended": "Auvent déplié",
+  "props.vorbauLength": "Longueur de l'auvent (m)",
   "props.textSection": "Texte",
   "props.fontSize": "Taille de police (m)",
   "props.rotation": "Rotation",

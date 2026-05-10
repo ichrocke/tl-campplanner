@@ -55,6 +55,7 @@
   "props.shape.circle": "Círculo",
   "props.shape.stadium": "Tienda sajona",
   "props.vorbauExtended": "Avance extendido",
+  "props.vorbauLength": "Longitud del avance (m)",
   "props.textSection": "Texto",
   "props.fontSize": "Tamaño de fuente (m)",
   "props.rotation": "Rotación",

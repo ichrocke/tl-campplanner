@@ -937,18 +937,17 @@ const IO = (() => {
                 const localPts = Canvas.getLocalShapePath(obj, 0);
                 const rad = (rot || 0) * Math.PI / 180;
                 const cs = Math.cos(rad), sn = Math.sin(rad);
-                const pts = localPts.map(p => `${((obj.x + p.x*cs - p.y*sn)*s).toFixed(1)},${((obj.y + p.x*sn + p.y*cs)*s).toFixed(1)}`).join(' ');
+                const toWorld = (lx, ly) => ({ x: obj.x + lx*cs - ly*sn, y: obj.y + lx*sn + ly*cs });
+                const pts = localPts.map(p => { const w = toWorld(p.x, p.y); return `${(w.x*s).toFixed(1)},${(w.y*s).toFixed(1)}`; }).join(' ');
                 els += `<polygon points="${pts}" fill="${color}" fill-opacity="0.6" stroke="${color}" stroke-width="1.5"/>\n`;
-                // Ridge line (across rect body of stadium)
+                // Ridge line along the long body axis + Sturmleinen pegs at the cap apexes
                 if (obj.type === 'tent') {
-                    const r = Canvas.getStadiumCapRatio(obj);
-                    const bodyHH = hh * (1 - 2 * r);
-                    const a = { x: obj.x + (0)*cs - (-bodyHH)*sn, y: obj.y + (0)*sn + (-bodyHH)*cs };
-                    const b = { x: obj.x + (0)*cs - ( bodyHH)*sn, y: obj.y + (0)*sn + ( bodyHH)*cs };
+                    const capR = hh;
+                    const bodyHW = Math.max(0, hw - capR);
+                    const a = toWorld(-bodyHW, 0), b = toWorld(bodyHW, 0);
                     els += `<line x1="${(a.x*s).toFixed(1)}" y1="${(a.y*s).toFixed(1)}" x2="${(b.x*s).toFixed(1)}" y2="${(b.y*s).toFixed(1)}" stroke="${color}" stroke-width="0.8" stroke-opacity="0.4"/>\n`;
                     if (obj.showPegs !== false) {
-                        const apex1 = { x: obj.x + (0)*cs - (-hh)*sn, y: obj.y + (0)*sn + (-hh)*cs };
-                        const apex2 = { x: obj.x + (0)*cs - ( hh)*sn, y: obj.y + (0)*sn + ( hh)*cs };
+                        const apex1 = toWorld(-hw, 0), apex2 = toWorld(hw, 0);
                         els += `<circle cx="${(apex1.x*s).toFixed(1)}" cy="${(apex1.y*s).toFixed(1)}" r="${(0.04*s).toFixed(1)}" fill="#9ca3af"/>\n`;
                         els += `<circle cx="${(apex2.x*s).toFixed(1)}" cy="${(apex2.y*s).toFixed(1)}" r="${(0.04*s).toFixed(1)}" fill="#9ca3af"/>\n`;
                     }

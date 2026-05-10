@@ -1,13 +1,15 @@
 # Changelog
 
+## [6.1.1] - 2026-05-10
+
+### Changed
+- **Sachsenzelt-Geometrie überarbeitet**: Form ist jetzt ein horizontaler Rechteck-Körper mit zwei echten Halbkreisen an den kurzen Seiten (links und rechts). Der Vorbau ist ein separater Anbau, der nach unten über die volle Körperbreite herauskommt. Im Properties-Panel kann der Vorbau ein-/ausgeklappt und seine Länge eingestellt werden (`Vorbau-Länge`). Die First-Linie verläuft längs durch den Körper, Sturmleinen-Heringe sitzen an den Spitzen der Halbkreise links und rechts. Vorlage: 8×4 m (Körper 4×4 + Caps 2×4) mit Vorbau 2 m.
+
 ## [6.1.0] - 2026-05-10
 
 ### Added
-- **Sachsenzelt (Stadion-Form)**: Neue Zelt-Form als eigener Shape `stadium` – Rechteckiger Körper mit zwei halb-elliptischen Apsiden auf den Stirnseiten. Vorlage "Sachsenzelt" 5×5 m (Bounding Box 5×10 m). Dezente First-Linie längs durch den Rechteck-Körper, kleine Heringe-Punkte an den Apsis-Spitzen (Sturmleinen-Erdheringe).
-- **Vorbau-Toggle**: Pro Sachsenzelt-Objekt eine Checkbox "Vorbau ausgeklappt" im Properties-Panel. Beim Umschalten schrumpfen/wachsen die Apsiden und die Höhe wird so angepasst, dass der Rechteck-Körper unverändert bleibt (ausgeklappt: 25 % der Höhe pro Apsis, eingeklappt: 4 %). Der Mindestabstand zu Nachbarn rechnet automatisch mit der jeweils aktuellen Bounding Box.
-
-### Changed
-- Hit-Test, Distanzberechnung, Eingangs-Position, PNG/Print/SVG-Export funktionieren für die neue Stadion-Form ohne weiteren Sonderpfad – sie ziehen den Polygonzug aus `getLocalShapePath`.
+- **Sachsenzelt (Stadion-Form)**: Neue Zelt-Form als eigener Shape `stadium` – Rechteckiger Körper mit zwei halbkreisförmigen Caps an den Stirnseiten. Vorlage "Sachsenzelt".
+- **Vorbau-Toggle**: Pro Sachsenzelt-Objekt eine Checkbox "Vorbau ausgeklappt" im Properties-Panel.
 
 ## [6.0.0] - 2026-05-02
 

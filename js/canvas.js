@@ -81,12 +81,13 @@ const Canvas = (() => {
         }
     }
 
-    // Stadium (Sachsenzelt): rectangle with two semi-elliptical caps on the short sides.
-    // Cap ratio = depth of one cap as fraction of total height.
-    const STADIUM_CAP_EXTENDED = 0.25;
-    const STADIUM_CAP_FOLDED = 0.04;
-    function getStadiumCapRatio(obj) {
-        return obj.vorbauExtended === false ? STADIUM_CAP_FOLDED : STADIUM_CAP_EXTENDED;
+    // Stadium (Sachsenzelt): rectangle body with two half-circle caps on the LEFT and RIGHT
+    // short sides (cap radius = height/2). Optional rectangular Vorbau attached at the bottom,
+    // spanning the full body-rect width, extending downward by vorbauLength.
+    function getStadiumVorbauLength(obj) {
+        if (obj.vorbauExtended === false) return 0;
+        const v = Number(obj.vorbauLength);
+        return isNaN(v) || v <= 0 ? 0 : v;
     }
 
     // Get local polygon path for an object shape (unscaled, centered at 0,0)
@@ -172,25 +173,38 @@ const Canvas = (() => {
             return pts;
         }
         if (obj.shape === 'stadium') {
-            // Vertical pill: rect body in the middle, semi-elliptical caps on top and bottom
-            const r = getStadiumCapRatio(obj);
-            const capDepth = 2 * r * hh;          // depth of one cap in world units
-            const bodyHH = hh - capDepth;         // half-height of rect body
-            const NCAP = 12;
+            // Horizontal pill: rect body in the middle, half-circle caps on LEFT and RIGHT.
+            // Optional Vorbau: rectangle below the body spanning the body-rect width.
+            const fullHW = hw;                                // half total width incl. caps
+            const fullHH = hh;                                // half body height (= cap radius)
+            const capR = fullHH;                              // half-circle radius = body height / 2
+            const bodyHW = Math.max(0, fullHW - capR);        // half body-rect width (no caps)
+            const vorbauL = getStadiumVorbauLength(obj);
+            const vorbauPad = vorbauL > 0 ? vorbauL + (extraPad || 0) : 0;
+            const NCAP = 8;
             const pts = [];
-            // Top cap: from (-hw, -bodyHH) over (0, -hh) to (hw, -bodyHH)
-            for (let i = 0; i <= NCAP; i++) {
-                const a = Math.PI + (i / NCAP) * Math.PI;
-                pts.push({ x: Math.cos(a) * hw, y: -bodyHH + Math.sin(a) * capDepth });
+            // Top edge of body rect, left to right
+            pts.push({ x: -bodyHW, y: -fullHH });
+            pts.push({ x:  bodyHW, y: -fullHH });
+            // Right cap: half-circle from (bodyHW, -fullHH) around to (bodyHW, +fullHH)
+            for (let i = 1; i < NCAP; i++) {
+                const a = -Math.PI / 2 + (i / NCAP) * Math.PI;
+                pts.push({ x: bodyHW + Math.cos(a) * capR, y: Math.sin(a) * capR });
             }
-            // Right side endpoint (long straight side from top-cap end down)
-            pts.push({ x: hw, y: bodyHH });
-            // Bottom cap: from (hw, +bodyHH) over (0, +hh) to (-hw, +bodyHH)
-            for (let i = 1; i <= NCAP; i++) {
-                const a = (i / NCAP) * Math.PI;
-                pts.push({ x: Math.cos(a) * hw, y: bodyHH + Math.sin(a) * capDepth });
+            pts.push({ x: bodyHW, y: fullHH });
+            // Bottom edge: detour through Vorbau if extended, else straight across
+            if (vorbauPad > 0) {
+                pts.push({ x:  bodyHW, y: fullHH + vorbauPad });
+                pts.push({ x: -bodyHW, y: fullHH + vorbauPad });
+                pts.push({ x: -bodyHW, y: fullHH });
+            } else {
+                pts.push({ x: -bodyHW, y: fullHH });
             }
-            // Left side closes implicitly back to point 0 (-hw, -bodyHH)
+            // Left cap: half-circle from (-bodyHW, +fullHH) around to (-bodyHW, -fullHH) [closing]
+            for (let i = 1; i < NCAP; i++) {
+                const a = Math.PI / 2 + (i / NCAP) * Math.PI;
+                pts.push({ x: -bodyHW + Math.cos(a) * capR, y: Math.sin(a) * capR });
+            }
             return pts;
         }
         // rect
@@ -1292,19 +1306,19 @@ const Canvas = (() => {
         }
         // Stadium tent: ridge line across rect body + apex pegs (Sturmleinen-Heringe)
         if (!_treasureMode && obj.type === 'tent' && obj.shape === 'stadium') {
-            const r = getStadiumCapRatio(obj);
-            const bodyHH = (h / 2) * (1 - 2 * r);
+            const capR = h / 2;                                 // cap radius in screen units
+            const bodyHW = Math.max(0, w / 2 - capR);           // half body-rect width
             ctx.strokeStyle = obj.color;
             ctx.globalAlpha = 0.4;
             ctx.lineWidth = 0.8 * ls;
             ctx.beginPath();
-            ctx.moveTo(0, -bodyHH); ctx.lineTo(0, bodyHH);
+            ctx.moveTo(-bodyHW, 0); ctx.lineTo(bodyHW, 0);
             ctx.stroke();
             ctx.globalAlpha = 1;
             if (obj.showPegs !== false) {
                 ctx.fillStyle = '#9ca3af';
-                drawPeg(0, -h / 2, rs);
-                drawPeg(0,  h / 2, rs);
+                drawPeg(-w / 2, 0, rs);
+                drawPeg( w / 2, 0, rs);
             }
         }
 
@@ -2593,7 +2607,7 @@ const Canvas = (() => {
         pointInObj, pointOnRotHandle, pointOnResizeHandle, computeDistancesForObj,
         getLocalShapePath, getShapeSides, getEffectiveSideDistance, zoomToObject,
         getRectPegsForSide, getEffectivePolySideDistance, getPolyPegsForSide, hasPolyPerSideRopes, regularPolygonPoints,
-        getStadiumCapRatio, STADIUM_CAP_EXTENDED, STADIUM_CAP_FOLDED,
+        getStadiumVorbauLength,
         get canvas() { return canvas; },
         get selectedIds() { return selectedIds; },
         // Compat: single selectedId getter/setter
