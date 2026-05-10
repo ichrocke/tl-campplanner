@@ -1,5 +1,8 @@
 {
   "app.title": "Tyra Lorena Camp Planner",
+  "tool.collapse": "Collapse",
+  "tool.colors": "Colors",
+  "tool.symbols": "Symbols",
   "tool.select": "Select",
   "tool.select.title": "Select (V)",
   "tool.pan": "Pan",

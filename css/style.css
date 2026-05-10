@@ -1017,11 +1017,33 @@ body {
     background: transparent;
     color: #9ca3af;
     cursor: pointer;
-    transition: all 0.15s;
+    transition: background 0.15s, color 0.15s;
+    gap: 8px;
 }
 
-#floating-tools .tool-btn span {
+#floating-tools .tool-btn .tool-label {
     display: none;
+    font-size: 12px;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+#floating-tools.expanded .tool-btn {
+    width: 150px;
+    justify-content: flex-start;
+    padding: 0 10px;
+}
+
+#floating-tools.expanded .tool-btn .tool-label {
+    display: inline;
+}
+
+#floating-tools .ft-toggle svg {
+    transition: transform 0.2s;
+}
+
+#floating-tools:not(.expanded) .ft-toggle svg {
+    transform: rotate(180deg);
 }
 
 #floating-tools .tool-btn:hover {
@@ -1039,6 +1061,71 @@ body {
     height: 1px;
     background: #444;
     margin: 2px 4px;
+}
+
+/* ---- Color row inside floating-tools ---- */
+#floating-tools .ft-color-row {
+    position: relative;
+}
+
+#floating-tools .ft-color-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: 1px solid rgba(255,255,255,0.3);
+    background: #4a90d9;
+    flex-shrink: 0;
+}
+
+#floating-tools .color-flyout {
+    position: absolute;
+    left: 100%;
+    top: 0;
+    margin-left: 6px;
+    background: rgba(26, 26, 30, 0.96);
+    border-radius: 10px;
+    padding: 6px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    z-index: 10;
+}
+
+#floating-tools .color-flyout.hidden {
+    display: none;
+}
+
+#floating-tools .color-flyout #color-swatches {
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+}
+
+#floating-tools .color-flyout .color-swatch {
+    margin: 0;
+}
+
+#floating-tools .color-flyout .color-add-btn {
+    width: 24px;
+    height: 24px;
+    border: 1px dashed #666;
+    border-radius: 4px;
+    background: transparent;
+    color: #9ca3af;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+    flex-shrink: 0;
+}
+
+#floating-tools .color-flyout .color-add-btn:hover {
+    background: #3a3a42;
+    color: #e5e7eb;
 }
 
 /* ---- Settings IO Buttons ---- */
@@ -2037,7 +2124,8 @@ kbd {
 /* ---- Touch ---- */
 @media (pointer: coarse) {
     .tool-btn, .icon-btn, .lang-flag { min-height: 36px; min-width: 36px; }
-    #floating-tools .tool-btn { width: 40px; height: 36px; }
+    #floating-tools:not(.expanded) .tool-btn { width: 40px; height: 36px; }
+    #floating-tools.expanded .tool-btn { height: 36px; }
     .color-swatch { width: 32px; height: 26px; }
     .palette-item { padding: 8px; }
     .tab { padding: 6px 14px; }

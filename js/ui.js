@@ -280,6 +280,8 @@ const UI = (() => {
 
     function buildColorSwatches() {
         syncColorsToState();
+        const indicator = document.getElementById('ft-color-indicator');
+        if (indicator) indicator.style.background = getActiveColor();
         const container = document.getElementById('color-swatches');
         container.innerHTML = '';
         _savedColors.forEach((color, i) => {
@@ -343,33 +345,25 @@ const UI = (() => {
             btn.addEventListener('click', () => Tools.setTool(btn.dataset.tool));
         });
 
-        // Prevent canvas contextmenu handler from blocking color palette right-clicks
-        document.getElementById('color-palette').addEventListener('contextmenu', (e) => {
-            e.stopPropagation();
+        // Toolbar collapse/expand toggle (default expanded; persisted)
+        const toggleBtn = document.getElementById('floating-tools-toggle');
+        const collapsed = localStorage.getItem('zeltplaner_toolbar_collapsed') === '1';
+        if (collapsed) panel.classList.remove('expanded');
+        toggleBtn.addEventListener('click', () => {
+            const nowCollapsed = panel.classList.toggle('expanded') === false;
+            localStorage.setItem('zeltplaner_toolbar_collapsed', nowCollapsed ? '1' : '0');
         });
 
-        // Color palette drag
-        const cpanel = document.getElementById('color-palette');
-        const chandle = document.getElementById('color-palette-handle');
-        let cDragging = false, cOffX = 0, cOffY = 0;
-        chandle.addEventListener('mousedown', (e) => {
-            cDragging = true;
-            cOffX = e.clientX - cpanel.offsetLeft;
-            cOffY = e.clientY - cpanel.offsetTop;
-            e.preventDefault();
+        // Color flyout (click "Farben" → swatches expand to the right)
+        const flyout = document.getElementById('color-flyout');
+        const colorToggle = document.getElementById('btn-color-toggle');
+        colorToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            flyout.classList.toggle('hidden');
         });
-        document.addEventListener('mousemove', (e) => {
-            if (!cDragging) return;
-            const container = document.getElementById('canvas-container');
-            const rect = container.getBoundingClientRect();
-            let nx = e.clientX - cOffX;
-            let ny = e.clientY - cOffY;
-            nx = Math.max(0, Math.min(rect.width - cpanel.offsetWidth, nx));
-            ny = Math.max(0, Math.min(rect.height - cpanel.offsetHeight, ny));
-            cpanel.style.left = nx + 'px';
-            cpanel.style.top = ny + 'px';
-        });
-        document.addEventListener('mouseup', () => { cDragging = false; });
+        flyout.addEventListener('click', (e) => e.stopPropagation());
+        flyout.addEventListener('contextmenu', (e) => e.stopPropagation());
+        document.addEventListener('click', () => { flyout.classList.add('hidden'); });
 
         // Add color button
         document.getElementById('btn-add-color').addEventListener('click', () => {

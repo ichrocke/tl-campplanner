@@ -1,5 +1,8 @@
 {
   "app.title": "Tyra Lorena Zeltplaner",
+  "tool.collapse": "Einklappen",
+  "tool.colors": "Farben",
+  "tool.symbols": "Symbole",
   "tool.select": "Auswählen",
   "tool.select.title": "Auswählen (V)",
   "tool.pan": "Verschieben",

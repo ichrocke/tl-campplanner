@@ -1,5 +1,11 @@
 # Changelog
 
+## [6.2.0] - 2026-05-10
+
+### Added
+- **Toolleiste mit Text-Labels und Einklapp-Toggle**: Die schwebende Toolleiste links zeigt standardmäßig Icon und Beschriftung pro Werkzeug. Über den Pfeil-Button ganz oben lässt sie sich schmal einklappen (nur Icons) und wieder ausklappen. Der Zustand wird in localStorage gespeichert und überlebt Reloads.
+- **Farb-Eintrag in der Toolleiste**: Statt einer separaten schwebenden Farb-Palette gibt es jetzt einen `Farben`-Eintrag direkt in der Toolleiste. Klick öffnet ein horizontales Flyout rechts neben der Leiste mit allen Swatches und dem Plus-Button. Ein farbiger Indikator am Eintrag zeigt die aktive Farbe.
+
 ## [6.1.2] - 2026-05-10
 
 ### Fixed

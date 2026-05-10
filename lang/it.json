@@ -1,5 +1,8 @@
 {
   "app.title": "Tyra Lorena Pianificatore Campo",
+  "tool.collapse": "Comprimi",
+  "tool.colors": "Colori",
+  "tool.symbols": "Simboli",
   "tool.select": "Seleziona",
   "tool.select.title": "Seleziona (V)",
   "tool.pan": "Sposta",

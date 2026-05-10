@@ -1,5 +1,8 @@
 {
   "app.title": "Tyra Lorena Planificador de Campamento",
+  "tool.collapse": "Plegar",
+  "tool.colors": "Colores",
+  "tool.symbols": "Símbolos",
   "tool.select": "Seleccionar",
   "tool.select.title": "Seleccionar (V)",
   "tool.pan": "Mover",
