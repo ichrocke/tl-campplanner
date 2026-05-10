@@ -1,16 +1,16 @@
 {
   "version": 1,
-  "exportDate": "2026-05-10",
+  "exportDate": "2026-05-10T18:55:21.375Z",
   "sites": [
     {
-      "id": "mmxs08eh_gqpcpu",
+      "id": "mp04qsx9_cy7sfh",
       "name": "Beispielzeltplatz",
       "grounds": [],
       "gridSize": 1,
       "snapToGrid": true,
       "objects": [
         {
-          "id": "mmxs2x80_dc7bbq",
+          "id": "mp04qsx9_0qvmgr",
           "type": "ground",
           "name": "Beispielzeltplatz",
           "x": 2.5,
@@ -36,7 +36,7 @@
           "descSize": 0,
           "groupId": "",
           "locked": true,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "points": [
             {
               "x": -10,
@@ -62,7 +62,7 @@
           "showPegs": true
         },
         {
-          "id": "mmytl27o_fwfj1g",
+          "id": "mp04qsx9_n6sfi2",
           "type": "area",
           "name": "Mauer Nord",
           "x": 0,
@@ -88,7 +88,7 @@
           "descSize": 0,
           "groupId": "",
           "locked": true,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "texture": "crosshatch",
           "points": [
             {
@@ -113,7 +113,7 @@
           "showPegs": true
         },
         {
-          "id": "mmyte0wl_9gyahf",
+          "id": "mp04qsx9_iey7ck",
           "type": "area",
           "name": "Weg",
           "x": 16.875,
@@ -139,7 +139,7 @@
           "descSize": 0,
           "groupId": "",
           "locked": true,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "texture": "solid",
           "points": [
             {
@@ -164,7 +164,7 @@
           "showPegs": true
         },
         {
-          "id": "mmxslidw_oyhf6q",
+          "id": "mp04qsx9_kmg5br",
           "type": "tent",
           "name": "Sippe Adler",
           "x": -7,
@@ -185,18 +185,18 @@
           "labelSize": 0,
           "lineWidth": 0,
           "ropeWidth": 0,
-          "entranceSide": "none",
           "descColor": "",
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
-          "showPegs": true
+          "showPegs": true,
+          "entrancePos": 0.38
         },
         {
-          "id": "mmxsllce_300v3n",
+          "id": "mp04qsx9_lgjku2",
           "type": "tent",
           "name": "Sippe Eule",
           "x": -7,
@@ -217,18 +217,18 @@
           "labelSize": 0,
           "lineWidth": 0,
           "ropeWidth": 0,
-          "entranceSide": "none",
           "descColor": "",
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
-          "showPegs": true
+          "showPegs": true,
+          "entrancePos": 0.13
         },
         {
-          "id": "mmxslqrf_4m9mxh",
+          "id": "mp04qsx9_uvz2fa",
           "type": "tent",
           "name": "Sippe Wolf",
           "x": -7,
@@ -249,21 +249,21 @@
           "labelSize": 1,
           "lineWidth": 0,
           "ropeWidth": 0,
-          "entranceSide": "none",
           "descColor": "",
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "labelOffsetX": 0,
           "labelOffsetY": 0,
           "objectOpacity": 1,
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
-          "showPegs": true
+          "showPegs": true,
+          "entrancePos": 0.6
         },
         {
-          "id": "mmysm5k1_qqhnc2",
+          "id": "mp04qsx9_2qrvt2",
           "type": "tent",
           "name": "Zelt 1",
           "x": -2.75,
@@ -284,18 +284,18 @@
           "labelSize": 0,
           "lineWidth": 0,
           "ropeWidth": 0,
-          "entranceSide": "none",
           "descColor": "",
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
-          "showPegs": true
+          "showPegs": true,
+          "entrancePos": 0.61
         },
         {
-          "id": "mmysmgn6_zg4ddt",
+          "id": "mp04qsx9_6x85al",
           "type": "tent",
           "name": "Zelt 2",
           "x": 4.25,
@@ -316,18 +316,18 @@
           "labelSize": 0,
           "lineWidth": 0,
           "ropeWidth": 0,
-          "entranceSide": "none",
           "descColor": "",
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
-          "showPegs": true
+          "showPegs": true,
+          "entrancePos": 0.61
         },
         {
-          "id": "mmysmod5_elsdcz",
+          "id": "mp04qsx9_hqqwlr",
           "type": "tent",
           "name": "Zelt 3",
           "x": 12.75,
@@ -348,18 +348,18 @@
           "labelSize": 0,
           "lineWidth": 0,
           "ropeWidth": 0,
-          "entranceSide": "none",
           "descColor": "",
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
-          "showPegs": true
+          "showPegs": true,
+          "entrancePos": 0.62
         },
         {
-          "id": "mmysn0di_s5e98l",
+          "id": "mp04qsx9_9t33xd",
           "type": "tent",
           "name": "Zelt 4",
           "x": -2.75,
@@ -380,18 +380,18 @@
           "labelSize": 0,
           "lineWidth": 0,
           "ropeWidth": 0,
-          "entranceSide": "none",
           "descColor": "",
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
-          "showPegs": true
+          "showPegs": true,
+          "entrancePos": 0.11
         },
         {
-          "id": "mmysn4lk_dc2o12",
+          "id": "mp04qsx9_6bbzuu",
           "type": "tent",
           "name": "Zelt 5",
           "x": 0.75,
@@ -412,18 +412,18 @@
           "labelSize": 0,
           "lineWidth": 0,
           "ropeWidth": 0,
-          "entranceSide": "none",
           "descColor": "",
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
-          "showPegs": true
+          "showPegs": true,
+          "entrancePos": 0.09
         },
         {
-          "id": "mmysn8h4_74oqsj",
+          "id": "mp04qsx9_y8shk6",
           "type": "tent",
           "name": "Sippe Bär",
           "x": 8.65,
@@ -444,26 +444,26 @@
           "labelSize": 0,
           "lineWidth": 0,
           "ropeWidth": 0,
-          "entranceSide": "none",
           "descColor": "",
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
-          "showPegs": true
+          "showPegs": true,
+          "entrancePos": 0.12
         },
         {
-          "id": "mmysnc2f_eiwaya",
+          "id": "mp04qsx9_zwnb6e",
           "type": "tent",
           "name": "Sachsenzelt",
           "x": 8.5,
           "y": -5.5,
-          "width": 5,
-          "height": 3,
+          "width": 4,
+          "height": 2.5,
           "rotation": 0,
-          "guyRopeDistance": 1,
+          "guyRopeDistance": 0,
           "guyRopeSides": {
             "top": true,
             "right": true,
@@ -476,20 +476,20 @@
           "labelSize": 0,
           "lineWidth": 0,
           "ropeWidth": 0,
-          "entranceSide": "none",
           "descColor": "",
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
           "showPegs": true,
           "vorbauExtended": true,
-          "vorbauLength": 1.5
+          "vorbauLength": 1,
+          "entrancePos": 0.56
         },
         {
-          "id": "mmyso0yy_393v4c",
+          "id": "mp04qsx9_9zy9e0",
           "type": "tent",
           "name": "Zelt 6",
           "x": 0.75,
@@ -510,18 +510,18 @@
           "labelSize": 0,
           "lineWidth": 0,
           "ropeWidth": 0,
-          "entranceSide": "none",
           "descColor": "",
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
-          "showPegs": true
+          "showPegs": true,
+          "entrancePos": 0.61
         },
         {
-          "id": "mmysog8k_rxq0z8",
+          "id": "mp04qsx9_ozrci3",
           "type": "tent",
           "name": "Zelt 7",
           "x": 4.25,
@@ -542,18 +542,18 @@
           "labelSize": 0,
           "lineWidth": 0,
           "ropeWidth": 0,
-          "entranceSide": "none",
           "descColor": "",
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
-          "showPegs": true
+          "showPegs": true,
+          "entrancePos": 0.12
         },
         {
-          "id": "mmysopxg_ei48f7",
+          "id": "mp04qsx9_lqcb3y",
           "type": "tent",
           "name": "Küchenzelt",
           "x": 13.25,
@@ -579,14 +579,14 @@
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "labelOffsetY": 1,
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
           "showPegs": true
         },
         {
-          "id": "mmysp24k_269rrj",
+          "id": "mp04qsx9_dscyks",
           "type": "firepit",
           "name": "Feuerstelle",
           "x": 11.5,
@@ -612,13 +612,13 @@
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
           "showPegs": true
         },
         {
-          "id": "mmysp7p5_qs18dt",
+          "id": "mp04qsx9_u0t9c8",
           "type": "tent",
           "name": "Tarp",
           "x": 0,
@@ -644,14 +644,14 @@
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "labelOffsetX": 0,
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
           "showPegs": true
         },
         {
-          "id": "mmyspc8t_fbpzp0",
+          "id": "mp04qsx9_3krkik",
           "type": "custom",
           "name": "Melonenbeet",
           "x": 14,
@@ -677,14 +677,14 @@
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "labelOffsetX": -0.5,
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
           "showPegs": true
         },
         {
-          "id": "mmyspu6l_srijqa",
+          "id": "mp04qsx9_m6rr8j",
           "type": "bar",
           "name": "Theke",
           "x": 14.75,
@@ -710,14 +710,14 @@
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "labelOffsetX": -1,
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
           "showPegs": true
         },
         {
-          "id": "mmysqd6d_qnd606",
+          "id": "mp04qsx9_s0ge07",
           "type": "entrance",
           "name": "Eingang",
           "x": 14.75,
@@ -743,14 +743,14 @@
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "labelOffsetX": -1,
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
           "showPegs": true
         },
         {
-          "id": "mmysx46f_if35uj",
+          "id": "mp04qsx9_vyc28z",
           "type": "area",
           "name": "Spielwiese",
           "x": 9,
@@ -776,7 +776,7 @@
           "descSize": 0,
           "groupId": "",
           "locked": true,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "texture": "hatch",
           "points": [
             {
@@ -802,7 +802,7 @@
           "showPegs": true
         },
         {
-          "id": "mmytcuaz_iwrtto",
+          "id": "mp04qsx9_fzc5mj",
           "type": "area",
           "name": "Bereich Süd",
           "x": -3.5,
@@ -828,7 +828,7 @@
           "descSize": 0,
           "groupId": "",
           "locked": true,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "texture": "hatch",
           "points": [
             {
@@ -853,7 +853,7 @@
           "showPegs": true
         },
         {
-          "id": "mmytd83u_ds3w14",
+          "id": "mp04qsx9_nwexbc",
           "type": "area",
           "name": "Materiallager",
           "x": -12.5,
@@ -879,7 +879,7 @@
           "descSize": 0,
           "groupId": "",
           "locked": true,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "texture": "hatch",
           "points": [
             {
@@ -904,7 +904,7 @@
           "showPegs": true
         },
         {
-          "id": "mmytnb0j_lgsnuu",
+          "id": "mp04qsx9_ei0arr",
           "type": "symbol",
           "name": "Fire Ext.",
           "x": 14,
@@ -929,14 +929,14 @@
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "symbolId": "fire_ext",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
           "showPegs": true
         },
         {
-          "id": "mmytnlhv_zkly5y",
+          "id": "mp04qsx9_azkeu9",
           "type": "symbol",
           "name": "First Aid",
           "x": 14,
@@ -961,14 +961,14 @@
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "symbolId": "firstaid",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
           "showPegs": true
         },
         {
-          "id": "mmytnt4o_7cgeg3",
+          "id": "mp04qsx9_33mher",
           "type": "symbol",
           "name": "Waste",
           "x": 3,
@@ -994,14 +994,14 @@
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "symbolId": "trash",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
           "showPegs": true
         },
         {
-          "id": "mmytnxog_hz4nl2",
+          "id": "mp04qsx9_xfdy3l",
           "type": "symbol",
           "name": "Waste",
           "x": 12,
@@ -1027,14 +1027,14 @@
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "symbolId": "trash",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
           "showPegs": true
         },
         {
-          "id": "mmyto23l_ve8mz0",
+          "id": "mp04qsx9_gzfu7d",
           "type": "symbol",
           "name": "Fire Ext.",
           "x": 1.25,
@@ -1059,14 +1059,14 @@
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "symbolId": "fire_ext",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
           "showPegs": true
         },
         {
-          "id": "mmyto5mh_bwfg5f",
+          "id": "mp04qsx9_63vtqe",
           "type": "symbol",
           "name": "First Aid",
           "x": -1.5,
@@ -1091,14 +1091,14 @@
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "symbolId": "firstaid",
           "guyRopeSideDistances": {},
           "guyRopePegs": {},
           "showPegs": true
         },
         {
-          "id": "mmyzbrtt_3j4xx7",
+          "id": "mp04qsx9_xg0tvf",
           "type": "fence",
           "name": "Zaun",
           "x": 6.666666666666667,
@@ -1124,7 +1124,7 @@
           "descSize": 0,
           "groupId": "",
           "locked": false,
-          "layerId": "mmxs08eh_hydvym",
+          "layerId": "mp04qsx9_7hd069",
           "points": [
             {
               "x": -10,
@@ -1292,13 +1292,13 @@
       },
       "layers": [
         {
-          "id": "mmxs08eh_hydvym",
+          "id": "mp04qsx9_7hd069",
           "name": "Default",
           "visible": true,
           "locked": false
         }
       ],
-      "activeLayerId": "mmxs08eh_hydvym",
+      "activeLayerId": "mp04qsx9_7hd069",
       "offsetX": 0,
       "compassRotation": 36,
       "notebook": ""
@@ -1325,10 +1325,8 @@
       "#22c55e",
       "#9333ea",
       "#ef4444",
-      "#f59e0b",
-      "#00a3d7",
-      "#1a0a53"
+      "#f59e0b"
     ],
-    "active": 7
+    "active": 0
   }
 }
