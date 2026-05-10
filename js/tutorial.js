@@ -54,22 +54,6 @@ const Tutorial = (() => {
                 },
             },
             {
-                target: '[data-tool="area"]',
-                title: I18n.t('tutorial.stepArea.title'),
-                text: I18n.t('tutorial.stepArea.text'),
-                onEnter() { _baseline = snapshotCounts(); },
-                check() { return Tools.activeTool === 'area'; },
-            },
-            {
-                target: '#canvas',
-                title: I18n.t('tutorial.stepAreaDraw.title'),
-                text: I18n.t('tutorial.stepAreaDraw.text'),
-                check() {
-                    const c = snapshotCounts();
-                    return _baseline && c.area > _baseline.area;
-                },
-            },
-            {
                 target: '#object-palette',
                 title: I18n.t('tutorial.step4.title'),
                 text: I18n.t('tutorial.step4.text'),
@@ -137,6 +121,13 @@ const Tutorial = (() => {
                 target: null,
                 title: I18n.t('tutorial.step12.title'),
                 text: I18n.t('tutorial.step12.text'),
+                action: {
+                    labelKey: 'tutorial.loadExample',
+                    handler: () => {
+                        if (UI && typeof UI.loadExample === 'function') UI.loadExample();
+                        stop();
+                    },
+                },
             },
         ];
     }
@@ -217,6 +208,7 @@ const Tutorial = (() => {
                 <div class="tutorial-actions">
                     <button id="tutorial-skip" class="btn-secondary"></button>
                     <button id="tutorial-prev" class="btn-secondary"></button>
+                    <button id="tutorial-action" class="btn-secondary" style="display:none"></button>
                     <button id="tutorial-next" class="btn-primary"></button>
                 </div>
             </div>`;
@@ -225,6 +217,12 @@ const Tutorial = (() => {
         document.getElementById('tutorial-skip').addEventListener('click', stop);
         document.getElementById('tutorial-prev').addEventListener('click', prev);
         document.getElementById('tutorial-next').addEventListener('click', next);
+        document.getElementById('tutorial-action').addEventListener('click', () => {
+            const step = steps()[_stepIdx];
+            if (step && step.action && typeof step.action.handler === 'function') {
+                try { step.action.handler(); } catch (e) {}
+            }
+        });
         document.querySelectorAll('.tutorial-lang').forEach(btn => {
             btn.addEventListener('click', () => {
                 I18n.setLang(btn.dataset.lang);
@@ -275,6 +273,15 @@ const Tutorial = (() => {
         prevBtn.textContent = I18n.t('tutorial.prev');
         nextBtn.textContent = step.check ? I18n.t('tutorial.skipStep') : ((_stepIdx === all.length - 1) ? I18n.t('tutorial.finish') : I18n.t('tutorial.next'));
         prevBtn.style.visibility = _stepIdx === 0 ? 'hidden' : 'visible';
+        const actionBtn = document.getElementById('tutorial-action');
+        if (actionBtn) {
+            if (step.action) {
+                actionBtn.style.display = '';
+                actionBtn.textContent = I18n.t(step.action.labelKey);
+            } else {
+                actionBtn.style.display = 'none';
+            }
+        }
 
         if (typeof step.onEnter === 'function') {
             try { step.onEnter(); } catch (e) {}

@@ -1,5 +1,11 @@
 # Changelog
 
+## [6.3.1] - 2026-05-10
+
+### Changed
+- **Tutorial**: Räume-Schritt wieder entfernt – die Grundfläche im Schritt davor reicht aus.
+- **Tutorial**: Letzter Schritt bietet jetzt direkt einen "Beispielplatz laden"-Button. Klick öffnet den vorgefertigten Beispielplatz als neuen Tab und beendet das Tutorial.
+
 ## [6.3.0] - 2026-05-10
 
 ### Added

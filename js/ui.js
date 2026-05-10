@@ -2235,30 +2235,7 @@ const UI = (() => {
         document.getElementById('btn-import').addEventListener('click', () => IO.importFile());
         document.getElementById('btn-export').addEventListener('click', () => IO.exportFile());
         document.getElementById('btn-load-example').addEventListener('click', () => {
-            fetch('examples/example-camp.json?v=' + Date.now())
-                .then(r => r.json())
-                .then(data => {
-                    if (!data.sites || !data.sites[0]) throw new Error('invalid');
-                    const site = JSON.parse(JSON.stringify(data.sites[0]));
-                    site.id = State.generateId();
-                    const layerIdMap = {};
-                    (site.layers || []).forEach(l => {
-                        const oldId = l.id;
-                        l.id = State.generateId();
-                        layerIdMap[oldId] = l.id;
-                    });
-                    if (site.activeLayerId && layerIdMap[site.activeLayerId]) {
-                        site.activeLayerId = layerIdMap[site.activeLayerId];
-                    }
-                    site.objects.forEach(o => {
-                        o.id = State.generateId();
-                        if (o.layerId && layerIdMap[o.layerId]) o.layerId = layerIdMap[o.layerId];
-                    });
-                    State.sites.push(site);
-                    State.activeSiteIndex = State.sites.length - 1;
-                    closeModal();
-                })
-                .catch(err => alert((I18n.t('msg.exampleError') || 'Could not load example: ') + err));
+            loadExample().then(() => closeModal()).catch(() => {});
         });
 
         // CSV import
@@ -2901,9 +2878,38 @@ const UI = (() => {
         document.querySelectorAll('.eyedropper-btn.active').forEach(b => b.classList.remove('active'));
     }
 
+    function loadExample() {
+        return fetch('examples/example-camp.json?v=' + Date.now())
+            .then(r => r.json())
+            .then(data => {
+                if (!data.sites || !data.sites[0]) throw new Error('invalid');
+                const site = JSON.parse(JSON.stringify(data.sites[0]));
+                site.id = State.generateId();
+                const layerIdMap = {};
+                (site.layers || []).forEach(l => {
+                    const oldId = l.id;
+                    l.id = State.generateId();
+                    layerIdMap[oldId] = l.id;
+                });
+                if (site.activeLayerId && layerIdMap[site.activeLayerId]) {
+                    site.activeLayerId = layerIdMap[site.activeLayerId];
+                }
+                site.objects.forEach(o => {
+                    o.id = State.generateId();
+                    if (o.layerId && layerIdMap[o.layerId]) o.layerId = layerIdMap[o.layerId];
+                });
+                State.sites.push(site);
+                State.activeSiteIndex = State.sites.length - 1;
+            })
+            .catch(err => {
+                alert((I18n.t('msg.exampleError') || 'Could not load example: ') + err);
+                throw err;
+            });
+    }
+
     return {
         init, buildTabs, buildPalette, buildPlacedList, buildLayers, syncSettings, translateUI,
-        showProperties, hideProperties, getActiveColor,
+        showProperties, hideProperties, getActiveColor, loadExample,
         updateToolButtons, updateCoords, updateZoom, showHint,
         showContextMenu, showCanvasContextMenu, showGroundVertexMenu, showGroundEdgeMenu,
         showAreaVertexMenu, showAreaEdgeMenu, showFenceVertexMenu, showFenceEdgeMenu,
