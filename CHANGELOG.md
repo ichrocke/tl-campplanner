@@ -1,5 +1,13 @@
 # Changelog
 
+## [6.1.2] - 2026-05-10
+
+### Fixed
+- **Sachsenzelt-Vorbau**: Wurde beim Platzieren aus der Vorlage nicht angezeigt, weil `vorbauExtended` und `vorbauLength` in `State.addObject` nicht aus dem Template übernommen wurden. Jetzt werden beide Felder beim Erzeugen mit-kopiert.
+
+### Changed
+- **Sachsenzelt-Vorlage**: Standardabspannung jetzt 1 m (vorher 0).
+
 ## [6.1.1] - 2026-05-10
 
 ### Changed
