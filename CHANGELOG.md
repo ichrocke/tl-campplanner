@@ -1,5 +1,18 @@
 # Changelog
 
+## [6.3.0] - 2026-05-10
+
+### Added
+- **Beispielplatz**: Im Export-/Print-Dialog ein Button "Beispielplatz laden", der einen vorgefertigten kleinen Zeltplatz als neuen Tab öffnet. Praktisch zum Ausprobieren des Tools ohne leeres Canvas. Enthält ein Sachsenzelt mit ausgeklapptem Vorbau, Sippenzelte, Yurte, Theke, Feuerstelle, Materiallager etc.
+- **Tutorial: Räume-Schritt**: Neuer interaktiver Schritt direkt nach der Grundfläche, der das Gebiet-Werkzeug erklärt und den Nutzer eine Fläche zeichnen lässt.
+- **Tutorial: Farben-Schritt**: Eigener Schritt, der das neue Farben-Flyout in der Toolleiste vorstellt.
+- **Tutorial: Support-Schritt**: Vor dem Abschluss steht jetzt ein eigener Schritt, der den "Kaffee spendieren"-Link in der Top-Leiste hervorhebt.
+
+### Changed
+- **Tutorial: Eigenschaften erzwingt jetzt eine Änderung**: Der Properties-Schritt geht erst weiter, wenn am ausgewählten Objekt tatsächlich etwas geändert wurde (Name, Farbe, Größe, Rotation oder Beschreibung).
+- **Tutorial: Lupen-Highlight korrigiert**: Der Schritt "Platzierte Objekte" beleuchtet jetzt die ganze Sidebar-Sektion inklusive Sortier-Dropdown und Such-Lupe – nicht nur die Liste darunter.
+- **Tutorial: Speichern-Text verfeinert** und mehrere Hinweise sprachlich nachgezogen.
+
 ## [6.2.0] - 2026-05-10
 
 ### Added

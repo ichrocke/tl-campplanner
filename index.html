@@ -79,7 +79,7 @@
                     <div id="object-palette" class="collapsible"></div>
                 </div>
                 <div id="sidebar-divider" class="sidebar-divider"></div>
-                <div class="sidebar-section">
+                <div class="sidebar-section" id="sidebar-placed">
                     <div class="placed-section-header">
                         <h3 data-i18n="sidebar.placedObjects">Placed Objects</h3>
                         <div class="placed-section-controls">
@@ -397,10 +397,11 @@
                 <div class="export-left">
                     <h4 class="settings-subtitle">JSON Data</h4>
                     <p style="font-size:11px;color:var(--text-secondary);margin-bottom:8px">Saves all camp sites, objects, layers, templates and settings as JSON file.</p>
-                    <div style="display:flex;gap:6px;margin-bottom:12px">
+                    <div style="display:flex;gap:6px;margin-bottom:8px">
                         <button id="btn-import" class="btn-secondary" style="flex:1" data-i18n="btn.import">Import</button>
                         <button id="btn-export" class="btn-secondary" style="flex:1" data-i18n="btn.export">Export</button>
                     </div>
+                    <button id="btn-load-example" class="btn-secondary" style="width:100%;margin-bottom:12px;font-size:11px" data-i18n="btn.loadExample">Beispielplatz laden</button>
 
                     <div class="settings-divider"></div>
                     <h4 class="settings-subtitle">CSV-Import</h4>

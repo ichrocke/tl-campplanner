@@ -10,10 +10,24 @@ const Tutorial = (() => {
 
     function snapshotCounts() {
         const site = State.activeSite;
-        if (!site) return { ground: 0, nonGround: 0 };
-        let g = 0, n = 0;
-        site.objects.forEach(o => { if (o.type === 'ground') g++; else n++; });
-        return { ground: g, nonGround: n };
+        if (!site) return { ground: 0, nonGround: 0, area: 0 };
+        let g = 0, n = 0, a = 0;
+        site.objects.forEach(o => {
+            if (o.type === 'ground') g++;
+            else if (o.type === 'area') a++;
+            else n++;
+        });
+        return { ground: g, nonGround: n, area: a };
+    }
+
+    function snapshotProps() {
+        const site = State.activeSite;
+        if (!site) return '';
+        return JSON.stringify(site.objects.map(o => ({
+            id: o.id, name: o.name, color: o.color,
+            width: o.width, height: o.height, rotation: o.rotation,
+            description: o.description,
+        })));
     }
 
     function steps() {
@@ -40,6 +54,22 @@ const Tutorial = (() => {
                 },
             },
             {
+                target: '[data-tool="area"]',
+                title: I18n.t('tutorial.stepArea.title'),
+                text: I18n.t('tutorial.stepArea.text'),
+                onEnter() { _baseline = snapshotCounts(); },
+                check() { return Tools.activeTool === 'area'; },
+            },
+            {
+                target: '#canvas',
+                title: I18n.t('tutorial.stepAreaDraw.title'),
+                text: I18n.t('tutorial.stepAreaDraw.text'),
+                check() {
+                    const c = snapshotCounts();
+                    return _baseline && c.area > _baseline.area;
+                },
+            },
+            {
                 target: '#object-palette',
                 title: I18n.t('tutorial.step4.title'),
                 text: I18n.t('tutorial.step4.text'),
@@ -59,9 +89,11 @@ const Tutorial = (() => {
                 target: '#properties',
                 title: I18n.t('tutorial.step5.title'),
                 text: I18n.t('tutorial.step5.text'),
+                onEnter() { _baseline = snapshotProps(); },
+                check() { return _baseline !== null && snapshotProps() !== _baseline; },
             },
             {
-                target: '#placed-objects-list',
+                target: '#sidebar-placed',
                 title: I18n.t('tutorial.step6.title'),
                 text: I18n.t('tutorial.step6.text'),
             },
@@ -81,6 +113,11 @@ const Tutorial = (() => {
                 text: I18n.t('tutorial.step9.text'),
             },
             {
+                target: '#btn-color-toggle',
+                title: I18n.t('tutorial.stepColor.title'),
+                text: I18n.t('tutorial.stepColor.text'),
+            },
+            {
                 target: '#btn-exportmenu',
                 title: I18n.t('tutorial.step10.title'),
                 text: I18n.t('tutorial.step10.text'),
@@ -90,6 +127,11 @@ const Tutorial = (() => {
                 target: '#btn-settings',
                 title: I18n.t('tutorial.step11.title'),
                 text: I18n.t('tutorial.step11.text'),
+            },
+            {
+                target: '.donate-link',
+                title: I18n.t('tutorial.stepDonate.title'),
+                text: I18n.t('tutorial.stepDonate.text'),
             },
             {
                 target: null,
