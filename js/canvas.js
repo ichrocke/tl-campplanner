@@ -77,8 +77,16 @@ const Canvas = (() => {
             case 'octagon': return 8;
             case 'decagon': return 10;
             case 'dodecagon': return 12;
-            default: return 0; // rect or circle handled separately
+            default: return 0; // rect, circle, stadium handled separately
         }
+    }
+
+    // Stadium (Sachsenzelt): rectangle with two semi-elliptical caps on the short sides.
+    // Cap ratio = depth of one cap as fraction of total height.
+    const STADIUM_CAP_EXTENDED = 0.25;
+    const STADIUM_CAP_FOLDED = 0.04;
+    function getStadiumCapRatio(obj) {
+        return obj.vorbauExtended === false ? STADIUM_CAP_FOLDED : STADIUM_CAP_EXTENDED;
     }
 
     // Get local polygon path for an object shape (unscaled, centered at 0,0)
@@ -161,6 +169,28 @@ const Canvas = (() => {
                 const a = (i / 16) * Math.PI * 2;
                 pts.push({ x: Math.cos(a) * hw, y: Math.sin(a) * hh });
             }
+            return pts;
+        }
+        if (obj.shape === 'stadium') {
+            // Vertical pill: rect body in the middle, semi-elliptical caps on top and bottom
+            const r = getStadiumCapRatio(obj);
+            const capDepth = 2 * r * hh;          // depth of one cap in world units
+            const bodyHH = hh - capDepth;         // half-height of rect body
+            const NCAP = 12;
+            const pts = [];
+            // Top cap: from (-hw, -bodyHH) over (0, -hh) to (hw, -bodyHH)
+            for (let i = 0; i <= NCAP; i++) {
+                const a = Math.PI + (i / NCAP) * Math.PI;
+                pts.push({ x: Math.cos(a) * hw, y: -bodyHH + Math.sin(a) * capDepth });
+            }
+            // Right side endpoint (long straight side from top-cap end down)
+            pts.push({ x: hw, y: bodyHH });
+            // Bottom cap: from (hw, +bodyHH) over (0, +hh) to (-hw, +bodyHH)
+            for (let i = 1; i <= NCAP; i++) {
+                const a = (i / NCAP) * Math.PI;
+                pts.push({ x: Math.cos(a) * hw, y: bodyHH + Math.sin(a) * capDepth });
+            }
+            // Left side closes implicitly back to point 0 (-hw, -bodyHH)
             return pts;
         }
         // rect
@@ -820,6 +850,12 @@ const Canvas = (() => {
         } else if (obj.shape === 'circle') {
             ctx.beginPath();
             ctx.ellipse(0, 0, hw, hh, 0, 0, Math.PI * 2);
+        } else if (obj.shape === 'stadium') {
+            const pts = getLocalShapePath(obj, extraPad);
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x * z, pts[0].y * z);
+            for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x * z, pts[i].y * z);
+            ctx.closePath();
         } else {
             // rect – use a path so we can use it uniformly
             ctx.beginPath();
@@ -1253,6 +1289,23 @@ const Canvas = (() => {
             ctx.moveTo(0, -h / 2); ctx.lineTo(0, h / 2);
             ctx.stroke();
             ctx.globalAlpha = 1;
+        }
+        // Stadium tent: ridge line across rect body + apex pegs (Sturmleinen-Heringe)
+        if (!_treasureMode && obj.type === 'tent' && obj.shape === 'stadium') {
+            const r = getStadiumCapRatio(obj);
+            const bodyHH = (h / 2) * (1 - 2 * r);
+            ctx.strokeStyle = obj.color;
+            ctx.globalAlpha = 0.4;
+            ctx.lineWidth = 0.8 * ls;
+            ctx.beginPath();
+            ctx.moveTo(0, -bodyHH); ctx.lineTo(0, bodyHH);
+            ctx.stroke();
+            ctx.globalAlpha = 1;
+            if (obj.showPegs !== false) {
+                ctx.fillStyle = '#9ca3af';
+                drawPeg(0, -h / 2, rs);
+                drawPeg(0,  h / 2, rs);
+            }
         }
 
         // Entrance marker (skip in treasure mode)
@@ -2238,6 +2291,9 @@ const Canvas = (() => {
         if (obj.shape === 'circle') {
             return (lx * lx / (hw * hw) + ly * ly / (hh * hh)) <= 1;
         }
+        if (obj.shape === 'stadium') {
+            return pointInPolygon(lx, ly, getLocalShapePath(obj, 0));
+        }
         return Math.abs(lx) <= hw && Math.abs(ly) <= hh;
     }
 
@@ -2537,6 +2593,7 @@ const Canvas = (() => {
         pointInObj, pointOnRotHandle, pointOnResizeHandle, computeDistancesForObj,
         getLocalShapePath, getShapeSides, getEffectiveSideDistance, zoomToObject,
         getRectPegsForSide, getEffectivePolySideDistance, getPolyPegsForSide, hasPolyPerSideRopes, regularPolygonPoints,
+        getStadiumCapRatio, STADIUM_CAP_EXTENDED, STADIUM_CAP_FOLDED,
         get canvas() { return canvas; },
         get selectedIds() { return selectedIds; },
         // Compat: single selectedId getter/setter

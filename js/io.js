@@ -933,6 +933,26 @@ const IO = (() => {
             } else if (['hexagon','octagon','decagon','dodecagon'].includes(shape)) {
                 const sides = shape === 'hexagon' ? 6 : shape === 'octagon' ? 8 : shape === 'decagon' ? 10 : 12;
                 els += `<polygon points="${regPoly(obj.x, obj.y, hw, hh, sides, rot)}" fill="${color}" fill-opacity="0.6" stroke="${color}" stroke-width="1.5"/>\n`;
+            } else if (shape === 'stadium') {
+                const localPts = Canvas.getLocalShapePath(obj, 0);
+                const rad = (rot || 0) * Math.PI / 180;
+                const cs = Math.cos(rad), sn = Math.sin(rad);
+                const pts = localPts.map(p => `${((obj.x + p.x*cs - p.y*sn)*s).toFixed(1)},${((obj.y + p.x*sn + p.y*cs)*s).toFixed(1)}`).join(' ');
+                els += `<polygon points="${pts}" fill="${color}" fill-opacity="0.6" stroke="${color}" stroke-width="1.5"/>\n`;
+                // Ridge line (across rect body of stadium)
+                if (obj.type === 'tent') {
+                    const r = Canvas.getStadiumCapRatio(obj);
+                    const bodyHH = hh * (1 - 2 * r);
+                    const a = { x: obj.x + (0)*cs - (-bodyHH)*sn, y: obj.y + (0)*sn + (-bodyHH)*cs };
+                    const b = { x: obj.x + (0)*cs - ( bodyHH)*sn, y: obj.y + (0)*sn + ( bodyHH)*cs };
+                    els += `<line x1="${(a.x*s).toFixed(1)}" y1="${(a.y*s).toFixed(1)}" x2="${(b.x*s).toFixed(1)}" y2="${(b.y*s).toFixed(1)}" stroke="${color}" stroke-width="0.8" stroke-opacity="0.4"/>\n`;
+                    if (obj.showPegs !== false) {
+                        const apex1 = { x: obj.x + (0)*cs - (-hh)*sn, y: obj.y + (0)*sn + (-hh)*cs };
+                        const apex2 = { x: obj.x + (0)*cs - ( hh)*sn, y: obj.y + (0)*sn + ( hh)*cs };
+                        els += `<circle cx="${(apex1.x*s).toFixed(1)}" cy="${(apex1.y*s).toFixed(1)}" r="${(0.04*s).toFixed(1)}" fill="#9ca3af"/>\n`;
+                        els += `<circle cx="${(apex2.x*s).toFixed(1)}" cy="${(apex2.y*s).toFixed(1)}" r="${(0.04*s).toFixed(1)}" fill="#9ca3af"/>\n`;
+                    }
+                }
             } else {
                 els += `<polygon points="${rotRect(obj.x, obj.y, hw, hh, rot)}" fill="${color}" fill-opacity="0.6" stroke="${color}" stroke-width="1.5"/>\n`;
             }

@@ -743,6 +743,7 @@ const UI = (() => {
             : t.shape === 'octagon' ? 'clip-path:polygon(30% 0%,70% 0%,100% 30%,100% 70%,70% 100%,30% 100%,0% 70%,0% 30%)'
             : (t.shape === 'decagon' || t.shape === 'dodecagon') ? 'border-radius:50%'
             : t.shape === 'triangle' ? 'clip-path:polygon(50% 0%,100% 100%,0% 100%)'
+            : t.shape === 'stadium' ? 'border-radius:30% / 50%'
             : '';
         const shortcutLabel = idx < 10 ? `<span class="palette-shortcut">${(idx + 1) % 10}</span>` : '';
         el.innerHTML = `
@@ -784,8 +785,7 @@ const UI = (() => {
                     openColorPicker(t.color, (c) => { t.color = c; State.notifyChange(true); buildPalette(); });
                 }},
                 { label: I18n.t('props.shape'), action: () => {
-                    const shapes = ['rect', 'triangle', 'hexagon', 'octagon', 'circle'];
-                    const names = shapes.map(s => I18n.t('props.shape.' + s));
+                    const shapes = ['rect', 'triangle', 'hexagon', 'octagon', 'circle', 'stadium'];
                     const current = shapes.indexOf(t.shape);
                     const next = (current + 1) % shapes.length;
                     t.shape = shapes[next];
@@ -1322,8 +1322,10 @@ const UI = (() => {
                         <option value="decagon" ${obj.shape === 'decagon' ? 'selected' : ''}>${I18n.t('props.shape.decagon')}</option>
                         <option value="dodecagon" ${obj.shape === 'dodecagon' ? 'selected' : ''}>${I18n.t('props.shape.dodecagon')}</option>
                         <option value="circle" ${obj.shape === 'circle' ? 'selected' : ''}>${I18n.t('props.shape.circle')}</option>
+                        <option value="stadium" ${obj.shape === 'stadium' ? 'selected' : ''}>${I18n.t('props.shape.stadium')}</option>
                     </select>
-                </label>`}
+                </label>
+                ${obj.shape === 'stadium' ? `<label style="flex-direction:row !important;align-items:center !important;gap:6px !important"><input type="checkbox" id="prop-vorbau" ${obj.vorbauExtended !== false ? 'checked' : ''} style="width:auto"> ${I18n.t('props.vorbauExtended')}</label>` : ''}`}
             </div>`;
         }
 
@@ -1788,6 +1790,25 @@ const UI = (() => {
         bind('prop-guyrope', 'guyRopeDistance', parseFloat);
         bind('prop-color', 'color');
         bind('prop-shape', 'shape');
+
+        // Sachsenzelt: Vorbau ein-/ausklappen – passt auch height an, sodass der
+        // Rechteck-Körper unverändert bleibt und nur die Apsiden schrumpfen/wachsen.
+        const vorbauCb = document.getElementById('prop-vorbau');
+        if (vorbauCb) {
+            vorbauCb.addEventListener('change', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                const oldR = obj.vorbauExtended === false ? Canvas.STADIUM_CAP_FOLDED : Canvas.STADIUM_CAP_EXTENDED;
+                const newExtended = vorbauCb.checked;
+                const newR = newExtended ? Canvas.STADIUM_CAP_EXTENDED : Canvas.STADIUM_CAP_FOLDED;
+                const bodyH = obj.height * (1 - 2 * oldR);
+                const newHeight = bodyH / (1 - 2 * newR);
+                State.updateObject(obj.id, { vorbauExtended: newExtended, height: newHeight });
+                const heightInput = document.getElementById('prop-height');
+                if (heightInput) heightInput.value = newHeight.toFixed(2);
+                Canvas.render();
+                buildPlacedList();
+            });
+        }
 
         // Eyedropper: pick color from another canvas object
         const pickBtn = document.getElementById('prop-color-pick');

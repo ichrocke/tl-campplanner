@@ -1,5 +1,14 @@
 # Changelog
 
+## [6.1.0] - 2026-05-10
+
+### Added
+- **Sachsenzelt (Stadion-Form)**: Neue Zelt-Form als eigener Shape `stadium` – Rechteckiger Körper mit zwei halb-elliptischen Apsiden auf den Stirnseiten. Vorlage "Sachsenzelt" 5×5 m (Bounding Box 5×10 m). Dezente First-Linie längs durch den Rechteck-Körper, kleine Heringe-Punkte an den Apsis-Spitzen (Sturmleinen-Erdheringe).
+- **Vorbau-Toggle**: Pro Sachsenzelt-Objekt eine Checkbox "Vorbau ausgeklappt" im Properties-Panel. Beim Umschalten schrumpfen/wachsen die Apsiden und die Höhe wird so angepasst, dass der Rechteck-Körper unverändert bleibt (ausgeklappt: 25 % der Höhe pro Apsis, eingeklappt: 4 %). Der Mindestabstand zu Nachbarn rechnet automatisch mit der jeweils aktuellen Bounding Box.
+
+### Changed
+- Hit-Test, Distanzberechnung, Eingangs-Position, PNG/Print/SVG-Export funktionieren für die neue Stadion-Form ohne weiteren Sonderpfad – sie ziehen den Polygonzug aus `getLocalShapePath`.
+
 ## [6.0.0] - 2026-05-02
 
 ### Added

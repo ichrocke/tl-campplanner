@@ -17,6 +17,7 @@ const State = (() => {
             { type: 'tent', name: I18n.t('template.tent4p'), width: 3, height: 2.5, guyRopeDistance: 0.6, color: '#3b82f6', shape: 'rect' },
             { type: 'tent', name: I18n.t('template.familyTent'), width: 4, height: 3, guyRopeDistance: 0.8, color: '#2563eb', shape: 'rect' },
             { type: 'tent', name: I18n.t('template.groupTent'), width: 6, height: 4, guyRopeDistance: 1.0, color: '#1d4ed8', shape: 'rect' },
+            { type: 'tent', name: I18n.t('template.saxonTent'), width: 5, height: 10, guyRopeDistance: 0, color: '#0e7490', shape: 'stadium', vorbauExtended: true },
             { type: 'tent', name: I18n.t('template.yurtRound'), width: 5, height: 5, guyRopeDistance: 1.0, color: '#7c3aed', shape: 'circle' },
             { type: 'tent', name: I18n.t('template.yurt6'), width: 5, height: 5, guyRopeDistance: 1.0, color: '#6d28d9', shape: 'hexagon' },
             { type: 'tent', name: I18n.t('template.yurt8'), width: 5, height: 5, guyRopeDistance: 1.0, color: '#5b21b6', shape: 'octagon' },
