@@ -425,10 +425,7 @@ const UI = (() => {
             }
         });
 
-        // Paint tool button
-        document.getElementById('color-palette').querySelector('.color-paint-btn').addEventListener('click', () => {
-            Tools.setTool('paint');
-        });
+        // Paint tool button is bound via [data-tool] loop in bindFloatingTools
 
         // Zoom buttons
         document.getElementById('btn-zoom-in').addEventListener('click', () => {
