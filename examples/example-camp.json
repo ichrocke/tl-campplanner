@@ -1214,11 +1214,13 @@
         {
           "type": "tent",
           "name": "Sachsenzelt",
-          "width": 3,
+          "width": 8,
           "height": 4,
-          "shape": "decagon",
+          "shape": "stadium",
           "guyRopeDistance": 1,
-          "color": "#4a90d9"
+          "color": "#0e7490",
+          "vorbauExtended": true,
+          "vorbauLength": 2
         },
         {
           "type": "tent",
