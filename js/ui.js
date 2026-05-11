@@ -2176,15 +2176,21 @@ const UI = (() => {
     function bindModals() {
         document.getElementById('co-cancel').addEventListener('click', closeModal);
         function getCustomTemplate() {
-            return {
+            const shape = document.getElementById('co-shape').value;
+            const tpl = {
                 type: document.getElementById('co-type').value,
                 name: document.getElementById('co-name').value || 'Object',
                 width: parseFloat(document.getElementById('co-width').value) || 2,
                 height: parseFloat(document.getElementById('co-height').value) || 2,
-                shape: document.getElementById('co-shape').value,
+                shape,
                 guyRopeDistance: parseFloat(document.getElementById('co-guyrope').value) || 0,
                 color: document.getElementById('co-color').value,
             };
+            if (shape === 'stadium') {
+                tpl.vorbauExtended = true;
+                tpl.vorbauLength = 2;
+            }
+            return tpl;
         }
         document.getElementById('co-create-only').addEventListener('click', () => {
             const template = getCustomTemplate();

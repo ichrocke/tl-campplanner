@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.3.2] - 2026-05-11
+
+### Added
+- **Eigenes Objekt: Sachsenzelt als Form**: Im "Eigenes Objekt erstellen"-Dialog gibt es jetzt die Form `Sachsenzelt` (Stadium-Form). Beim Erstellen wird automatisch der Vorbau mit Länge 2 m gesetzt – analog zur Standard-Sachsenzelt-Vorlage. Vorbau kann anschließend in den Eigenschaften ein- oder ausgeklappt werden.
+
 ## [6.3.1] - 2026-05-10
 
 ### Changed
