@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Raum-Ansicht</title>
+<!--
+  Read-only Raum-Viewer fuer den Adminbereich.
+  Laedt den Raum-State ausschliesslich lesend ueber api/admin.php?action=view.
+  Bewusst werden NUR i18n.js, state.js, maptiles.js und canvas.js eingebunden
+  (kein collab.js / tools.js / ui.js / io.js / app.js) – dadurch findet
+  keinerlei Schreibzugriff, keine Praesenz-/Cursor-Registrierung und kein
+  State-Push statt. Der Betrachter taucht im Raum nicht auf.
+-->
+<style>
+  :root { --bg:#0f172a; --surface:#1e293b; --surface2:#334155; --border:#475569; --text:#f1f5f9; --text2:#94a3b8; --accent:#3b82f6; --amber:#f59e0b; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html, body { height:100%; }
+  body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; background:var(--bg); color:var(--text); display:flex; flex-direction:column; overflow:hidden; }
+  .topbar { display:flex; align-items:center; gap:12px; padding:8px 14px; background:var(--surface); border-bottom:1px solid var(--surface2); flex-wrap:wrap; }
+  .topbar h1 { font-size:15px; font-weight:600; white-space:nowrap; }
+  .ro-badge { font-size:11px; font-weight:700; color:#fff; background:var(--amber); padding:2px 8px; border-radius:6px; letter-spacing:.3px; }
+  .arch-badge { font-size:11px; font-weight:600; color:var(--text2); background:var(--surface2); padding:2px 8px; border-radius:6px; }
+  .spacer { flex:1; }
+  .tabs { display:flex; gap:4px; flex-wrap:wrap; }
+  .tab { padding:5px 12px; border:1px solid var(--border); background:var(--surface2); color:var(--text2); font-size:13px; border-radius:7px; cursor:pointer; }
+  .tab.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .ctrl { display:flex; gap:4px; }
+  .ctrl button { width:32px; height:32px; border:1px solid var(--border); background:var(--surface2); color:var(--text); border-radius:7px; cursor:pointer; font-size:16px; line-height:1; }
+  .ctrl button:hover { background:var(--border); }
+  .ctrl button.wide { width:auto; padding:0 12px; font-size:13px; }
+  #stage { flex:1; position:relative; min-height:0; }
+  #canvas { position:absolute; inset:0; cursor:grab; }
+  #canvas.dragging { cursor:grabbing; }
+  #status { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); color:var(--text2); font-size:15px; text-align:center; }
+  #status.err { color:#ef4444; }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <h1 id="room-name">Raum-Ansicht</h1>
+    <span class="ro-badge">NUR LESEN</span>
+    <span id="arch-badge" class="arch-badge" style="display:none">Archiv</span>
+    <div class="spacer"></div>
+    <div id="tabs" class="tabs"></div>
+    <div class="ctrl">
+      <button id="zoom-out" title="Verkleinern">&minus;</button>
+      <button id="zoom-in" title="Vergroessern">+</button>
+      <button id="fit" class="wide" title="Einpassen">Einpassen</button>
+    </div>
+  </div>
+  <div id="stage">
+    <canvas id="canvas"></canvas>
+    <div id="status">Laden&hellip;</div>
+  </div>
+
+  <script>
+    // Cache-Busting analog zur Hauptapp
+    var _cbv = Date.now();
+    ['js/i18n.js', 'js/state.js', 'js/maptiles.js', 'js/canvas.js'].forEach(function (s) {
+      document.write('<script src="' + s + '?v=' + _cbv + '"><\/script>');
+    });
+  </script>
+
+  <script>
+  (function () {
+    'use strict';
+    var PPM = 30; // muss zu canvas.js passen
+    var params = new URLSearchParams(location.search);
+    var key = params.get('key') || '';
+    var roomId = params.get('id') || '';
+    var archived = params.get('archived') === '1';
+
+    var statusEl = document.getElementById('status');
+    function showStatus(msg, isErr) {
+      statusEl.textContent = msg;
+      statusEl.className = isErr ? 'err' : '';
+      statusEl.style.display = '';
+    }
+    function hideStatus() { statusEl.style.display = 'none'; }
+
+    if (typeof I18n !== 'undefined') { try { I18n.setLang('de'); } catch (e) {} }
+
+    var canvasEl = document.getElementById('canvas');
+
+    function renderTabs() {
+      var wrap = document.getElementById('tabs');
+      wrap.innerHTML = '';
+      var sites = State.sites || [];
+      if (sites.length <= 1) return;
+      sites.forEach(function (site, i) {
+        var b = document.createElement('button');
+        b.className = 'tab' + (i === State.activeSiteIndex ? ' active' : '');
+        b.textContent = site.name || ('Platz ' + (i + 1));
+        b.onclick = function () { State.activeSiteIndex = i; renderTabs(); Canvas.render(); };
+        wrap.appendChild(b);
+      });
+    }
+
+    function fitToContent() {
+      var site = State.activeSite;
+      if (!site) return;
+      var objs = site.objects || [];
+      var minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      function acc(x, y) { if (x < minX) minX = x; if (y < minY) minY = y; if (x > maxX) maxX = x; if (y > maxY) maxY = y; }
+      objs.forEach(function (o) {
+        if (o.points && o.points.length) {
+          o.points.forEach(function (p) { acc((o.x || 0) + p.x, (o.y || 0) + p.y); });
+        } else {
+          var hw = (o.width || 0) / 2, hh = (o.height || 0) / 2;
+          acc((o.x || 0) - hw, (o.y || 0) - hh);
+          acc((o.x || 0) + hw, (o.y || 0) + hh);
+        }
+      });
+      if (!isFinite(minX)) { // leer: Standardansicht
+        site.view.panX = 0; site.view.panY = 0; site.view.zoom = 1; Canvas.render(); return;
+      }
+      var cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
+      var w = Math.max(maxX - minX, 1), h = Math.max(maxY - minY, 1);
+      var zx = (canvasEl.width * 0.85) / (w * PPM);
+      var zy = (canvasEl.height * 0.85) / (h * PPM);
+      site.view.zoom = Math.max(0.1, Math.min(10, Math.min(zx, zy)));
+      site.view.panX = -cx;
+      site.view.panY = -cy;
+      Canvas.render();
+    }
+
+    // --- Pan per Maus-Drag ---
+    var dragging = false, lastX = 0, lastY = 0;
+    canvasEl.addEventListener('mousedown', function (e) {
+      dragging = true; lastX = e.clientX; lastY = e.clientY; canvasEl.classList.add('dragging');
+    });
+    window.addEventListener('mousemove', function (e) {
+      if (!dragging) return;
+      var site = State.activeSite; if (!site) return;
+      var z = site.view.zoom * PPM;
+      site.view.panX += (e.clientX - lastX) / z;
+      site.view.panY += (e.clientY - lastY) / z;
+      lastX = e.clientX; lastY = e.clientY;
+      Canvas.render();
+    });
+    window.addEventListener('mouseup', function () { dragging = false; canvasEl.classList.remove('dragging'); });
+
+    // --- Zoom per Mausrad (auf Cursor zentriert) ---
+    canvasEl.addEventListener('wheel', function (e) {
+      e.preventDefault();
+      var site = State.activeSite; if (!site) return;
+      var rect = canvasEl.getBoundingClientRect();
+      var sx = e.clientX - rect.left, sy = e.clientY - rect.top;
+      var before = Canvas.s2w(sx, sy);
+      var factor = e.deltaY < 0 ? 1.1 : 1 / 1.1;
+      site.view.zoom = Math.max(0.1, Math.min(10, site.view.zoom * factor));
+      var z = site.view.zoom * PPM;
+      // Weltpunkt unter dem Cursor wieder an dieselbe Bildschirmposition legen
+      site.view.panX = (sx - canvasEl.width / 2) / z - before.x;
+      site.view.panY = (sy - canvasEl.height / 2) / z - before.y;
+      Canvas.render();
+    }, { passive: false });
+
+    function zoomBy(factor) {
+      var site = State.activeSite; if (!site) return;
+      var cx = canvasEl.width / 2, cy = canvasEl.height / 2;
+      var before = Canvas.s2w(cx, cy);
+      site.view.zoom = Math.max(0.1, Math.min(10, site.view.zoom * factor));
+      var z = site.view.zoom * PPM;
+      site.view.panX = -before.x; site.view.panY = -before.y;
+      Canvas.render();
+    }
+    document.getElementById('zoom-in').onclick = function () { zoomBy(1.2); };
+    document.getElementById('zoom-out').onclick = function () { zoomBy(1 / 1.2); };
+    document.getElementById('fit').onclick = fitToContent;
+
+    // --- Laden (rein lesend) ---
+    function load() {
+      if (!key || !roomId) { showStatus('Fehlende Parameter (key/id).', true); return; }
+      var url = 'api/admin.php?action=view&key=' + encodeURIComponent(key) +
+                '&id=' + encodeURIComponent(roomId) + (archived ? '&archived=1' : '');
+      fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+        if (!data || data.error) { showStatus('Fehler: ' + ((data && data.error) || 'unbekannt'), true); return; }
+        document.getElementById('room-name').textContent = data.name || roomId;
+        if (data.archived) document.getElementById('arch-badge').style.display = '';
+        Canvas.init(canvasEl);
+        try {
+          State.importJSON(data.state, true);
+        } catch (e) {
+          showStatus('State konnte nicht geladen werden.', true); return;
+        }
+        if (!State.activeSite && typeof State.createSite === 'function') State.createSite();
+        hideStatus();
+        renderTabs();
+        Canvas.render();
+      }).catch(function () {
+        showStatus('Netzwerkfehler beim Laden.', true);
+      });
+    }
+
+    window.addEventListener('resize', function () { if (typeof Canvas !== 'undefined') Canvas.render(); });
+
+    if (typeof State === 'undefined' || typeof Canvas === 'undefined') {
+      showStatus('Engine nicht geladen.', true);
+    } else {
+      load();
+    }
+  })();
+  </script>
+</body>
+</html>

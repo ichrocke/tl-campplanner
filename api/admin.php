@@ -10,6 +10,30 @@ if (($_GET['key'] ?? '') !== ADMIN_KEY) {
 $pdo = getDB();
 $action = $_GET['action'] ?? 'list';
 
+// Raum-State NUR LESEN (fuer den Viewer). Bewusst vor cleanupExpiredRooms()
+// und ohne jeglichen Schreibzugriff: kein last_activity-Update, keine
+// Praesenz/Cursor-Registrierung. Liest aktive Raeume oder das Archiv.
+if ($action === 'view') {
+    $id = $_GET['id'] ?? '';
+    $archived = ($_GET['archived'] ?? '') === '1';
+    if (!$id || !preg_match('/^[a-z0-9]{4,12}$/', $id)) {
+        jsonResponse(['error' => 'Invalid room ID'], 400);
+    }
+    $table = $archived ? 'rooms_archive' : 'rooms';
+    $stmt = $pdo->prepare("SELECT name, state_json, version FROM $table WHERE id = ?");
+    $stmt->execute([$id]);
+    $row = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$row) {
+        jsonResponse(['error' => 'Room not found'], 404);
+    }
+    jsonResponse([
+        'name' => $row['name'],
+        'version' => intval($row['version']),
+        'state' => $row['state_json'],
+        'archived' => $archived,
+    ]);
+}
+
 // Ablauf berechnen: Gesamtminuten ab jetzt (0 = unbegrenzt)
 function calcTotalMinutes($days, $hours, $minutes) {
     $d = intval($days); $h = intval($hours); $m = intval($minutes);
@@ -445,6 +469,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                     </div>
                 </div>
                 <div class="popup-actions">
+                    <a href="../viewer.html?key=<?= urlencode(ADMIN_KEY) ?>&id=<?= $r['id'] ?>" target="_blank" rel="noopener" class="btn btn-link" onclick="event.stopPropagation()">Ansehen</a>
                     <button class="btn btn-link" onclick="copyLink('<?= $r['id'] ?>');closePopup()">Link kopieren</button>
                     <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=export&id=<?= $r['id'] ?>" class="btn btn-link" onclick="event.stopPropagation()">JSON exportieren</a>
                     <?php if ($isLocked): ?>
@@ -504,6 +529,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
                         <span>Loeschung in <?= $daysLeft ?> T</span>
                     </div>
                     <div class="room-actions archive-actions">
+                        <a href="../viewer.html?key=<?= urlencode(ADMIN_KEY) ?>&id=<?= $a['id'] ?>&archived=1" target="_blank" rel="noopener" class="btn btn-link btn-sm" style="flex:1;text-align:center">Ansehen</a>
                         <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=restore&id=<?= $a['id'] ?>" class="btn btn-unlock btn-sm" style="flex:1;text-align:center">Wiederherstellen</a>
                         <a href="?key=<?= urlencode(ADMIN_KEY) ?>&action=purge&id=<?= $a['id'] ?>" class="btn btn-delete btn-sm" onclick="return confirm('Endgueltig loeschen?')" style="flex:1;text-align:center">Loeschen</a>
                     </div>
