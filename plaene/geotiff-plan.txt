@@ -1,0 +1,89 @@
+GeoTIFF-Integration – Planungsnotizen
+======================================
+Stand: 2026-06-29
+
+## Ausgangslage
+
+Ein User hat GeoTIFFs von Hangneigungskarten seines Drachenfestgeländes (wo ist es wie steil)
+und möchte diese als Overlay zur Zeltplanung nutzen. Das Tool hat dafür bereits eine gute
+Basis: js/maptiles.js und das site.mapLayer-System (Georeferenz + Opacity + Rotation +
+Deckkraft, Rendering per drawImage auf Canvas).
+
+## Zwei Implementierungswege
+
+### Weg A – Generisches Bild-Overlay mit manueller Georeferenzierung (Empfehlung für MVP)
+
+Der User exportiert die Hangneigungskarte aus seiner GIS-Software als PNG/JPG. Im Tool
+importiert er das Bild und richtet es aus – entweder visuell (schieben/skalieren/drehen
+über den vorhandenen Satellitenlayer) oder per 2-Punkt-Georeferenzierung (zwei bekannte
+Punkte im Bild und auf der Karte anklicken).
+
+Vorteile:
+- Kein TIFF-Decoder nötig, keine neue Dependency
+- Kein CRS/Projektions-Gefrickel
+- Deckt den Bedarf zu ~90 %
+- Robuster (User sieht das Ergebnis direkt)
+
+Aufwand: gering bis moderat (ein halber bis ganzer Arbeitstag)
+
+Technische Änderungen:
+- Import-Dialog: Datei-Input für PNG/JPG, Bild als Data-URL oder ObjectURL einlesen
+- State: mapLayer um imageDataURL + imageTransform (x, y, scale, rotation) erweitern
+- Rendering: neuer drawImageOverlay-Pfad in maptiles.js oder direkt in canvas.js
+- UI: einfache Positionier-Werkzeuge (Regler für x/y/scale) oder Drag-to-place
+
+Persistenz: Data-URL in localStorage ist nur für kleine Bilder praktisch (<1 MB).
+Für größere Bilder besser: beim Import in localStorage nicht persistieren,
+stattdessen IndexedDB oder bei jeder Sitzung neu importieren.
+
+---
+
+### Weg B – Echtes GeoTIFF einlesen (automatisch georeferenziert)
+
+Die Datei wird direkt importiert; die Georeferenzierung (Tiepoint + PixelScale oder
+ModelTransformation + GeoKeys/CRS) wird automatisch ausgelesen und das Bild
+pixelgenau verankert.
+
+Vorteile:
+- Ein Klick, sitzt sofort metergenau
+- Keine manuelle Ausrichtung nötig
+
+Nachteile / Knackpunkte:
+1. TIFF-Decoder: Reale GIS-Exporte nutzen LZW/Deflate/JPEG-Kompression und oft
+   Tile-Struktur. Selbst schreiben ist viel Aufwand. Praktisch unvermeidlich:
+   Bibliothek geotiff.js (MIT-Lizenz) als vendored Bundle (js/vendor/geotiff.min.js),
+   kein Build-Step nötig – kollidiert aber mit der „keine Dependencies"-Regel in CLAUDE.md.
+
+2. Projektion / CRS: Deutsche GeoTIFFs meist UTM32N (EPSG:25832), nicht Lat/Lng.
+   Für kleine Ausschnitte (Zeltgelände = ein paar hundert Meter) ist der pragmatische
+   Weg fast verzerrungsfrei: projizierte UTM-Meter direkt als Weltmeter ankern.
+   Für exakte Überlagerung mit OSM/Satellit: Reprojektion UTM→WGS84 (proj4js oder
+   hartkodierte UTM32-Formeln).
+
+3. Dateigröße & Persistenz: Orthophotos können sehr groß sein. Beim Import auf
+   max. 2–4k Pixel herunterskalieren, als PNG-Canvas-Export speichern.
+
+Aufwand MVP: moderat (1–2 Tage)
+Aufwand mit Reprojektion + Persistenz: hoch (2–3 Tage)
+
+Technische Änderungen zusätzlich zu Weg A:
+- js/vendor/geotiff.min.js einbinden
+- GeoTIFF-Import-Handler: Datei lesen, dekodieren, auf Canvas rendern (herunterskaliert)
+- Tie-Point + Pixel-Scale aus Tags auslesen → Bounding-Box in Weltmeter berechnen
+- Optional: GeoKey-Parser für CRS-Erkennung + UTM32-Reprojektion
+
+---
+
+## Empfehlung
+
+Weg A als MVP umsetzen. Weg B als Aufsatz, falls der User den manuellen Ausrichtungsschritt
+als zu umständlich empfindet. Beide Wege nutzen dieselbe mapLayer-Render-Pipeline.
+
+## Offener Punkt
+
+Beispieldatei vom User liegt noch nicht vor. Vor Umsetzung analysieren:
+- Kompression (unkomprimiert / LZW / Deflate / JPEG)?
+- Georeferenzierung (ModelTiepoint+PixelScale vs. ModelTransformation)?
+- CRS aus GeoKeys (UTM32N / Gauss-Krüger / WGS84)?
+- Bildinhalt: eingefärbt (RGB) oder Rohwerte (Graustufen/Float32)?
+- Auflösung und Dateigröße?
