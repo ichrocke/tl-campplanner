@@ -304,6 +304,7 @@
   "ground.export": "Esporta terreno",
   "ground.import": "Importare terreno",
   "ground.printOnly": "Stampa solo questo terreno",
+  "props.showDiagonals": "Mostra diagonali con misure",
   "props.locked": "Bloccato",
   "props.lockObj": "Blocca posizione",
   "shortcut.gridSize": "Dimensione griglia +/-",

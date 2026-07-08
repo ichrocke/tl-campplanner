@@ -1,5 +1,13 @@
 # Changelog
 
+## [6.4.0] - 2026-07-08
+
+### Added
+- **Grundfläche: Diagonalen anzeigen**: In den Eigenschaften einer Grundfläche gibt es einen neuen Haken "Diagonalen mit Massen anzeigen". Ist er aktiv, werden alle Diagonalen der Fläche gestrichelt mit Längenmass eingeblendet (praktisch zum Prüfen rechter Winkel). Der Haken lässt sich auch bei Mehrfachauswahl mehrerer Grundflächen gemeinsam setzen.
+
+### Fixed
+- **Import überschreibt keine Tabs mehr**: Beim Importieren einer JSON-Datei (kompletter Export oder Einzel-Tab) werden die enthaltenen Pläne jetzt immer als neue Tabs hinzugefügt, statt vorhandene Tabs zu ersetzen. Importierte Sites erhalten frische IDs, um Kollisionen mit bereits geöffneten Plänen zu vermeiden. Betraf alle Browser (u.a. Firefox, Chrome).
+
 ## [6.3.2] - 2026-05-11
 
 ### Added

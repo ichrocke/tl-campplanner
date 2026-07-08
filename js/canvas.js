@@ -762,6 +762,44 @@ const Canvas = (() => {
                 }
             }
 
+            // Diagonals (dashed) with measurements
+            if (obj.showDiagonals && pts.length >= 4 && !_treasureMode) {
+                const n = pts.length;
+                const isDiag = (i, j) => j !== (i + 1) % n && i !== (j + 1) % n;
+                ctx.strokeStyle = darkColor;
+                ctx.lineWidth = 1;
+                ctx.setLineDash([5, 4]);
+                for (let i = 0; i < n; i++) {
+                    for (let j = i + 2; j < n; j++) {
+                        if (!isDiag(i, j)) continue;
+                        const pa = w2s(pts[i].x, pts[i].y);
+                        const pb = w2s(pts[j].x, pts[j].y);
+                        ctx.beginPath();
+                        ctx.moveTo(pa.x, pa.y);
+                        ctx.lineTo(pb.x, pb.y);
+                        ctx.stroke();
+                    }
+                }
+                ctx.setLineDash([]);
+                ctx.font = '10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                for (let i = 0; i < n; i++) {
+                    for (let j = i + 2; j < n; j++) {
+                        if (!isDiag(i, j)) continue;
+                        const a = pts[i], b = pts[j];
+                        const dist = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
+                        const dmp = w2s((a.x + b.x) / 2, (a.y + b.y) / 2);
+                        const label = dist.toFixed(1) + ' m';
+                        const tw = ctx.measureText(label).width;
+                        ctx.fillStyle = 'rgba(255,255,255,0.75)';
+                        ctx.fillRect(dmp.x - tw / 2 - 2, dmp.y - 7, tw + 4, 14);
+                        ctx.fillStyle = darkColor;
+                        ctx.fillText(label, dmp.x, dmp.y);
+                    }
+                }
+            }
+
             // Area + name display
             if (pts.length >= 3) {
                 const center = polygonCentroid(pts);

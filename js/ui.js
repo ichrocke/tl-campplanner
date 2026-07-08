@@ -1491,6 +1491,12 @@ const UI = (() => {
 
         // --- Ground-specific actions ---
         if (obj.type === 'ground') {
+            html += `<div class="prop-section">
+                <label style="flex-direction:row !important;align-items:center !important;gap:6px !important;cursor:pointer">
+                    <input type="checkbox" id="prop-ground-diagonals" ${obj.showDiagonals ? 'checked' : ''} style="width:auto">
+                    ${I18n.t('props.showDiagonals')}
+                </label>
+            </div>`;
             html += `<div class="prop-actions" style="flex-wrap:wrap">
                 <button class="btn-duplicate" id="prop-ground-print">${I18n.t('ground.printOnly')}</button>
                 <button class="btn-duplicate" id="prop-ground-export">${I18n.t('ground.export')}</button>
@@ -1529,6 +1535,14 @@ const UI = (() => {
         }
 
         // Ground-specific handlers
+        const gdEl = document.getElementById('prop-ground-diagonals');
+        if (gdEl && obj.type === 'ground') {
+            gdEl.addEventListener('change', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                State.updateObject(obj.id, { showDiagonals: gdEl.checked });
+                Canvas.render();
+            });
+        }
         const gpBtn = document.getElementById('prop-ground-print');
         if (gpBtn && obj.type === 'ground') {
             gpBtn.addEventListener('click', () => {
@@ -1977,6 +1991,18 @@ const UI = (() => {
             <label>${I18n.t('props.bulkColor')} <span style="display:inline-flex;align-items:center;gap:4px"><input type="color" id="prop-bulk-color" value="#4a90d9"><button type="button" id="prop-bulk-color-pick" class="eyedropper-btn" title="${I18n.t('props.color.eyedropper')}">&#127777;&#65039;</button></span></label>
         </div>`;
 
+        // Ground diagonals (when any ground is selected)
+        const selGrounds = selObjs.filter(o => o.type === 'ground');
+        if (selGrounds.length > 0) {
+            const allDiag = selGrounds.every(o => o.showDiagonals);
+            html += `<div class="prop-section">
+                <label style="flex-direction:row !important;align-items:center !important;gap:6px !important;cursor:pointer">
+                    <input type="checkbox" id="prop-multi-diagonals" ${allDiag ? 'checked' : ''} style="width:auto">
+                    ${I18n.t('props.showDiagonals')}
+                </label>
+            </div>`;
+        }
+
         // Align buttons
         html += `<div class="prop-section">
             <div class="prop-section-title">${I18n.t('ctx.align')}</div>
@@ -2001,6 +2027,15 @@ const UI = (() => {
             </div>`;
 
         content.innerHTML = html;
+
+        // Ground diagonals handler (applies to all selected grounds)
+        const mDiag = document.getElementById('prop-multi-diagonals');
+        if (mDiag) {
+            mDiag.addEventListener('change', () => {
+                selGrounds.forEach(o => State.updateObject(o.id, { showDiagonals: mDiag.checked }));
+                Canvas.render();
+            });
+        }
 
         // Group name handler
         const gnInput = document.getElementById('prop-group-name');

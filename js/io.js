@@ -30,7 +30,8 @@ const IO = (() => {
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
-                    State.importJSON(e.target.result);
+                    // Import fügt immer neue Tabs hinzu, ohne vorhandene zu überschreiben
+                    State.importJSON(e.target.result, false, true);
                 } catch (err) {
                     alert(I18n.t('msg.importError') + err.message);
                 }
@@ -1278,8 +1279,8 @@ ${els}</svg>`;
                         State.sites.push(site);
                         State.activeSiteIndex = State.sites.length - 1;
                     } else if (data.sites && Array.isArray(data.sites)) {
-                        // Full export file - import all tabs
-                        State.importJSON(e.target.result);
+                        // Full export file - alle Tabs als neue Tabs hinzufügen
+                        State.importJSON(e.target.result, false, true);
                     } else {
                         throw new Error('Unknown format');
                     }

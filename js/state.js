@@ -63,6 +63,77 @@ const State = (() => {
         return { minX, maxX, minY, maxY, width: maxX - minX, height: maxY - minY };
     }
 
+    // Migrate a single site loaded from JSON to the current schema (in place).
+    function migrateSite(s) {
+        if (!s.templates) s.templates = defaultTemplates();
+        // Migrate: old single bgImage → bgimage object
+        if (s.bgImage && s.bgImage.dataUrl) {
+            s.objects.unshift({
+                id: generateId(), type: 'bgimage', name: 'Hintergrundbild',
+                x: s.bgImage.x || 0, y: s.bgImage.y || 0,
+                width: s.bgImage.width || 50, height: (s.bgImage.width || 50) * 0.7,
+                rotation: 0, guyRopeDistance: 0, color: '#888', shape: 'rect',
+                description: '', labelSize: 0, lineWidth: 0, ropeWidth: 0,
+                guyRopeSides: { top: true, right: true, bottom: true, left: true },
+                dataUrl: s.bgImage.dataUrl, opacity: s.bgImage.opacity || 0.3,
+            });
+            delete s.bgImage;
+        }
+        // Migrate: old ground/grounds → ground objects
+        if (s.ground && !s.grounds) {
+            s.grounds = s.ground.length >= 3 ? [s.ground] : [];
+            delete s.ground;
+        }
+        if (s.grounds && s.grounds.length > 0) {
+            s.grounds.forEach((pts, i) => {
+                if (pts.length < 3) return;
+                let cx = 0, cy = 0;
+                pts.forEach(p => { cx += p.x; cy += p.y; });
+                cx /= pts.length; cy /= pts.length;
+                s.objects.unshift({
+                    id: generateId(), type: 'ground',
+                    name: I18n.t('tool.ground') + ' ' + (i + 1),
+                    x: cx, y: cy, width: 0, height: 0, rotation: 0,
+                    guyRopeDistance: 0, color: '#22c55e', shape: 'rect',
+                    description: '', labelSize: 0, lineWidth: 0, ropeWidth: 0,
+                    guyRopeSides: { top: true, right: true, bottom: true, left: true },
+                    groupId: '', points: pts,
+                });
+            });
+            delete s.grounds;
+        }
+        // Migrate: ensure layers exist
+        if (!s.layers || !s.layers.length) {
+            const lid = generateId();
+            s.layers = [{ id: lid, name: 'Default', visible: true, locked: false }];
+            s.activeLayerId = lid;
+        }
+        if (!s.activeLayerId) s.activeLayerId = s.layers[0].id;
+        // Migrate: ensure guyRopeSides exists on all objects
+        s.objects.forEach(o => {
+            if (!o.guyRopeSides) o.guyRopeSides = { top: true, right: true, bottom: true, left: true };
+            if (!o.guyRopeSideDistances) o.guyRopeSideDistances = {};
+            if (!o.guyRopePegs) o.guyRopePegs = {};
+            if (o.showPegs === undefined) o.showPegs = true;
+            if (!o.layerId) o.layerId = s.layers[0].id;
+        });
+        return s;
+    }
+
+    // Give a site (and its objects/layers) fresh IDs so it can be appended
+    // next to existing sites without ID collisions.
+    function reassignSiteIds(s) {
+        s.id = generateId();
+        (s.objects || []).forEach(o => { o.id = generateId(); });
+        (s.layers || []).forEach(l => {
+            const oldId = l.id;
+            const newId = generateId();
+            l.id = newId;
+            (s.objects || []).forEach(o => { if (o.layerId === oldId) o.layerId = newId; });
+            if (s.activeLayerId === oldId) s.activeLayerId = newId;
+        });
+    }
+
     function createSite(name) {
         const site = {
             id: generateId(),
@@ -353,9 +424,23 @@ const State = (() => {
         // Color palette storage (set by UI)
         _colorPalette: null,
 
-        importJSON(json, skipSync) {
+        importJSON(json, skipSync, append) {
             const data = JSON.parse(json);
             if (!data.sites || !Array.isArray(data.sites)) throw new Error('Invalid format');
+
+            // Append-Modus: vorhandene Tabs bleiben erhalten, importierte Sites
+            // werden als neue Tabs hinzugefügt (mit frischen IDs gegen Kollisionen).
+            if (append && _sites.length > 0) {
+                const firstNewIndex = _sites.length;
+                data.sites.forEach(s => {
+                    migrateSite(s);
+                    reassignSiteIds(s);
+                    _sites.push(s);
+                });
+                _activeSiteIndex = firstNewIndex;
+                notify(false, skipSync);
+                return;
+            }
 
             // Collab: lokale View-Positionen und aktiven Site-Index bewahren
             let savedViews = null;
@@ -369,63 +454,12 @@ const State = (() => {
             _sites = data.sites;
             let autoOff = 0;
             _sites.forEach(s => {
-                if (!s.templates) s.templates = defaultTemplates();
                 if (s.offsetX === undefined) {
                     s.offsetX = autoOff;
                     const b = getSiteContentBounds(s);
                     autoOff = b ? b.maxX + 10 : autoOff + 30;
                 }
-                // Migrate: old single bgImage → bgimage object
-                if (s.bgImage && s.bgImage.dataUrl) {
-                    s.objects.unshift({
-                        id: generateId(), type: 'bgimage', name: 'Hintergrundbild',
-                        x: s.bgImage.x || 0, y: s.bgImage.y || 0,
-                        width: s.bgImage.width || 50, height: (s.bgImage.width || 50) * 0.7,
-                        rotation: 0, guyRopeDistance: 0, color: '#888', shape: 'rect',
-                        description: '', labelSize: 0, lineWidth: 0, ropeWidth: 0,
-                        guyRopeSides: { top: true, right: true, bottom: true, left: true },
-                        dataUrl: s.bgImage.dataUrl, opacity: s.bgImage.opacity || 0.3,
-                    });
-                    delete s.bgImage;
-                }
-                // Migrate: old ground/grounds → ground objects
-                if (s.ground && !s.grounds) {
-                    s.grounds = s.ground.length >= 3 ? [s.ground] : [];
-                    delete s.ground;
-                }
-                if (s.grounds && s.grounds.length > 0) {
-                    s.grounds.forEach((pts, i) => {
-                        if (pts.length < 3) return;
-                        let cx = 0, cy = 0;
-                        pts.forEach(p => { cx += p.x; cy += p.y; });
-                        cx /= pts.length; cy /= pts.length;
-                        s.objects.unshift({
-                            id: generateId(), type: 'ground',
-                            name: I18n.t('tool.ground') + ' ' + (i + 1),
-                            x: cx, y: cy, width: 0, height: 0, rotation: 0,
-                            guyRopeDistance: 0, color: '#22c55e', shape: 'rect',
-                            description: '', labelSize: 0, lineWidth: 0, ropeWidth: 0,
-                            guyRopeSides: { top: true, right: true, bottom: true, left: true },
-                            groupId: '', points: pts,
-                        });
-                    });
-                    delete s.grounds;
-                }
-                // Migrate: ensure layers exist
-                if (!s.layers || !s.layers.length) {
-                    const lid = generateId();
-                    s.layers = [{ id: lid, name: 'Default', visible: true, locked: false }];
-                    s.activeLayerId = lid;
-                }
-                if (!s.activeLayerId) s.activeLayerId = s.layers[0].id;
-                // Migrate: ensure guyRopeSides exists on all objects
-                s.objects.forEach(o => {
-                    if (!o.guyRopeSides) o.guyRopeSides = { top: true, right: true, bottom: true, left: true };
-                    if (!o.guyRopeSideDistances) o.guyRopeSideDistances = {};
-                    if (!o.guyRopePegs) o.guyRopePegs = {};
-                    if (o.showPegs === undefined) o.showPegs = true;
-                    if (!o.layerId) o.layerId = s.layers[0].id;
-                });
+                migrateSite(s);
             });
             _minDistance = data.minDistance || 2;
             if (data.displaySettings) Object.assign(_displaySettings, data.displaySettings);

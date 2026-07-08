@@ -304,6 +304,7 @@
   "ground.export": "Grundfläche exportieren",
   "ground.import": "Grundfläche importieren",
   "ground.printOnly": "Nur diese Grundfläche drucken",
+  "props.showDiagonals": "Diagonalen mit Massen anzeigen",
   "props.locked": "Gesperrt",
   "props.lockObj": "Position sperren",
   "shortcut.gridSize": "Rastergröße +/-",

@@ -303,6 +303,7 @@
   "ground.export": "Exporter la zone au sol",
   "ground.import": "Importer la zone au sol",
   "ground.printOnly": "Imprimer uniquement cette zone au sol",
+  "props.showDiagonals": "Afficher les diagonales avec mesures",
   "props.locked": "Verrouille",
   "props.lockObj": "Verrouiller la position",
   "shortcut.gridSize": "Taille de grille +/-",
