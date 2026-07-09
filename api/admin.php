@@ -48,7 +48,8 @@ if ($action === 'create') {
     $name = trim($_GET['name'] ?? '');
     if (!$name) $name = 'Raum ' . date('d.m.Y H:i');
     $totalMin = calcTotalMinutes($_GET['days'] ?? 0, $_GET['hours'] ?? 0, $_GET['minutes'] ?? 0);
-    $id = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz0123456789'), 0, 8);
+    // S2: cryptographically-strong 10-char room ID (existing IDs stay valid)
+    $id = ''; for ($i = 0; $i < 10; $i++) $id .= 'abcdefghijklmnopqrstuvwxyz0123456789'[random_int(0, 35)];
     $emptyState = json_encode([
         'version' => 1,
         'sites' => [],
