@@ -109,20 +109,16 @@ S7  MITTEL  Kein Rate-Limiting / unbegrenzte Raum- & Nachrichten-Erstellung
     room-messages.php ohne Limit. FIX: Rate-Limit pro IP, Cap für aktive
     Räume und Nachrichten/Minute.
 
-S8  MITTEL  SSE-Last auf Shared Hosting (room-sse.php:31-91)
-    Jeder Client: 1 SSE-Stream (bis 90s, blockiert PHP-Worker) + Poll 1s +
-    Cursor-POST 300ms. Wenige Nutzer x lange Streams -> Worker-Erschöpfung
-    (DoS für ganze Domain). FIX: SSE-Dauer reduzieren / pro-IP-Limit /
-    ggf. reines Long-Poll; Cursor-Intervall erhöhen.
+S8  MITTEL (TEILWEISE 2026-07-09)  SSE-Last auf Shared Hosting
+    Client-Cursor-Intervall auf 500ms erhöht. REST (Server): SSE_MAX_DURATION /
+    SSE_POLL_INTERVAL sind Werte in config.php (auf dem Server) – dort senkbar
+    (in config.example.php dokumentiert). Pro-IP-SSE-Limit weiterhin offen.
 
-S10 NIEDRIG  setup.php im Live-Betrieb
-    Key-geschützt und nicht destruktiv (nur CREATE/ALTER IF NOT EXISTS).
-    Restrisiko nur bei ADMIN_KEY-Leak. FIX (optional): nach Deploy entfernen
-    oder per .htaccess sperren.
+(S10 ERLEDIGT 2026-07-09: setup.php per define('SETUP_ENABLED', false) in
+ config.php abschaltbar.)
 
-S12 NIEDRIG  Raum-Lebenszyklus / DB-Wachstum (db.php:27-38)
-    Cleanup nur opportunistisch bei room-state.php-Aufruf; Räume ohne TTL
-    (Admin, expires_at NULL) werden NIE aufgeräumt. FIX: echter Cron-Job.
+(S12 TEILWEISE 2026-07-09: cleanupExpiredRooms() läuft jetzt auch bei
+ room-create. Echter Cron-Job für nie gelesene/unbefristete Räume weiter offen.)
 
 
 ================================================================================
