@@ -3,72 +3,72 @@
 ## [6.5.1] - 2026-07-09
 
 ### Fixed
-- **Symbole, Post-its und Bilder respektieren jetzt Ebenen**: Diese Objekttypen ignorierten bisher die Ebenen-Sichtbarkeit und -Deckkraft – beim Ausblenden einer Ebene blieben Symbole sichtbar (waren aber nicht mehr anklickbar). Jetzt werden sie wie alle anderen Objekte ausgeblendet, wenn ihre Ebene unsichtbar ist, und übernehmen auch die Ebenen-Deckkraft.
+- **Symbols, post-its and images now respect layers**: These object types previously ignored layer visibility and opacity — hiding a layer left symbols visible (but no longer clickable). They are now hidden like every other object when their layer is invisible, and also inherit the layer opacity.
 
 ## [6.5.0] - 2026-07-09
 
 ### Added
-- **Mehrfachauswahl in andere Ebene verschieben**: Sind mehrere Objekte gleichzeitig ausgewählt, gibt es im Eigenschaften-Panel jetzt eine Auswahl "In Ebene verschieben", mit der alle ausgewählten Objekte gemeinsam auf dieselbe Ebene gelegt werden. Erscheint nur, wenn der Zeltplatz mehr als eine Ebene hat. Liegen die ausgewählten Objekte auf unterschiedlichen Ebenen, zeigt die Auswahl "—", bis eine Ziel-Ebene gewählt wird.
+- **Move multi-selection to another layer**: When several objects are selected, the properties panel now offers a "Move to layer" dropdown that moves all selected objects onto the same layer at once. Only shown when the site has more than one layer. If the selected objects are on different layers, the dropdown shows "—" until a target layer is chosen.
 
 ## [6.4.0] - 2026-07-08
 
 ### Added
-- **Grundfläche: Diagonalen anzeigen**: In den Eigenschaften einer Grundfläche gibt es einen neuen Haken "Diagonalen mit Massen anzeigen". Ist er aktiv, werden alle Diagonalen der Fläche gestrichelt mit Längenmass eingeblendet (praktisch zum Prüfen rechter Winkel). Der Haken lässt sich auch bei Mehrfachauswahl mehrerer Grundflächen gemeinsam setzen.
+- **Ground area: show diagonals**: A ground area's properties now include a "Show diagonals with measurements" checkbox. When enabled, all diagonals of the area are drawn dashed with their length (handy for checking right angles). The checkbox can also be set for several selected ground areas at once.
 
 ### Fixed
-- **Import überschreibt keine Tabs mehr**: Beim Importieren einer JSON-Datei (kompletter Export oder Einzel-Tab) werden die enthaltenen Pläne jetzt immer als neue Tabs hinzugefügt, statt vorhandene Tabs zu ersetzen. Importierte Sites erhalten frische IDs, um Kollisionen mit bereits geöffneten Plänen zu vermeiden. Betraf alle Browser (u.a. Firefox, Chrome).
+- **Import no longer overwrites tabs**: When importing a JSON file (full export or single tab), the contained plans are now always added as new tabs instead of replacing existing ones. Imported sites get fresh IDs to avoid collisions with already open plans. Affected all browsers (incl. Firefox, Chrome).
 
 ## [6.3.2] - 2026-05-11
 
 ### Added
-- **Eigenes Objekt: Sachsenzelt als Form**: Im "Eigenes Objekt erstellen"-Dialog gibt es jetzt die Form `Sachsenzelt` (Stadium-Form). Beim Erstellen wird automatisch der Vorbau mit Länge 2 m gesetzt – analog zur Standard-Sachsenzelt-Vorlage. Vorbau kann anschließend in den Eigenschaften ein- oder ausgeklappt werden.
+- **Custom object: Sachsenzelt as a shape**: The "Create custom object" dialog now offers the `Sachsenzelt` shape (stadium shape). On creation the vestibule is automatically set to a length of 2 m — matching the standard Sachsenzelt template. The vestibule can then be expanded or collapsed in the properties.
 
 ### Fixed
-- **Beispielplatz: Sachsenzelt-Vorlage**: In der Objekt-Palette des Beispielplatzes war das "Sachsenzelt" fälschlich als Dekagon (10-Eck) angelegt. Korrigiert auf die korrekte Stadium-Form mit Vorbau (8×4 m, Vorbau 2 m).
+- **Example site: Sachsenzelt template**: In the example site's object palette the "Sachsenzelt" was incorrectly defined as a decagon (10-gon). Corrected to the proper stadium shape with vestibule (8×4 m, vestibule 2 m).
 
 ## [6.3.1] - 2026-05-10
 
 ### Changed
-- **Tutorial**: Räume-Schritt wieder entfernt – die Grundfläche im Schritt davor reicht aus.
-- **Tutorial**: Letzter Schritt bietet jetzt direkt einen "Beispielplatz laden"-Button. Klick öffnet den vorgefertigten Beispielplatz als neuen Tab und beendet das Tutorial.
+- **Tutorial**: Removed the rooms step again — the ground area in the previous step is enough.
+- **Tutorial**: The last step now offers a "Load example site" button directly. Clicking it opens the prebuilt example site as a new tab and ends the tutorial.
 
 ## [6.3.0] - 2026-05-10
 
 ### Added
-- **Beispielplatz**: Im Export-/Print-Dialog ein Button "Beispielplatz laden", der einen vorgefertigten kleinen Zeltplatz als neuen Tab öffnet. Praktisch zum Ausprobieren des Tools ohne leeres Canvas. Enthält ein Sachsenzelt mit ausgeklapptem Vorbau, Sippenzelte, Yurte, Theke, Feuerstelle, Materiallager etc.
-- **Tutorial: Räume-Schritt**: Neuer interaktiver Schritt direkt nach der Grundfläche, der das Gebiet-Werkzeug erklärt und den Nutzer eine Fläche zeichnen lässt.
-- **Tutorial: Farben-Schritt**: Eigener Schritt, der das neue Farben-Flyout in der Toolleiste vorstellt.
-- **Tutorial: Support-Schritt**: Vor dem Abschluss steht jetzt ein eigener Schritt, der den "Kaffee spendieren"-Link in der Top-Leiste hervorhebt.
+- **Example site**: A "Load example site" button in the export/print dialog opens a prebuilt small camp site as a new tab. Handy for trying out the tool without an empty canvas. Contains a Sachsenzelt with expanded vestibule, clan tents, a yurt, a bar, a fire pit, storage, etc.
+- **Tutorial: rooms step**: New interactive step right after the ground area that explains the area tool and lets the user draw an area.
+- **Tutorial: colors step**: Dedicated step introducing the new colors flyout in the toolbar.
+- **Tutorial: support step**: Before the end there is now a dedicated step highlighting the "Buy a coffee" link in the top bar.
 
 ### Changed
-- **Tutorial: Eigenschaften erzwingt jetzt eine Änderung**: Der Properties-Schritt geht erst weiter, wenn am ausgewählten Objekt tatsächlich etwas geändert wurde (Name, Farbe, Größe, Rotation oder Beschreibung).
-- **Tutorial: Lupen-Highlight korrigiert**: Der Schritt "Platzierte Objekte" beleuchtet jetzt die ganze Sidebar-Sektion inklusive Sortier-Dropdown und Such-Lupe – nicht nur die Liste darunter.
-- **Tutorial: Speichern-Text verfeinert** und mehrere Hinweise sprachlich nachgezogen.
+- **Tutorial: properties now requires a change**: The properties step only advances once something has actually been changed on the selected object (name, color, size, rotation or description).
+- **Tutorial: magnifier highlight fixed**: The "Placed objects" step now highlights the whole sidebar section including the sort dropdown and search magnifier — not just the list below it.
+- **Tutorial: save text refined** and several hints polished linguistically.
 
 ## [6.2.0] - 2026-05-10
 
 ### Added
-- **Toolleiste mit Text-Labels und Einklapp-Toggle**: Die schwebende Toolleiste links zeigt standardmäßig Icon und Beschriftung pro Werkzeug. Über den Pfeil-Button ganz oben lässt sie sich schmal einklappen (nur Icons) und wieder ausklappen. Der Zustand wird in localStorage gespeichert und überlebt Reloads.
-- **Farb-Eintrag in der Toolleiste**: Statt einer separaten schwebenden Farb-Palette gibt es jetzt einen `Farben`-Eintrag direkt in der Toolleiste. Klick öffnet ein horizontales Flyout rechts neben der Leiste mit allen Swatches und dem Plus-Button. Ein farbiger Indikator am Eintrag zeigt die aktive Farbe.
+- **Toolbar with text labels and collapse toggle**: The floating toolbar on the left shows an icon and label per tool by default. The arrow button at the very top collapses it to a narrow icon-only bar and expands it again. The state is stored in localStorage and survives reloads.
+- **Colors entry in the toolbar**: Instead of a separate floating color palette there is now a `Colors` entry directly in the toolbar. Clicking it opens a horizontal flyout to the right of the bar with all swatches and the plus button. A colored indicator on the entry shows the active color.
 
 ## [6.1.2] - 2026-05-10
 
 ### Fixed
-- **Sachsenzelt-Vorbau**: Wurde beim Platzieren aus der Vorlage nicht angezeigt, weil `vorbauExtended` und `vorbauLength` in `State.addObject` nicht aus dem Template übernommen wurden. Jetzt werden beide Felder beim Erzeugen mit-kopiert.
+- **Sachsenzelt vestibule**: Was not shown when placed from the template because `vorbauExtended` and `vorbauLength` were not copied from the template in `State.addObject`. Both fields are now copied on creation.
 
 ### Changed
-- **Sachsenzelt-Vorlage**: Standardabspannung jetzt 1 m (vorher 0).
+- **Sachsenzelt template**: Default guy rope distance is now 1 m (previously 0).
 
 ## [6.1.1] - 2026-05-10
 
 ### Changed
-- **Sachsenzelt-Geometrie überarbeitet**: Form ist jetzt ein horizontaler Rechteck-Körper mit zwei echten Halbkreisen an den kurzen Seiten (links und rechts). Der Vorbau ist ein separater Anbau, der nach unten über die volle Körperbreite herauskommt. Im Properties-Panel kann der Vorbau ein-/ausgeklappt und seine Länge eingestellt werden (`Vorbau-Länge`). Die First-Linie verläuft längs durch den Körper, Sturmleinen-Heringe sitzen an den Spitzen der Halbkreise links und rechts. Vorlage: 8×4 m (Körper 4×4 + Caps 2×4) mit Vorbau 2 m.
+- **Sachsenzelt geometry reworked**: The shape is now a horizontal rectangular body with two real semicircles on the short sides (left and right). The vestibule is a separate extension protruding downward across the full body width. In the properties panel the vestibule can be expanded/collapsed and its length set (`Vestibule length`). The ridge line runs lengthwise through the body; storm-line pegs sit at the tips of the semicircles on the left and right. Template: 8×4 m (body 4×4 + caps 2×4) with a 2 m vestibule.
 
 ## [6.1.0] - 2026-05-10
 
 ### Added
-- **Sachsenzelt (Stadion-Form)**: Neue Zelt-Form als eigener Shape `stadium` – Rechteckiger Körper mit zwei halbkreisförmigen Caps an den Stirnseiten. Vorlage "Sachsenzelt".
-- **Vorbau-Toggle**: Pro Sachsenzelt-Objekt eine Checkbox "Vorbau ausgeklappt" im Properties-Panel.
+- **Sachsenzelt (stadium shape)**: New tent shape as its own `stadium` shape — a rectangular body with two semicircular caps on the end faces. Template "Sachsenzelt".
+- **Vestibule toggle**: A "Vestibule expanded" checkbox per Sachsenzelt object in the properties panel.
 
 ## [6.0.0] - 2026-05-02
 
