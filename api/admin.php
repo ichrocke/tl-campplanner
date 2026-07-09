@@ -251,6 +251,8 @@ header('Content-Type: text/html; charset=utf-8');
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- S3: never leak the ?key= admin token via Referer to third parties -->
+<meta name="referrer" content="no-referrer">
 <title>Collab Admin</title>
 <style>
 :root { --bg:#0f172a; --surface:#1e293b; --surface2:#334155; --border:#475569; --text:#f1f5f9; --text2:#94a3b8; --accent:#3b82f6; --green:#22c55e; --red:#ef4444; --radius:12px; }
