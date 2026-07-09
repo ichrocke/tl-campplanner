@@ -484,11 +484,18 @@ const Canvas = (() => {
 
     // Background image cache
     const _bgImageCache = {};
+    const _bgImageLoading = {};
+    const _bgImageFailed = {};
     function loadBgImage(dataUrl) {
         if (_bgImageCache[dataUrl]) return _bgImageCache[dataUrl];
+        // D11: don't spawn a new Image on every render while one is loading,
+        // and stop retrying a broken dataURL forever.
+        if (_bgImageLoading[dataUrl] || _bgImageFailed[dataUrl]) return null;
+        _bgImageLoading[dataUrl] = true;
         const img = new Image();
+        img.onload = () => { delete _bgImageLoading[dataUrl]; _bgImageCache[dataUrl] = img; render(); };
+        img.onerror = () => { delete _bgImageLoading[dataUrl]; _bgImageFailed[dataUrl] = true; };
         img.src = dataUrl;
-        img.onload = () => { _bgImageCache[dataUrl] = img; render(); };
         return null;
     }
 

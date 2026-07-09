@@ -2273,7 +2273,7 @@ const UI = (() => {
             buildPlacedList();
         });
         document.getElementById('prop-multi-del').addEventListener('click', () => {
-            [...Canvas.selectedIds].forEach(id => State.removeObject(id));
+            State.removeObjects([...Canvas.selectedIds]);
             Canvas.clearSelection();
             hideProperties();
             Canvas.render();

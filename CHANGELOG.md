@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.9.2] - 2026-07-09
+
+### Fixed
+- **Deleting many objects is one undo step**: Deleting a multi-selection now counts as a single undo action instead of one per object.
+- **Renaming a tab, grid changes and template add/remove are undoable on their own**: These no longer get silently reverted by a later, unrelated undo.
+- **Background images load more efficiently**: A background image is no longer re-decoded on every redraw while it loads, and a broken image is not retried endlessly.
+
 ## [6.9.1] - 2026-07-09
 
 ### Fixed

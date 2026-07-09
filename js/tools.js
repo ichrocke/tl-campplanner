@@ -961,12 +961,12 @@ const Tools = (() => {
                 break;
             case '+': case '=': {
                 const s = State.activeSite;
-                if (s) { s.gridSize = Math.min(10, Math.round((s.gridSize + 0.25) * 100) / 100); State.notifyChange(true); Canvas.render(); }
+                if (s) { s.gridSize = Math.min(10, Math.round((s.gridSize + 0.25) * 100) / 100); State.notifyChange(); Canvas.render(); }
                 break;
             }
             case '-': case '_': {
                 const s = State.activeSite;
-                if (s) { s.gridSize = Math.max(0.25, Math.round((s.gridSize - 0.25) * 100) / 100); State.notifyChange(true); Canvas.render(); }
+                if (s) { s.gridSize = Math.max(0.25, Math.round((s.gridSize - 0.25) * 100) / 100); State.notifyChange(); Canvas.render(); }
                 break;
             }
             case 't': case 'T': setTool('text'); break;
@@ -1036,12 +1036,13 @@ const Tools = (() => {
             case 'x': case 'X':
                 if ((e.key === 'x' || e.key === 'X') && (e.ctrlKey || e.metaKey)) break;
                 if (Canvas.selectionCount > 0) {
-                    // Skip locked objects (D7)
+                    // Skip locked objects (D7); batch as a single undo step (D10)
                     const del = [...Canvas.selectedIds].filter(id => {
                         const o = State.activeSite && State.activeSite.objects.find(x => x.id === id);
                         return o && !o.locked;
                     });
-                    del.forEach(id => { State.removeObject(id); Canvas.removeFromSelection(id); });
+                    del.forEach(id => Canvas.removeFromSelection(id));
+                    State.removeObjects(del);
                     if (Canvas.selectionCount === 0) UI.hideProperties();
                     Canvas.render();
                 }

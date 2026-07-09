@@ -236,7 +236,7 @@ const State = (() => {
 
         renameSite(index, name) {
             _sites[index].name = name;
-            notify(true);
+            notify(); // D13: own undo step so a later undo doesn't revert the rename
         },
 
         addObject(template, x, y) {
@@ -358,11 +358,23 @@ const State = (() => {
             notify();
         },
 
+        // Batch remove: one undo step + one notify for N objects (D10)
+        removeObjects(ids) {
+            const site = this.activeSite;
+            if (!site || !ids || !ids.length) return;
+            const idSet = new Set(ids);
+            site.objects = site.objects.filter(o => !idSet.has(o.id));
+            if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
+                ids.forEach(id => Collab.pushOp({ type: 'remove', siteIdx: _activeSiteIndex, objectId: id }));
+            }
+            notify();
+        },
+
         removeTemplate(index) {
             const site = this.activeSite;
             if (!site || !site.templates) return;
             site.templates.splice(index, 1);
-            notify(true);
+            notify(); // D13: own undo step
         },
 
         addTemplate(template) {
@@ -370,7 +382,7 @@ const State = (() => {
             if (!site) return;
             if (!site.templates) site.templates = [];
             site.templates.push(template);
-            notify(true);
+            notify(); // D13: own undo step
         },
 
         notifyChange(skipUndo) { notify(skipUndo); },
