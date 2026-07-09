@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.8.0] - 2026-07-09
+
+### Changed
+- **Layer order now controls stacking (z-order) and click priority**: Objects are drawn and hit-tested strictly by their layer position in the panel — objects on a higher layer render above and are selected before objects on a lower layer. This fixes the case where a ground area on a lower layer would appear above (and steal clicks from) an object on a layer above it; you can now click the object above. Within a single layer, ground areas stay at the back and the previous stacking order is preserved. Hovering, right-click, the paint tool and the colour eyedropper now also skip objects on hidden or locked layers, matching normal selection.
+
 ## [6.7.0] - 2026-07-09
 
 ### Changed

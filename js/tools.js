@@ -150,7 +150,7 @@ const Tools = (() => {
 
         // Eyedropper: pick color from clicked object, return it via callback
         if (_eyedropperMode) {
-            const hit = [...site.objects].reverse().find(o => Canvas.pointInObj(world.x, world.y, o));
+            const hit = Canvas.hitTest(world.x, world.y, { selectableOnly: true });
             if (hit && hit.color) {
                 if (_eyedropperCallback) _eyedropperCallback(hit.color);
             }
@@ -252,15 +252,8 @@ const Tools = (() => {
             }
         }
 
-        // 2. Check object hit (skip hidden/locked layers)
-        const hit = [...site.objects].reverse().find(o => {
-            if (!Canvas.pointInObj(world.x, world.y, o)) return false;
-            if (o.layerId && site.layers) {
-                const layer = site.layers.find(l => l.id === o.layerId);
-                if (layer && (!layer.visible || layer.locked)) return false;
-            }
-            return true;
-        });
+        // 2. Check object hit (topmost by layer z-order; skips hidden/locked layers)
+        const hit = Canvas.hitTest(world.x, world.y, { selectableOnly: true });
         if (hit) {
             if (ctrlKey) {
                 Canvas.toggleSelection(hit.id);
@@ -435,14 +428,7 @@ const Tools = (() => {
 
     // --- Paint tool ---
     function onPaintClick(world, site) {
-        const hit = [...site.objects].reverse().find(o => {
-            if (!Canvas.pointInObj(world.x, world.y, o)) return false;
-            if (o.layerId && site.layers) {
-                const layer = site.layers.find(l => l.id === o.layerId);
-                if (layer && !layer.visible) return false;
-            }
-            return true;
-        });
+        const hit = Canvas.hitTest(world.x, world.y, { selectableOnly: true });
         if (hit && hit.type !== 'guideline') {
             const color = UI.getActiveColor();
             if (color) {
@@ -742,7 +728,7 @@ const Tools = (() => {
                     }
                 }
 
-                const hit = [...site.objects].reverse().find(o => Canvas.pointInObj(world.x, world.y, o));
+                const hit = Canvas.hitTest(world.x, world.y, { selectableOnly: true });
                 const newHov = hit ? hit.id : null;
                 if (newHov !== Canvas.hoveredId) {
                     Canvas.hoveredId = newHov;
@@ -1152,7 +1138,7 @@ const Tools = (() => {
             }
         }
 
-        const hit = [...site.objects].reverse().find(o => Canvas.pointInObj(world.x, world.y, o));
+        const hit = Canvas.hitTest(world.x, world.y, { selectableOnly: true });
         if (hit) {
             Canvas.selectedId = hit.id;
             Canvas.render();
@@ -1170,7 +1156,7 @@ const Tools = (() => {
         const world = getMouseWorld(e);
         const site = State.activeSite;
         if (!site) return;
-        const hit = [...site.objects].reverse().find(o => Canvas.pointInObj(world.x, world.y, o));
+        const hit = Canvas.hitTest(world.x, world.y, { selectableOnly: true });
         if (hit) {
             Canvas.selectedId = hit.id;
             UI.showProperties(hit);

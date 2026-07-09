@@ -244,8 +244,7 @@ const Canvas = (() => {
         drawBgImages(activeSite);
         drawGrid(activeSite);
 
-        // Draw only the active site
-        drawGround(activeSite);
+        // Draw only the active site (grounds + objects, ordered by layer z-order)
         drawObjects(activeSite);
 
         // Permanent distances
@@ -726,9 +725,7 @@ const Canvas = (() => {
         }
     }
 
-    function drawGround(site) {
-        // Draw ground-type objects (rendered before other objects)
-        site.objects.forEach(obj => {
+    function drawOneGround(obj, site) {
             if (obj.type !== 'ground' || !obj.points || obj.points.length < 2) return;
             if (!isLayerVisible(site, obj.layerId)) return;
             const pts = obj.points;
@@ -845,7 +842,6 @@ const Canvas = (() => {
                     }
                 }
             }
-        });
     }
 
     let _groundCursorPos = null; // {x, y} world coords
@@ -893,13 +889,61 @@ const Canvas = (() => {
         });
     }
 
+    // Layer z-order: 0 = frontmost layer (top of panel), higher index = further back.
+    function layerZ(o) {
+        const site = State.activeSite;
+        if (!site || !site.layers || !o || !o.layerId) return 0;
+        const idx = site.layers.findIndex(l => l.id === o.layerId);
+        return idx < 0 ? site.layers.length : idx;
+    }
+
+    // Back-to-front draw order (negative => a drawn before b, i.e. further back)
+    function drawOrderCompare(a, b) {
+        const aSel = selectedIds.has(a.id) ? 1 : 0;
+        const bSel = selectedIds.has(b.id) ? 1 : 0;
+        if (aSel !== bSel) return aSel - bSel;      // selected drawn last (on top)
+        const az = layerZ(a), bz = layerZ(b);
+        if (az !== bz) return bz - az;              // higher index (further back) drawn first
+        const ag = a.type === 'ground' ? 0 : 1;
+        const bg = b.type === 'ground' ? 0 : 1;
+        return ag - bg;                             // grounds sit at the back within a layer
+    }
+
     function drawObjects(site) {
-        const sorted = [...site.objects].sort((a, b) => {
-            const aSel = selectedIds.has(a.id) ? 1 : 0;
-            const bSel = selectedIds.has(b.id) ? 1 : 0;
-            return aSel - bSel;
+        // Grounds + all non-background objects, drawn back-to-front by layer order.
+        // Array.sort is stable, so objects on the same layer keep their array order.
+        const sorted = site.objects.filter(o => o.type !== 'bgimage').sort(drawOrderCompare);
+        sorted.forEach(obj => {
+            if (obj.type === 'ground') drawOneGround(obj, site);
+            else drawObject(obj);
         });
-        sorted.forEach(obj => drawObject(obj));
+    }
+
+    // Topmost object at a world point, respecting the same layer z-order as rendering
+    // (ignoring the temporary selection-on-top rule). opts.selectableOnly skips
+    // objects on hidden/locked layers.
+    function hitTest(wx, wy, opts) {
+        const site = State.activeSite;
+        if (!site) return null;
+        opts = opts || {};
+        const cands = site.objects.filter(o => {
+            if (!pointInObj(wx, wy, o)) return false;
+            if (opts.selectableOnly && !isObjSelectable(o)) return false;
+            return true;
+        });
+        if (!cands.length) return null;
+        cands.sort((a, b) => {
+            // Background images always sit at the very back (drawn separately)
+            const abg = a.type === 'bgimage' ? 1 : 0;
+            const bbg = b.type === 'bgimage' ? 1 : 0;
+            if (abg !== bbg) return bbg - abg;          // bgimage first (back)
+            const az = layerZ(a), bz = layerZ(b);
+            if (az !== bz) return bz - az;              // back layers first
+            const ag = a.type === 'ground' ? 0 : 1;
+            const bg = b.type === 'ground' ? 0 : 1;
+            return ag - bg;                             // grounds at the back within a layer
+        });
+        return cands[cands.length - 1];                 // frontmost
     }
 
     // Draw a shape path on ctx (local coords, already translated/rotated)
@@ -2618,7 +2662,6 @@ const Canvas = (() => {
         }
         drawBgImages(site);
         if (!options || options.showGrid !== false) drawGrid(site);
-        drawGround(site);
         drawObjects(site);
 
         // Distances
@@ -2692,6 +2735,7 @@ const Canvas = (() => {
         set selectionRect(r) { selectionRect = r; },
         objInRect,
         isObjSelectable,
+        hitTest,
         get hoveredId() { return hoveredId; },
         set hoveredId(id) { hoveredId = id; },
         get dragDistances() { return dragDistances; },
