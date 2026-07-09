@@ -130,6 +130,12 @@ try {
 
     // State zurueckschreiben
     $newJson = json_encode($state, JSON_UNESCAPED_UNICODE);
+    // S5: enforce the same size cap as room-update.php so ops can't grow the
+    // stored state without bound (e.g. via a huge embedded image dataURL).
+    if (strlen($newJson) > MAX_STATE_SIZE) {
+        $pdo->rollBack();
+        jsonResponse(['error' => 'State too large'], 413);
+    }
     $updateStmt = $pdo->prepare('UPDATE rooms SET state_json = ?, version = version + 1, last_activity = NOW() WHERE id = ?');
     $updateStmt->execute([$newJson, $roomId]);
 
@@ -141,6 +147,8 @@ try {
     jsonResponse(['ok' => true, 'version' => $newVersion]);
 
 } catch (Exception $e) {
-    $pdo->rollBack();
-    jsonResponse(['error' => 'Server error: ' . $e->getMessage()], 500);
+    if ($pdo->inTransaction()) $pdo->rollBack();
+    // S9: don't leak DB/internal details to the client; log server-side instead.
+    error_log('room-ops error: ' . $e->getMessage());
+    jsonResponse(['error' => 'Server error'], 500);
 }

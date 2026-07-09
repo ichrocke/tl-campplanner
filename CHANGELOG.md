@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.10.1] - 2026-07-09
+
+### Security
+- **Collaboration backend hardening**: Room API responses now restrict CORS to the app's own domain instead of allowing any site; new room IDs are generated with a cryptographically strong random source and are longer (existing rooms keep working unchanged); the object-sync endpoint enforces the same maximum state size as the full-state endpoint; internal error details are no longer sent to the client; and web access to internal PHP config files is blocked on both modern and older Apache.
+
 ## [6.10.0] - 2026-07-09
 
 ### Security

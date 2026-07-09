@@ -13,12 +13,31 @@ function getDB() {
     return $pdo;
 }
 
+// S6: restrict CORS to our own domain instead of a wildcard. Same-origin
+// requests (the actual app) are unaffected; only cross-origin callers are
+// blocked. Override the list in config.php via ALLOWED_ORIGINS if needed.
+function corsAllowOrigin() {
+    $allowed = defined('ALLOWED_ORIGINS') ? ALLOWED_ORIGINS : [
+        'https://campplanner.tyra-lorena.de',
+        'http://campplanner.tyra-lorena.de',
+        'https://www.campplanner.tyra-lorena.de',
+        'http://www.campplanner.tyra-lorena.de',
+    ];
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+    return in_array($origin, $allowed, true) ? $origin : $allowed[0];
+}
+
+function sendCorsHeaders() {
+    header('Access-Control-Allow-Origin: ' . corsAllowOrigin());
+    header('Vary: Origin');
+    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+    header('Access-Control-Allow-Headers: Content-Type');
+}
+
 function jsonResponse($data, $code = 200) {
     http_response_code($code);
     header('Content-Type: application/json; charset=utf-8');
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type');
+    sendCorsHeaders();
     echo json_encode($data);
     exit;
 }
@@ -39,8 +58,6 @@ function cleanupExpiredRooms() {
 
 // Handle CORS preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    header('Access-Control-Allow-Origin: *');
-    header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-    header('Access-Control-Allow-Headers: Content-Type');
+    sendCorsHeaders();
     exit;
 }

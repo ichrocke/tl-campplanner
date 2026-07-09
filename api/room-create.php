@@ -12,8 +12,16 @@ if (!$input) jsonResponse(['error' => 'Invalid JSON'], 400);
 $name = trim($input['name'] ?? '');
 if (!$name) $name = 'Raum ' . date('d.m.Y H:i');
 
-// Raum-ID generieren
-$id = substr(str_shuffle('abcdefghijklmnopqrstuvwxyz0123456789'), 0, 8);
+// S2: cryptographically-strong room IDs. 10 chars from a 36-char alphabet
+// (~51 bits). Existing shorter IDs keep working (they still match the
+// ^[a-z0-9]{4,12}$ validation everywhere) – nothing is migrated.
+function genRoomId($len = 10) {
+    $a = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    $max = strlen($a) - 1;
+    $id = '';
+    for ($i = 0; $i < $len; $i++) $id .= $a[random_int(0, $max)];
+    return $id;
+}
 
 $emptyState = json_encode([
     'version' => 1,
@@ -26,8 +34,20 @@ $emptyState = json_encode([
 
 $pdo = getDB();
 
-// 8 Stunden Gueltigkeit
+// Insert with a few retries in case of an (astronomically unlikely) ID collision
 $stmt = $pdo->prepare('INSERT INTO rooms (id, name, state_json, expires_at) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 8 HOUR))');
-$stmt->execute([$id, $name, $emptyState]);
+$id = null;
+for ($attempt = 0; $attempt < 5; $attempt++) {
+    $candidate = genRoomId();
+    try {
+        $stmt->execute([$candidate, $name, $emptyState]);
+        $id = $candidate;
+        break;
+    } catch (PDOException $e) {
+        if ($e->getCode() === '23000' && $attempt < 4) continue; // duplicate key -> retry
+        error_log('room-create error: ' . $e->getMessage());
+        jsonResponse(['error' => 'Could not create room'], 500);
+    }
+}
 
 jsonResponse(['ok' => true, 'roomId' => $id, 'name' => $name]);

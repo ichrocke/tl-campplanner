@@ -1,10 +1,13 @@
-# Schutz: setup.php und admin.php nicht ohne key erreichbar
-# config.php und db.php komplett sperren
+# Block direct web access to config.php and db.php (pure PHP includes).
+# setup.php and admin.php are NOT protected here – they enforce ADMIN_KEY in PHP.
+# Works on Apache 2.4 (Require) and falls back to 2.2 syntax (Order/Deny).
 
-<Files "config.php">
-    Require all denied
-</Files>
-
-<Files "db.php">
-    Require all denied
-</Files>
+<FilesMatch "^(config|db)\.php$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
