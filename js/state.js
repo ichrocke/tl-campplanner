@@ -358,6 +358,17 @@ const State = (() => {
             notify();
         },
 
+        // Batch update: apply the same props to many objects in one undo step (D10)
+        updateObjects(ids, props) {
+            const site = this.activeSite;
+            if (!site || !ids || !ids.length) return;
+            ids.forEach(id => { const o = site.objects.find(x => x.id === id); if (o) Object.assign(o, props); });
+            if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
+                ids.forEach(id => Collab.pushOp({ type: 'update', siteIdx: _activeSiteIndex, objectId: id, props }));
+            }
+            notify();
+        },
+
         // Batch remove: one undo step + one notify for N objects (D10)
         removeObjects(ids) {
             const site = this.activeSite;

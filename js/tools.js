@@ -1099,14 +1099,14 @@ const Tools = (() => {
                     e.preventDefault();
                     // Group selected objects
                     const groupId = State.generateId();
-                    [...Canvas.selectedIds].forEach(id => State.updateObject(id, { groupId }));
+                    State.updateObjects([...Canvas.selectedIds], { groupId });
                     Canvas.render();
                     break;
                 }
                 if ((e.ctrlKey || e.metaKey) && e.shiftKey && Canvas.selectionCount >= 1) {
                     e.preventDefault();
                     // Ungroup
-                    [...Canvas.selectedIds].forEach(id => State.updateObject(id, { groupId: '' }));
+                    State.updateObjects([...Canvas.selectedIds], { groupId: '' });
                     Canvas.render();
                     break;
                 }
@@ -1115,7 +1115,7 @@ const Tools = (() => {
             case 'G':
                 if ((e.ctrlKey || e.metaKey) && e.shiftKey) {
                     e.preventDefault();
-                    [...Canvas.selectedIds].forEach(id => State.updateObject(id, { groupId: '' }));
+                    State.updateObjects([...Canvas.selectedIds], { groupId: '' });
                     Canvas.render();
                     break;
                 }

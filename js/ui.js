@@ -2241,13 +2241,13 @@ const UI = (() => {
 
         document.getElementById('prop-multi-group').addEventListener('click', () => {
             const gid = State.generateId();
-            [...Canvas.selectedIds].forEach(id => State.updateObject(id, { groupId: gid }));
+            State.updateObjects([...Canvas.selectedIds], { groupId: gid });
             showMultiProperties();
             Canvas.render();
             buildPlacedList();
         });
         document.getElementById('prop-multi-ungroup').addEventListener('click', () => {
-            [...Canvas.selectedIds].forEach(id => State.updateObject(id, { groupId: '' }));
+            State.updateObjects([...Canvas.selectedIds], { groupId: '' });
             Canvas.render();
             buildPlacedList();
         });
