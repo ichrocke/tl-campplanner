@@ -213,6 +213,7 @@
   "msg.nameFence": "Nome tubatura:",
   "msg.defaultFence": "Tubatura",
   "msg.autosaveFailed": "Salvataggio automatico non riuscito: memoria piena (forse immagini di sfondo troppo grandi). Esporta il tuo piano con il pulsante Esporta per non perderlo.",
+  "msg.multiTab": "Attenzione: questo piano è in modifica in un'altra scheda del browser. Per evitare perdite di dati, lavora in una sola scheda, altrimenti chiudendo una scheda potresti sovrascrivere le modifiche dell'altra.",
   "msg.autosaveCorrupt": "Impossibile caricare lo stato salvato automaticamente, forse danneggiato. È stata conservata una copia di backup con una chiave separata.",
   "msg.importError": "Errore durante l'importazione: ",
   "msg.popupBlocked": "Il blocco popup impedisce l'apertura della finestra di stampa.",

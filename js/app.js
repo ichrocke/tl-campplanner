@@ -142,6 +142,18 @@
         }
     });
 
+    // D3: warn when the same plan is being edited in another browser tab
+    // (the 'storage' event only fires in *other* tabs of the same origin), so
+    // the user is aware that closing tabs may overwrite each other's work.
+    let _multiTabWarned = false;
+    window.addEventListener('storage', (e) => {
+        if (e.key !== STORAGE_KEY || !e.newValue) return;
+        if (typeof Collab !== 'undefined' && Collab.isConnected()) return;
+        if (_multiTabWarned) return;
+        _multiTabWarned = true;
+        try { alert(I18n.t('msg.multiTab')); } catch (ex) {}
+    });
+
     // Legal modal (Impressum / Datenschutz)
     const legalOverlay = document.getElementById('modal-overlay');
     const legalModal = document.getElementById('modal-legal');

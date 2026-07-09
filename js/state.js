@@ -38,8 +38,30 @@ const State = (() => {
         _listeners.forEach(fn => fn(skipSync));
     }
 
+    // D5: keep big image dataURLs OUT of the (up to 50) undo snapshots. Each
+    // unique dataURL is stored once in a map and referenced by a short token, so
+    // a 4 MB background image no longer multiplies across the whole undo stack.
+    const _undoImgByUrl = new Map(); // dataUrl -> token
+    const _undoImgByTok = new Map(); // token -> dataUrl
+    let _undoImgSeq = 0;
+    function _undoImgReplacer(key, val) {
+        if (key === 'dataUrl' && typeof val === 'string' && val.length > 100) {
+            let tok = _undoImgByUrl.get(val);
+            if (!tok) { tok = '@img' + (++_undoImgSeq); _undoImgByUrl.set(val, tok); _undoImgByTok.set(tok, val); }
+            return tok;
+        }
+        return val;
+    }
+    function _undoImgReviver(key, val) {
+        if (key === 'dataUrl' && typeof val === 'string' && val.charCodeAt(0) === 64 /* @ */ && _undoImgByTok.has(val)) {
+            return _undoImgByTok.get(val);
+        }
+        return val;
+    }
+    function parseSnapshot(str) { return JSON.parse(str, _undoImgReviver); }
+
     function pushUndo() {
-        const snapshot = JSON.stringify({ sites: _sites, activeSiteIndex: _activeSiteIndex, minDistance: _minDistance });
+        const snapshot = JSON.stringify({ sites: _sites, activeSiteIndex: _activeSiteIndex, minDistance: _minDistance }, _undoImgReplacer);
         _undoStack = _undoStack.slice(0, _undoPointer + 1);
         _undoStack.push(snapshot);
         if (_undoStack.length > 50) _undoStack.shift();
@@ -401,7 +423,7 @@ const State = (() => {
         undo() {
             if (_undoPointer <= 0) return;
             _undoPointer--;
-            const data = JSON.parse(_undoStack[_undoPointer]);
+            const data = parseSnapshot(_undoStack[_undoPointer]);
             _sites = data.sites;
             _activeSiteIndex = data.activeSiteIndex;
             _minDistance = data.minDistance;
@@ -411,7 +433,7 @@ const State = (() => {
         redo() {
             if (_undoPointer >= _undoStack.length - 1) return;
             _undoPointer++;
-            const data = JSON.parse(_undoStack[_undoPointer]);
+            const data = parseSnapshot(_undoStack[_undoPointer]);
             _sites = data.sites;
             _activeSiteIndex = data.activeSiteIndex;
             _minDistance = data.minDistance;
