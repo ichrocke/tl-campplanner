@@ -70,7 +70,9 @@ while (true) {
         $userId = $_GET['uid'] ?? '';
         $userName = $_GET['uname'] ?? '';
         if ($userId) {
-            $stmt2 = $pdo->prepare('REPLACE INTO room_users (room_id, user_id, user_name, last_seen) VALUES (?, ?, ?, NOW())');
+            // C10: REPLACE would delete+reinsert and wipe cursor_x/y/color; use
+            // upsert so a heartbeat keeps the cursor position intact.
+            $stmt2 = $pdo->prepare('INSERT INTO room_users (room_id, user_id, user_name, last_seen) VALUES (?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE user_name = VALUES(user_name), last_seen = NOW()');
             $stmt2->execute([$roomId, $userId, $userName]);
         }
 

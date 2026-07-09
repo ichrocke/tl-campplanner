@@ -24,7 +24,9 @@ $pdo = getDB();
 
 // Eigenen Cursor updaten
 if ($userId) {
-    $stmt = $pdo->prepare('REPLACE INTO room_users (room_id, user_id, user_name, cursor_x, cursor_y, color, last_seen) VALUES (?, ?, ?, ?, ?, ?, NOW())');
+    // C10: upsert instead of REPLACE (delete+insert) so concurrent heartbeats
+    // and cursor updates don't wipe each other's columns.
+    $stmt = $pdo->prepare('INSERT INTO room_users (room_id, user_id, user_name, cursor_x, cursor_y, color, last_seen) VALUES (?, ?, ?, ?, ?, ?, NOW()) ON DUPLICATE KEY UPDATE user_name = VALUES(user_name), cursor_x = VALUES(cursor_x), cursor_y = VALUES(cursor_y), color = VALUES(color), last_seen = NOW()');
     $stmt->execute([$roomId, $userId, $userName, $cursorX, $cursorY, $color]);
 }
 

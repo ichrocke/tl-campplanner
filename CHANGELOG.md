@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.11.1] - 2026-07-09
+
+### Fixed
+- **Collaboration polish**: Remote cursors no longer jump to the corner and turn red every couple of seconds (presence updates no longer wipe cursor data). Joining a room no longer replays the whole chat history as a burst of notifications. The read-only room viewer now fits ground/area/fence plans correctly.
+
 ## [6.11.0] - 2026-07-09
 
 ### Fixed

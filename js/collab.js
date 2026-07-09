@@ -28,6 +28,7 @@ const Collab = (() => {
     let _wasLocked = false;
     let _expiresDeadline = null;
     let _lastMsgId = 0;
+    let _msgInitialized = false;
     let _onMessage = null;
 
     function init() {
@@ -126,6 +127,7 @@ const Collab = (() => {
         _opsInFlight = false;
         _opSinceLastPush = false;
         _lastMsgId = 0;
+        _msgInitialized = false;
         _locked = false;
         _wasLocked = false;
         if (_onUsersChange) _onUsersChange([]);
@@ -226,11 +228,12 @@ const Collab = (() => {
             const resp = await fetch(API_BASE + 'room-messages.php?room=' + encodeURIComponent(_roomId) + '&since=' + _lastMsgId);
             const data = await resp.json();
             if (data.messages && data.messages.length > 0) {
-                data.messages.forEach(m => {
-                    _lastMsgId = Math.max(_lastMsgId, intval(m.id));
-                    _onMessage(m);
-                });
+                data.messages.forEach(m => { _lastMsgId = Math.max(_lastMsgId, intval(m.id)); });
+                // C13: don't replay the whole history as a toast flood on join –
+                // only show messages that arrive after we've joined.
+                if (_msgInitialized) data.messages.forEach(m => _onMessage(m));
             }
+            _msgInitialized = true;
         } catch (e) { /* ignore */ }
     }
 
