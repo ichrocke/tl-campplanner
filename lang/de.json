@@ -212,6 +212,8 @@
   "msg.defaultArea": "Gebiet",
   "msg.nameFence": "Leitung benennen:",
   "msg.defaultFence": "Leitung",
+  "msg.autosaveFailed": "Auto-Speichern fehlgeschlagen – der Speicher ist voll (evtl. zu große Hintergrundbilder). Bitte exportiere deinen Plan über den Export-Button, um nichts zu verlieren.",
+  "msg.autosaveCorrupt": "Der automatisch gespeicherte Stand konnte nicht geladen werden und war möglicherweise beschädigt. Eine Sicherungskopie wurde unter einem separaten Schlüssel abgelegt.",
   "msg.importError": "Fehler beim Importieren: ",
   "msg.popupBlocked": "Popup-Blocker verhindert das Druckfenster.",
   "msg.noPrintContent": "Keine Inhalte zum Drucken.",

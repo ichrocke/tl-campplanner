@@ -212,6 +212,8 @@
   "msg.defaultArea": "Zona",
   "msg.nameFence": "Nombrar tuberia:",
   "msg.defaultFence": "Tuberia",
+  "msg.autosaveFailed": "Error al guardar automáticamente: el almacenamiento está lleno (quizá imágenes de fondo demasiado grandes). Exporta tu plano con el botón Exportar para no perderlo.",
+  "msg.autosaveCorrupt": "No se pudo cargar el estado guardado automáticamente y podría estar dañado. Se conservó una copia de seguridad con una clave separada.",
   "msg.importError": "Error al importar: ",
   "msg.popupBlocked": "El bloqueador de ventanas emergentes impide la ventana de impresión.",
   "msg.noPrintContent": "No hay contenido para imprimir.",

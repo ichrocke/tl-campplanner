@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.9.0] - 2026-07-09
+
+### Fixed
+- **Autosave no longer fails silently (data-loss protection)**: If a local autosave fails (e.g. browser storage is full because of large background images), you now get a clear warning to export your plan instead of the error being swallowed. Autosave also stores compactly to use less space.
+- **Corrupt autosave is preserved, not deleted**: If the saved state can't be loaded on startup (corrupt/incompatible), it is kept under a backup key and you are informed, instead of being silently discarded.
+- **Robust, atomic import**: Importing an incomplete or foreign JSON file no longer leaves the app in a broken state. Sites are fully validated and migrated (missing objects/view/layers/IDs and invalid numbers get safe defaults) before replacing the current plan; if a file is invalid the import is rejected and your current work stays intact.
+
 ## [6.8.1] - 2026-07-09
 
 ### Fixed

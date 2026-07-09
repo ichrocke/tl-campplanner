@@ -212,6 +212,8 @@
   "msg.defaultArea": "Zone",
   "msg.nameFence": "Nom du tuyau :",
   "msg.defaultFence": "Tuyau",
+  "msg.autosaveFailed": "Échec de la sauvegarde automatique : le stockage est plein (images de fond trop grandes ?). Exportez votre plan via le bouton Exporter pour ne rien perdre.",
+  "msg.autosaveCorrupt": "L'état enregistré automatiquement n'a pas pu être chargé et est peut-être corrompu. Une copie de sauvegarde a été conservée sous une clé distincte.",
   "msg.importError": "Erreur d'importation : ",
   "msg.popupBlocked": "Le bloqueur de popups empeche l'ouverture de la fenetre d'impression.",
   "msg.noPrintContent": "Aucun contenu a imprimer.",

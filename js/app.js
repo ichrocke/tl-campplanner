@@ -26,6 +26,13 @@
             }
         } catch (e) {
             console.warn('Could not restore autosave:', e);
+            // D2: do NOT silently discard a corrupt autosave – keep a backup copy
+            // so the user's data can potentially be recovered, and warn them.
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) localStorage.setItem(STORAGE_KEY + '_broken', saved);
+            } catch (ex) { /* ignore */ }
+            setTimeout(() => { try { alert(I18n.t('msg.autosaveCorrupt')); } catch (ex) {} }, 600);
         }
     }
     if (!restored) {
@@ -48,15 +55,27 @@
 
     // Auto-save to localStorage on state change (debounced, not in collab mode)
     let _saveTimer = null;
+    let _quotaWarned = false;
+    function saveNow() {
+        try {
+            localStorage.setItem(STORAGE_KEY, State.exportJSON(true)); // compact
+            return true;
+        } catch (e) {
+            // D1: a failed autosave (e.g. localStorage quota exceeded by a large
+            // background image) must NOT be swallowed – warn the user once.
+            console.warn('Autosave failed:', e);
+            if (!_quotaWarned) {
+                _quotaWarned = true;
+                try { alert(I18n.t('msg.autosaveFailed')); } catch (ex) {}
+            }
+            return false;
+        }
+    }
     function autoSave() {
         if (typeof Collab !== 'undefined' && Collab.isConnected()) return;
         if (localStorage.getItem('zeltplaner_autosave_enabled') === '0') return;
         clearTimeout(_saveTimer);
-        _saveTimer = setTimeout(() => {
-            try {
-                localStorage.setItem(STORAGE_KEY, State.exportJSON());
-            } catch (e) {}
-        }, 500);
+        _saveTimer = setTimeout(saveNow, 500);
     }
 
     // Language change handler
@@ -109,9 +128,10 @@
 
     // Save and remind before leaving
     window.addEventListener('beforeunload', (e) => {
-        try {
-            localStorage.setItem(STORAGE_KEY, State.exportJSON());
-        } catch (ex) { /* ignore */ }
+        if (!(typeof Collab !== 'undefined' && Collab.isConnected())
+            && localStorage.getItem('zeltplaner_autosave_enabled') !== '0') {
+            saveNow();
+        }
         const hasContent = State.sites.some(s => s.objects.length > 0);
         if (hasContent) {
             e.preventDefault();

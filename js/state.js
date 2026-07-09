@@ -64,7 +64,17 @@ const State = (() => {
     }
 
     // Migrate a single site loaded from JSON to the current schema (in place).
+    // Robust against incomplete/foreign JSON: fills required defaults so nothing
+    // downstream (render, hit-test, bounds) can throw or produce NaN.
     function migrateSite(s) {
+        if (!s || typeof s !== 'object') throw new Error('Invalid site');
+        if (!s.id) s.id = generateId();
+        if (!Array.isArray(s.objects)) s.objects = [];
+        if (!s.view || typeof s.view !== 'object') s.view = { panX: 0, panY: 0, zoom: 1 };
+        if (typeof s.view.zoom !== 'number' || !(s.view.zoom > 0)) s.view.zoom = 1;
+        if (typeof s.view.panX !== 'number') s.view.panX = 0;
+        if (typeof s.view.panY !== 'number') s.view.panY = 0;
+        if (typeof s.gridSize !== 'number' || !(s.gridSize > 0)) s.gridSize = 0.5;
         if (!s.templates) s.templates = defaultTemplates();
         // Migrate: old single bgImage → bgimage object
         if (s.bgImage && s.bgImage.dataUrl) {
@@ -111,11 +121,18 @@ const State = (() => {
         if (!s.activeLayerId) s.activeLayerId = s.layers[0].id;
         // Migrate: ensure guyRopeSides exists on all objects
         s.objects.forEach(o => {
+            if (!o.id) o.id = generateId();
             if (!o.guyRopeSides) o.guyRopeSides = { top: true, right: true, bottom: true, left: true };
             if (!o.guyRopeSideDistances) o.guyRopeSideDistances = {};
             if (!o.guyRopePegs) o.guyRopePegs = {};
             if (o.showPegs === undefined) o.showPegs = true;
             if (!o.layerId) o.layerId = s.layers[0].id;
+            // Defaults against NaN in hit-test / bounds / rendering
+            if (typeof o.rotation !== 'number' || isNaN(o.rotation)) o.rotation = 0;
+            if (typeof o.x !== 'number' || isNaN(o.x)) o.x = 0;
+            if (typeof o.y !== 'number' || isNaN(o.y)) o.y = 0;
+            if (typeof o.width !== 'number' || isNaN(o.width)) o.width = 0;
+            if (typeof o.height !== 'number' || isNaN(o.height)) o.height = 0;
         });
         return s;
     }
@@ -408,7 +425,7 @@ const State = (() => {
             return newIds;
         },
 
-        exportJSON() {
+        exportJSON(compact) {
             return JSON.stringify({
                 version: 1,
                 exportDate: new Date().toISOString(),
@@ -418,7 +435,7 @@ const State = (() => {
                 showDistances: this.showDistances,
                 minimapEnabled: this._minimapEnabled !== undefined ? this._minimapEnabled : true,
                 colorPalette: this._colorPalette || null,
-            }, null, 2);
+            }, null, compact ? 0 : 2);
         },
 
         // Color palette storage (set by UI)
@@ -430,13 +447,12 @@ const State = (() => {
 
             // Append-Modus: vorhandene Tabs bleiben erhalten, importierte Sites
             // werden als neue Tabs hinzugefügt (mit frischen IDs gegen Kollisionen).
+            // Atomar: erst alle Sites vollständig migrieren, dann anhängen –
+            // ein Fehler in einer Site hinterlässt keinen halbfertigen Import.
             if (append && _sites.length > 0) {
+                const prepared = data.sites.map(s => { migrateSite(s); reassignSiteIds(s); return s; });
                 const firstNewIndex = _sites.length;
-                data.sites.forEach(s => {
-                    migrateSite(s);
-                    reassignSiteIds(s);
-                    _sites.push(s);
-                });
+                prepared.forEach(s => _sites.push(s));
                 _activeSiteIndex = firstNewIndex;
                 notify(false, skipSync);
                 return;
@@ -451,6 +467,9 @@ const State = (() => {
                 savedSiteIndex = _activeSiteIndex;
             }
 
+            // Atomar: erst alle Sites migrieren/validieren, dann State ersetzen.
+            // So bleibt bei einer kaputten Datei der bisherige State erhalten.
+            data.sites.forEach(s => migrateSite(s));
             _sites = data.sites;
             let autoOff = 0;
             _sites.forEach(s => {
@@ -459,9 +478,8 @@ const State = (() => {
                     const b = getSiteContentBounds(s);
                     autoOff = b ? b.maxX + 10 : autoOff + 30;
                 }
-                migrateSite(s);
             });
-            _minDistance = data.minDistance || 2;
+            _minDistance = (data.minDistance != null) ? data.minDistance : 2;
             if (data.displaySettings) Object.assign(_displaySettings, data.displaySettings);
             if (data.showDistances !== undefined) this.showDistances = data.showDistances;
             if (data.minimapEnabled !== undefined) { this._minimapEnabled = data.minimapEnabled; if (typeof Canvas !== 'undefined') Canvas.minimapEnabled = data.minimapEnabled; }

@@ -212,6 +212,8 @@
   "msg.defaultArea": "Area",
   "msg.nameFence": "Name pipe:",
   "msg.defaultFence": "Pipe",
+  "msg.autosaveFailed": "Autosave failed – storage is full (possibly oversized background images). Please export your plan using the Export button so you don't lose it.",
+  "msg.autosaveCorrupt": "The automatically saved state could not be loaded and may be corrupt. A backup copy was kept under a separate key.",
   "msg.importError": "Import error: ",
   "msg.popupBlocked": "Popup blocker prevents the print window.",
   "msg.noPrintContent": "No content to print.",
