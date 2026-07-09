@@ -312,7 +312,8 @@ const IO = (() => {
             const win = window.open('', '_blank');
             if (!win) { alert(I18n.t('msg.popupBlocked')); return; }
             let imgsHtml = allPages.map(p => '<img src="' + p.toDataURL('image/png') + '">').join('\n');
-            win.document.write(`<!DOCTYPE html><html><head><title>${title || site.name}</title>
+            const safeTitle = String(title || site.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            win.document.write(`<!DOCTYPE html><html><head><title>${safeTitle}</title>
                 <style>
                     @page { size: ${orientation}; margin: 0; }
                     body { margin: 0; }

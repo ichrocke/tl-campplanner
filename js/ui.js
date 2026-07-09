@@ -64,10 +64,10 @@ const UI = (() => {
 
             const lColor = layer.color || '#888';
             el.innerHTML = `
-                <span class="layer-color-dot" style="background:${lColor}"></span>
+                <span class="layer-color-dot" style="background:${safeColor(lColor)}"></span>
                 <button class="layer-vis-btn ${layer.visible ? '' : 'off'}" title="Visibility">${layer.visible ? '\u{1F441}' : '\u{1F441}'}</button>
                 <button class="layer-lock-btn ${layer.locked ? 'on' : ''}" title="Lock">${layer.locked ? '\u{1F6AB}' : '\u{1F513}'}</button>
-                <span class="layer-name" title="${layer.name}">${layer.name}</span>
+                <span class="layer-name" title="${escAttr(layer.name)}">${escapeHtml(layer.name)}</span>
                 <span style="font-size:9px;color:var(--text-secondary)">${objCount}</span>
                 <div class="layer-order-btns">
                     <button class="layer-order-btn" data-dir="up" title="Up">&#9650;</button>
@@ -636,7 +636,7 @@ const UI = (() => {
             folderEl.innerHTML = `
                 <div class="palette-folder-header">
                     <span class="palette-folder-arrow ${collapsed ? 'collapsed' : ''}">&#9660;</span>
-                    <span class="palette-folder-name">${fname}</span>
+                    <span class="palette-folder-name">${escapeHtml(fname)}</span>
                     <span class="palette-folder-count">${(folders[fname] || []).length}</span>
                     <button class="palette-folder-del" title="${I18n.t('props.delete')}">&times;</button>
                 </div>`;
@@ -744,9 +744,9 @@ const UI = (() => {
         const shortcutLabel = idx < 10 ? `<span class="palette-shortcut">${(idx + 1) % 10}</span>` : '';
         el.innerHTML = `
             <div class="palette-drag-handle" title="Drag">&#8942;</div>
-            <div class="palette-swatch" style="background:${t.color};${shapeStyle}"></div>
+            <div class="palette-swatch" style="background:${safeColor(t.color)};${shapeStyle}"></div>
             <div class="palette-info">
-                <div class="palette-name">${t.name}</div>
+                <div class="palette-name">${escapeHtml(t.name)}</div>
                 <div class="palette-dims">${t.width} \u00d7 ${t.height} m</div>
             </div>
             ${shortcutLabel}
@@ -929,7 +929,7 @@ const UI = (() => {
             // Group header
             const gh = document.createElement('div');
             gh.className = 'placed-group-header' + (anySelected ? ' active' : '');
-            gh.innerHTML = `<span class="placed-group-icon">&#9654;</span> <strong>${gName}</strong> <span class="placed-item-dims">${members.length}</span>`;
+            gh.innerHTML = `<span class="placed-group-icon">&#9654;</span> <strong>${escapeHtml(gName)}</strong> <span class="placed-item-dims">${members.length}</span>`;
             gh.addEventListener('click', () => {
                 Canvas.selectMultiple(members.filter(o => Canvas.isObjSelectable(o)).map(o => o.id));
                 showMultiProperties();
@@ -958,8 +958,8 @@ const UI = (() => {
         const desc = obj.description ? ` - ${obj.description.split('\n')[0]}` : '';
         const lockStr = obj.locked ? ' &#128274;' : '';
         el.innerHTML = `
-            <div class="placed-item-color" style="background:${obj.color}"></div>
-            <span class="placed-item-name" title="${obj.name}${desc}">${obj.name}${lockStr}</span>
+            <div class="placed-item-color" style="background:${safeColor(obj.color)}"></div>
+            <span class="placed-item-name" title="${escAttr((obj.name || '') + desc)}">${escapeHtml(obj.name || '')}${lockStr}</span>
             <span class="placed-item-dims">${dims}</span>`;
         el.addEventListener('click', (e) => {
             if (e.ctrlKey || e.metaKey) {
@@ -1254,26 +1254,26 @@ const UI = (() => {
         const content = document.getElementById('prop-content');
         panel.classList.remove('hidden');
 
-        const descVal = (obj.description || '').replace(/"/g, '&quot;');
+        const descVal = escapeHtml(obj.description || '');
         let html = '';
 
         // --- Section: General ---
         html += `<div class="prop-section">
             <div class="prop-section-title">${obj.type === 'guideline' ? I18n.t('tool.measure') : I18n.t('props.general')}</div>
             ${obj.type === 'guideline'
-                ? `<div style="font-size:14px;font-weight:700;color:var(--primary);text-align:center;padding:4px 0">${obj.name}</div>`
-                : `<label>${I18n.t('props.name')} <textarea id="prop-name" rows="1" style="resize:vertical;font-family:var(--font);font-size:12px">${(obj.name || '').replace(/</g, '&lt;')}</textarea></label>
+                ? `<div style="font-size:14px;font-weight:700;color:var(--primary);text-align:center;padding:4px 0">${escapeHtml(obj.name)}</div>`
+                : `<label>${I18n.t('props.name')} <textarea id="prop-name" rows="1" style="resize:vertical;font-family:var(--font);font-size:12px">${escapeHtml(obj.name || '')}</textarea></label>
                    <label>${I18n.t('props.description')} <textarea id="prop-desc" rows="2" placeholder="${I18n.t('props.descPlaceholder')}" style="resize:vertical;font-family:var(--font);font-size:12px">${descVal}</textarea></label>
                    <div class="prop-grid">
-                       <label>${I18n.t('props.descColor')} <input type="color" id="prop-desc-color" value="${obj.descColor || '#94a3b8'}"></label>
+                       <label>${I18n.t('props.descColor')} <input type="color" id="prop-desc-color" value="${safeColor(obj.descColor, '#94a3b8')}"></label>
                        <label>${I18n.t('props.descSize')} <input type="number" id="prop-desc-size" value="${obj.descSize || ''}" min="0" max="5" step="0.1" placeholder="auto"></label>
                    </div>`
             }`;
         if (obj.type === 'text') {
-            html += `<label>${I18n.t('props.textSection')} <textarea id="prop-text" rows="2" style="resize:vertical;font-family:var(--font);font-size:12px">${(obj.text || '').replace(/</g, '&lt;')}</textarea></label>`;
+            html += `<label>${I18n.t('props.textSection')} <textarea id="prop-text" rows="2" style="resize:vertical;font-family:var(--font);font-size:12px">${escapeHtml(obj.text || '')}</textarea></label>`;
         }
         if (obj.type !== 'bgimage' && obj.type !== 'image') {
-            html += `<label>${I18n.t('props.color')} <span style="display:inline-flex;align-items:center;gap:4px"><input type="color" id="prop-color" value="${obj.color}"><button type="button" id="prop-color-pick" class="eyedropper-btn" title="${I18n.t('props.color.eyedropper')}">&#127777;&#65039;</button></span></label>`;
+            html += `<label>${I18n.t('props.color')} <span style="display:inline-flex;align-items:center;gap:4px"><input type="color" id="prop-color" value="${safeColor(obj.color)}"><button type="button" id="prop-color-pick" class="eyedropper-btn" title="${I18n.t('props.color.eyedropper')}">&#127777;&#65039;</button></span></label>`;
         }
         if (obj.type === 'bgimage' || obj.type === 'image') {
             html += `<label>${I18n.t('modal.settings.bgOpacity')} <input type="range" id="prop-opacity" min="0.05" max="1" step="0.05" value="${obj.opacity || (obj.type === 'image' ? 1 : 0.3)}" style="width:100%"></label>`;
@@ -1993,7 +1993,7 @@ const UI = (() => {
         if (isGroup) {
             html += `<div class="prop-section">
                 <div class="prop-section-title">${I18n.t('ctx.group')}</div>
-                <label>${I18n.t('props.groupName')} <input type="text" id="prop-group-name" value="${groupName}" placeholder="${I18n.t('ctx.group')}..."></label>
+                <label>${I18n.t('props.groupName')} <input type="text" id="prop-group-name" value="${escAttr(groupName)}" placeholder="${I18n.t('ctx.group')}..."></label>
             </div>`;
         }
 
@@ -2888,6 +2888,23 @@ const UI = (() => {
         return div.innerHTML;
     }
 
+    // Escape for use inside a double-quoted HTML attribute (also handles quotes)
+    function escAttr(str) {
+        return String(str == null ? '' : str)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // Validate a colour value before putting it into an attribute/style; fall
+    // back to a safe default for anything that isn't a plain hex/named/rgb colour.
+    function safeColor(c, fallback) {
+        c = String(c == null ? '' : c);
+        if (/^#[0-9a-fA-F]{3,8}$/.test(c)) return c;
+        if (/^[a-zA-Z]+$/.test(c)) return c;
+        if (/^rgba?\([\d.,\s%]+\)$/.test(c)) return c;
+        return fallback || '#000000';
+    }
+
     // --- Collab Status ---
     let _collabNamesExpanded = false;
     let _collabCountdownTimer = null;
@@ -3006,7 +3023,7 @@ const UI = (() => {
             dimsLine = `${(obj.width || 0).toFixed(1)} × ${(obj.height || 0).toFixed(1)} m`;
         }
         const ropeLine = obj.guyRopeDistance > 0 ? `<div class="hover-tooltip-dim">${I18n.t('props.guyRope.distance')}: ${obj.guyRopeDistance} m</div>` : '';
-        tip.innerHTML = `<div class="hover-tooltip-name">${obj.name || ''}</div><div class="hover-tooltip-dim">${dimsLine}</div>${ropeLine}`;
+        tip.innerHTML = `<div class="hover-tooltip-name">${escapeHtml(obj.name || '')}</div><div class="hover-tooltip-dim">${dimsLine}</div>${ropeLine}`;
         tip.classList.remove('hidden');
         const tw = tip.offsetWidth || 0, th = tip.offsetHeight || 0;
         const ww = window.innerWidth, wh = window.innerHeight;

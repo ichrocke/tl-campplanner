@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.8.1] - 2026-07-09
+
+### Fixed
+- **Security: escape user-controlled text and colours in the UI (XSS hardening)**: Object, group, layer, folder and template names, descriptions and colours are now HTML-escaped everywhere they are rendered (placed-objects list, hover tooltip, palette, layer panel, properties panel and the print window). Colour values are validated before being placed into attributes/styles. This closes a stored/self cross-site-scripting hole where a crafted name (e.g. in an imported plan or, in a shared room, from another participant) could execute code in other users' browsers.
+
 ## [6.8.0] - 2026-07-09
 
 ### Changed
