@@ -1,309 +1,117 @@
 ================================================================================
- ZELTPLATZPLANER – REVIEW & MASSNAHMENPLAN
- Erstellt: 2026-07-09   |   Modell-Review: Opus 4.8 + Fable-5-Subagenten
- Status: NUR PLANUNG – nichts umgesetzt, nichts deployed.
+ ZELTPLATZPLANER – OFFENE PUNKTE (aus Review 2026-07-09)
+================================================================================
+ Stand: Der Großteil der Review wurde am 2026-07-09 umgesetzt, getestet und
+ deployed (v6.8.1 – v6.12.1). Diese Datei listet nur noch die OFFENEN Punkte.
+
+ Bereits erledigt & live (nicht mehr hier aufgeführt):
+   - Standalone-Kern komplett (Autosave-/Import-Robustheit, Lock, Drag, Undo,
+     Distanzmessung, Performance, Ebenen-z-Order, u.v.m.)
+   - Frontend-Security: XSS-Escaping, Import-Validierung, CSP.
+   - Backend-Security-Kern: CSPRNG-Raum-IDs, Referrer-Policy, CORS auf eigene
+     Domain, Ops-Größenlimit, Fehler-Leak, .htaccess, setup-Schalter.
+   - Collab-Datenverlust: serialisierter Sync (Ops + Full-Push), siteId-Adres-
+     sierung, gemergter State zurück, Ops-Retry, Undo-Trennung, Cursor-Stabili-
+     tät, Chat-Join, Viewer-Bounds. (Kern live gegen die API verifiziert.)
+   - Features: IndexedDB-Auto-Backups + benannte Versionen.
+
+ Verifikationsgrad:  [V] am Code verifiziert   [A] Agent-Bericht, plausibel
 ================================================================================
 
-ZWECK & NUTZUNG
---------------------------------------------------------------------------------
-Diese Datei ist eine Bestandsaufnahme (Code-Review) UND ein priorisierter
-Umsetzungsplan. Sie kann jederzeit erneut geöffnet und abgearbeitet werden.
-
-Vorgehensvereinbarung mit dem Nutzer (vom 2026-07-09):
-  - Sicherheitslücken: NUR dokumentieren (nicht automatisch fixen).
-  - Fokus des Tools: SICHER und FUNKTIONAL.
-  - Import-UX-Fix (ehem. Teil A) am 2026-07-09 verworfen/gelöscht.
-
-Der Zeltplatzplaner wurde ursprünglich mit einem älteren Modell erstellt.
-Reviewed wurden BEIDE Varianten:
-  (1) Standalone (localStorage, kein Server)
-  (2) Collab/Raum-Version (PHP-Backend unter api/, Echtzeit-Sync)
-
-Verifikationsgrad:
-  [V]  = am Code direkt verifiziert (Datei:Zeile geprüft)
-  [A]  = von Review-Agent berichtet, plausibel, Stichprobe geprüft
-Jede Fundstelle nennt Datei:Zeile, damit sie schnell auffindbar ist.
-
-Schweregrade: KRITISCH > HOCH > MITTEL > NIEDRIG
-
-
-================================================================================
- 0. MANAGEMENT-SUMMARY – WAS ZUERST?
-================================================================================
-
-Die drei drängendsten Themen (in dieser Reihenfolge):
-
- 1) STORED XSS in der Collab-Version (KRITISCH, Sicherheit).
-    Objekt-/Gruppen-/Layer-/Template-Namen anderer Raum-Teilnehmer werden
-    ungefiltert per innerHTML gerendert. Ein Teilnehmer kann Schadcode im
-    Browser aller anderen ausführen. Fix ist mechanisch klein (esc()-Helfer
-    existiert bereits, muss nur überall angewandt werden). -> Teil B, X1.
-
- 2) DATENVERLUST in der Collab-Version (KRITISCH, Funktion).
-    Genau das vom Nutzer gemeldete Symptom ("erscheint auf beiden Zeltplätzen,
-    vorher Gezeichnetes verschwindet") ist durch mehrere sich verstärkende
-    Sync-Bugs am Code reproduzierbar (geteilter Timer, Index-statt-ID-Ops,
-    Versionsfortschreibung ohne State-Übernahme). -> Teil C, C1–C4.
-
- 3) FEHLENDE ZUGRIFFSKONTROLLE im Backend (HOCH, Sicherheit).
-    Raum-ID ist das einzige Token; schwach generiert; CORS offen;
-    ADMIN_KEY leakt über URL/Referer an Karten-CDNs. -> Teil B, S1–S4.
-
-Für den Standalone-Betrieb (ohne Raum) ist das Tool grundsätzlich solide;
-die größten Risiken dort sind Autosave-Datenverlust bei großen Bildern und
-"klebende" Drags. -> Teil D.
-
-
-================================================================================
- TEIL B – SICHERHEIT
-================================================================================
- (B teilt sich in FRONTEND-XSS und BACKEND/PHP. Alles NUR dokumentiert.)
-
-Positiv vorweg:
-  - config.php mit DB-Zugang + 32-stelligem ADMIN_KEY ist korrekt gitignored;
-    Secrets nicht im Repo. [V]
-  - Durchgängig prepared statements -> KEINE SQL-Injection gefunden. [A]
-  - Raum-ID wird überall streng per Regex ^[a-z0-9]{4,12}$ validiert. [A]
-  - Chat-Rendering ist korrekt escaped (ui.js escapeHtml). [V]
-  - SVG-Export escaped konsequent (io.js esc()). [A]
 
 --------------------------------------------------------------------------------
- B.1  FRONTEND – STORED / SELF XSS
---------------------------------------------------------------------------------
-
-X1  [ERLEDIGT 2026-07-09, v6.8.1]  Stored/Self-XSS behoben: escAttr()+safeColor()
-    hinzugefügt und an allen innerHTML-Sinks (placed list, Hover-Tooltip, Palette,
-    Layer-Panel, Properties, Gruppen-Input, Druck-Titel) angewandt; Farbwerte
-    validiert. Umgesetzt und deployed.
-
-(B.1 Frontend-XSS: X1/X2/X3 vollständig abgearbeitet am 2026-07-09.
- Hinweis: CSP nutzt 'unsafe-inline' für Scripts wegen statischem Hosting +
- Inline-Bootstrap/Druck-Popup; strikte nonce/hash-CSP wäre späterer Ausbau.)
-
---------------------------------------------------------------------------------
- B.2  BACKEND – PHP (api/)
+ BACKEND / PHP  (Server-nah – teils Schema-/Config-/Cron-Abhängig)
 --------------------------------------------------------------------------------
 
 S1  HOCH  Raum-ID ist einziges Zugriffstoken (kein Schreib-Token)
-    room-state/update/ops/messages/cursors: Wer die ID kennt, hat vollen
-    Lese- UND Schreibzugriff (State überschreiben, Objekte löschen).
-    In Kombination mit CORS * (db.php:19) kann jede fremde Website im Browser
-    eines Opfers gegen jeden bekannten Raum schreiben.
-    FIX: bei Raumerstellung geheimes Schreib-Token (bin2hex(random_bytes(16)))
-    erzeugen, speichern, für alle schreibenden Endpunkte verpflichtend prüfen.
-    Lesen darf ID-basiert bleiben.
-
-(ERLEDIGT & live 2026-07-09: S2 CSPRNG-Raum-IDs (room-create + admin; alte IDs
- gültig), S3 no-referrer in viewer.html/admin.php/index.html, S5 Größenlimit in
- room-ops, S6 CORS auf eigene Domain (live verifiziert), S9 Fehler-Leak weg,
- S11 .htaccess Apache-2.2-Fallback. DB/Daten unberührt.)
+    Wer die Raum-ID kennt, hat vollen Lese- UND Schreibzugriff (State über-
+    schreiben, Objekte löschen). FIX: bei Raumerstellung geheimes Schreib-Token
+    (bin2hex(random_bytes(16))) erzeugen, speichern, für alle schreibenden
+    Endpunkte prüfen. Lesen darf ID-basiert bleiben.
+    -> Größerer, koordinierter Client+Server-Umbau; vom Nutzer zurückgestellt.
 
 S4  MITTEL  Zustandsändernde Admin-Aktionen via GET (CSRF)
-    admin.php: create/delete/purge/purge_all/lock/... alle über $_GET, teils
-    als <a href>-Link. purge_all löscht das gesamte Archiv ohne serverseitige
-    Bestätigung. Mit bekanntem Key (S3) per <img src> auslösbar.
+    admin.php: create/delete/purge/purge_all/lock/... alle über $_GET, teils als
+    <a href>-Link. purge_all löscht das gesamte Archiv ohne Bestätigung.
     FIX: schreibende Aktionen auf POST + CSRF-Token; purge/delete absichern.
+    -> Größerer Admin-UI-Umbau (nur Owner-relevant; Referrer-Leak ist gefixt).
 
-S7  MITTEL  Kein Rate-Limiting / unbegrenzte Raum- & Nachrichten-Erstellung
-    room-create.php völlig unauthentifiziert -> DB/Storage-Flut möglich;
-    room-messages.php ohne Limit. FIX: Rate-Limit pro IP, Cap für aktive
-    Räume und Nachrichten/Minute.
+S7  MITTEL  Kein Rate-Limiting (Raum-/Nachrichten-Erstellung)
+    room-create.php unauthentifiziert -> DB/Storage-Flut möglich; room-messages
+    ohne Limit. FIX: Rate-Limit pro IP (Zähler-Tabelle), Cap für aktive Räume
+    und Nachrichten/Minute.
+    -> Braucht additive DB-Tabelle via setup.php-Lauf auf dem Server.
 
-S8  MITTEL (TEILWEISE 2026-07-09)  SSE-Last auf Shared Hosting
-    Client-Cursor-Intervall auf 500ms erhöht. REST (Server): SSE_MAX_DURATION /
-    SSE_POLL_INTERVAL sind Werte in config.php (auf dem Server) – dort senkbar
-    (in config.example.php dokumentiert). Pro-IP-SSE-Limit weiterhin offen.
+S8  MITTEL (teilweise erledigt)  SSE-Last auf Shared Hosting
+    Erledigt: Client-Cursor-Intervall auf 500ms erhöht.
+    Offen: SSE_MAX_DURATION / SSE_POLL_INTERVAL sind Werte in config.php (auf
+    dem Server, in config.example.php dokumentiert) – dort senkbar. Pro-IP-
+    Limit für gleichzeitige SSE-Streams weiterhin offen.
 
-(S10 ERLEDIGT 2026-07-09: setup.php per define('SETUP_ENABLED', false) in
- config.php abschaltbar.)
-
-(S12 TEILWEISE 2026-07-09: cleanupExpiredRooms() läuft jetzt auch bei
- room-create. Echter Cron-Job für nie gelesene/unbefristete Räume weiter offen.)
+S12 NIEDRIG (teilweise erledigt)  DB-Wachstum
+    Erledigt: cleanupExpiredRooms() läuft jetzt auch bei room-create.
+    Offen: echter Cron-Job für nie gelesene / unbefristete (Admin-)Räume.
 
 
-================================================================================
- TEIL C – COLLAB / RAUM: DATENVERLUST & KONSISTENZ
-================================================================================
- (Erklärt die Nutzer-Meldung im Raum-Betrieb. Alle am Code verifiziert, wo [V].)
+--------------------------------------------------------------------------------
+ COLLAB / RAUM  (Kern-Datenverlust ist behoben – Rest sind Härtungen/Design)
+--------------------------------------------------------------------------------
 
-ARCHITEKTUR-KONTEXT
-  Hybrid-Protokoll: Objekt-Ops (add/update/remove, adressiert per siteIdx +
-  objectId) + Full-State-Push (Last-Writer-Wins mit Versionsprüfung) als
-  Fallback. Genau an den Nahtstellen dieser zwei Pfade liegen die Bugs.
+C5b HOCH  Undo/Redo im Raum kann fremde Arbeit überschreiben
+    Erledigt (C5a): Remote-Importe landen nicht mehr im Undo-Stack.
+    Offen: Eigenes Ctrl+Z macht weiterhin einen Full-Push und kann damit die
+    zwischenzeitliche Arbeit anderer global überschreiben. Sauberer FIX:
+    op-basiertes Undo (nur eigene add/update/remove invertieren + als Ops senden).
 
-(ERLEDIGT & LIVE-VERIFIZIERT 2026-07-09: C1 (room-ops gibt gemergten State
- zurück, Client übernimmt ihn), C2/C3 (serialisierter runSync: Ops flushen +
- danach Full-Push; Strukturänderungen gehen nicht mehr verloren), C4 (Ops mit
- siteId; Server-Lookup per ID, Index-Fallback; live getestet: Objekt landete
- per siteId auf der richtigen Site), C5(a) (Remote-Importe nicht mehr im
- Undo-Stack). Client-Logik per Node-Harness geprüft, Server per Live-API-Test.
- Offen bleibt C5(b): op-basiertes Undo, damit eigenes Ctrl+Z fremde Arbeit
- nicht global überschreibt.)
-
-C2  KRITISCH  Geteilter _opsTimer: pushOp cancelt den Full-Push
-    [V collab.js:339 vs. 347-348]  pushState() plant doFullPush auf _opsTimer
-    (150ms); jede Op innerhalb dieser 150ms macht clearTimeout(_opsTimer) und
-    plant flushOps -> der Full-Push findet NIE statt. Strukturänderungen
-    (Tab löschen/anlegen/duplizieren, Append-Import, Undo, Drag-Commit) gehen
-    verloren. Das ist der Kern von "erscheint auf beiden Zeltplätzen":
-    Tab-Löschung erreicht den Server nie, folgende Op landet per Index auf dem
-    (serverseitig noch existierenden) falschen Platz.
-    FIX: zwei getrennte Timer (_fullPushTimer, _opsTimer) + _needFullPush-Flag,
-    das nach erfolgreichem flushOps einen ausstehenden Full-Push nachholt.
-
-C3  KRITISCH  pushState mit Pending-Ops sendet NUR die Ops
-    [V collab.js:334-336]  Löst eine Full-State-würdige Änderung (Rename, Layer/
-    Template, Drag-Commit, Undo) pushState aus, während Ops in der Queue liegen,
-    wird nur geflusht – die Änderung selbst nie übertragen (stille Divergenz).
-    FIX: wie C2 (_needFullPush) oder Strukturänderungen als eigene Ops.
-
-C4  KRITISCH  Ops adressieren Sites per INDEX statt ID
-    [V state.js addObject pushOp {siteIdx:_activeSiteIndex}]  Server:
-    room-ops.php verwirft ungültigen Index STILL (continue -> Datenverlust ohne
-    Fehler). Bei Tab-Löschen/duplicateSite verschieben sich Indizes -> Ops
-    landen auf falscher/fehlender Site; gleiche Objekt-ID kann auf zwei Sites
-    landen ("auf beiden Zeltplätzen"). migrateSite setzt aktuell KEINE s.id für
-    Alt-States [V].
-    FIX: Ops zusätzlich mit siteId senden; Server-Lookup per id, Fallback auf
-    siteIdx für Altclients; nicht gefundene Site -> Full-Refetch statt still
-    verwerfen; migrateSite um "if(!s.id) s.id=generateId()" ergänzen.
-
-C5  HOCH  Undo/Redo verwirft im Raum global fremde Arbeit
-    [V state.js undo(): _listeners.forEach(fn=>fn(false)) -> Full-Push]
-    Zudem landen Remote-Updates im Undo-Stack (importJSON ruft notify(false,..)
-    = skipUndo=false). Ctrl+Z stellt einen Snapshot vor dem letzten
-    Fremd-Update her und pusht ihn -> löscht die Objekte des anderen.
-    FIX (a, Zweizeiler): Remote-Imports mit skipUndo=true (bei skipSync===true
-    notify(true, skipSync)). FIX (b, sauber): op-basiertes Undo nur eigener Ops.
-
-C6  HOCH (TEILWEISE 2026-07-09)  Full-Push-Konflikt verwirft lokale Änderungen
-    Serialisierter Sync mildert das (Ops werden separat behbuilt + gemergter
-    State übernommen), aber ein rein struktureller lokaler Full-Push, der mit
-    einer fremden Änderung KOLLIDIERT, kann weiterhin verloren gehen.
+C6  HOCH (teilweise)  Full-Push-Konflikt verwirft lokale Änderungen
+    Serialisierter Sync mildert das, aber ein rein STRUKTURELLER lokaler
+    Full-Push, der mit einer fremden Änderung kollidiert, kann verloren gehen.
     REST-FIX: verlorene strukturelle Änderung nach Konflikt-Merge erneut
     anwenden + erneut pushen (bzw. Strukturänderungen als Ops, s. C16).
 
-(ERLEDIGT 2026-07-09: C7 (Ops bleiben bei Fehler in der Queue + Retry –
- Node-Harness bestätigt), C8 (disconnect() setzt allen Sync-State zurück),
- C9 (lokale Änderungen während Raum-Sperre werden beim Entsperren nachgesendet).)
-
-(C10 ERLEDIGT 2026-07-09: room-sse.php + room-cursors.php nutzen jetzt
- INSERT ... ON DUPLICATE KEY UPDATE statt REPLACE.)
-
 C11 MITTEL  Cursor/Presence ohne Site-Bezug
-    [A collab.js:235-242]  Cursor wird auf dem aktiven Tab des Betrachters
-    gezeichnet, egal auf welchem Tab der andere ist. FIX: siteId mitsenden +
-    beim Zeichnen filtern.
-
-(C12 ERLEDIGT 2026-07-09: _sseErrors wird bei onopen/onmessage zurückgesetzt.)
-
-(C13 ERLEDIGT 2026-07-09: Chat-Historie wird beim Join nicht mehr als
- Toast-Flut nachgespielt; nur neue Nachrichten. sendMessage bleibt für spätere
- Chat-UI erhalten.)
-
-(C14 ERLEDIGT 2026-07-09: Viewer fitToContent nutzt absolute Punkt-Koordinaten.)
+    Remote-Cursor wird auf dem aktiven Tab des Betrachters gezeichnet, egal auf
+    welchem Tab der andere ist. FIX: siteId beim Cursor-POST mitsenden + beim
+    Zeichnen filtern.
+    -> Braucht additive Spalte in room_users via setup.php-Lauf.
 
 C15 ANMERKUNG  Tote Server-Optypen (reorder/site_props/state_props)
-    room-ops.php:93-127 implementiert sie, KEIN Client sendet sie -> Z-Order-
-    und Settings-Änderungen laufen als Full-Push (erben C2/C3/C6). Diese Optypen
-    clientseitig zu nutzen wäre die halbe Miete zur Ablösung des Full-Push
-    (nach C4-Umstellung auf siteId).
+    room-ops.php implementiert sie, KEIN Client sendet sie -> Z-Order- und
+    Settings-Änderungen laufen als Full-Push. Diese Optypen clientseitig zu
+    nutzen wäre die halbe Miete zur Ablösung des Full-Push.
 
-C16 ANMERKUNG  Häufigste Aktion (Drag) läuft über unsichersten Pfad
+C16 ANMERKUNG  Häufigste Aktion (Drag) läuft über Full-Push
     Move/Rotate/Resize-Commit -> notifyChange() -> Full-Push, obwohl update-Ops
-    existieren. Zwei gleichzeitige Drags -> einer verliert (C6).
+    existieren. Zwei gleichzeitige Drags -> einer verliert (vgl. C6).
     FIX: am Drag-Ende update-Ops {x,y,rotation,points} senden + notify(false,true).
 
-EMPFOHLENE FIX-REIHENFOLGE COLLAB: C1 + C2/C3 (kleine Diffs, beseitigen die
-Hauptursache) -> C4 (siteId, abwärtskompatibel) -> C5 (Zweizeiler) -> C6/C7 ->
-C8–C11.
 
+--------------------------------------------------------------------------------
+ FEATURE-IDEEN (optional, zurückgestellt)
+--------------------------------------------------------------------------------
 
-================================================================================
- TEIL D – STANDALONE-KERN (state/tools/canvas/app)
-================================================================================
+E3  Kollisions-/Mindestabstands-Report: Panel mit ALLEN Abstandsverstößen
+    (Objekt A <-> B, Ist-Abstand), Klick zentriert die Stelle. Kern-Use-Case
+    (Brandschutzabstände). Nutzt die vorhandene Distanzlogik.
 
-POSITIV: Undo-Grundarchitektur korrekt (Snapshot nach Mutation, saubere
-Redo-Branch-Truncation); Datei-Import append-only mit vollständigem ID-Remap;
-dangling layerId macht Objekte NICHT unsichtbar (robuster Default); keine
-Listener-/Interval-Leaks im Kern; Touch-Handling durchdacht; segDist numerisch
-robust; renderOffscreen stellt View/Selektion nach Druck wieder her.
+E4  Echter PDF-Export (statt nur Druckfenster) mit Maßstab, Legende, Objekt-
+    liste – praktisch zur Weitergabe an Ämter/Feuerwehr.
 
-(Teil D vollständig abgearbeitet am 2026-07-09.)
+E5  Flächen-/Kapazitäts-Auswertung pro Grundfläche: qm, Anzahl Zelte, geschätzte
+    Personenzahl, freie Restfläche.
 
+E6  Fester Maßstabsbalken auf dem Canvas (immer sichtbar).
 
+E7  Raum-Version härten (bündelt v.a. S1 Schreib-Token + S7 Rate-Limit) –
+    Voraussetzung für fremde/öffentliche Nutzung der Collab-Version.
 
-================================================================================
- TEIL E – FEATURE-VORSCHLÄGE MIT ECHTEM MEHRWERT
-================================================================================
- (Priorität nach Nutzen/Aufwand. Alles optional, nichts umgesetzt.)
+E8  Presence mit Namen & Tab-Anzeige ("arbeitet auf Tab X"); nach C11.
 
-(E1 ERLEDIGT & live 2026-07-09: js/backup.js – rollierende Auto-Backups (letzte
- 10, gedrosselt) in IndexedDB; Dialog "Sicherungen" (Einstellungen) zum
- Auflisten/Wiederherstellen/Löschen. IndexedDB-Roundtrip im echten Browser
- verifiziert.)
+E9  Offline-First / PWA (Service Worker + Manifest): installierbar, echtes
+    Caching (behebt das Date.now()-Cache-Busting), funktioniert ohne Netz.
 
-(E2 ERLEDIGT & live 2026-07-09: benannte manuelle Sicherungen im selben Dialog
- ("Benannte Sicherung erstellen").)
-
-E3  Kollisions-/Mindestabstands-Report (funktional, hoch)
-    Ein Panel, das ALLE Verstöße gegen den Mindestabstand als Liste zeigt
-    (Objekt A <-> B, Ist-Abstand), Klick zentriert die Stelle. Nutzt die bereits
-    vorhandene Distanzlogik (nach Fix D9). Genau der Kern-Use-Case eines
-    Zeltplatzplaners (Brandschutzabstände).
-
-E4  PDF-Export statt nur Druckfenster (hoch)
-    Aktuell window.open + Druck. Ein echter PDF-Export (z.B. via Canvas ->
-    jsPDF, lokal gebündelt/offline) mit Maßstab, Legende und Objektliste ist
-    für Weitergabe an Ämter/Feuerwehr deutlich praktischer.
-
-E5  Flächen-/Kapazitäts-Auswertung (mittel)
-    Pro Grundfläche: qm, Anzahl Zelte, geschätzte Personenzahl, freie Restfläche.
-    Nutzt polygonArea (vorhanden) + pointInPolygon. Direkter Planungsnutzen.
-
-E6  Einheitliche Ausgabe-Skala / Maßstabsbalken auf dem Canvas (klein)
-    Fester Maßstabsbalken (z.B. "10 m") unten links, immer sichtbar – hilft bei
-    Screenshots und schnellem Größengefühl.
-
-E7  Raum-Version härten (SICHERHEIT, hoch – Voraussetzung für echten Einsatz)
-    Bündelt die Backend-Fixes: Schreib-Token (S1), CSPRNG-IDs (S2), Referrer-
-    Policy (S3), CORS-Restriktion (S6). Ohne diese ist die Collab-Version für
-    fremde/öffentliche Nutzung nicht empfehlenswert.
-
-E8  Presence mit Namen & Tab-Anzeige (klein, nach C10/C11)
-    Teilnehmerliste mit Namen + "arbeitet auf Tab X", farbige Cursor korrekt.
-    Macht Zusammenarbeit spürbar besser.
-
-E9  Offline-First / PWA (mittel)
-    Service Worker + Manifest -> installierbar, echtes Caching (behebt das
-    Date.now()-Cache-Busting-Problem, das aktuell jeden Reload verlangsamt),
-    funktioniert auf dem Platz ohne Netz.
-
-E10 Snap zu anderen Objekten / Hilfslinien (mittel)
-    Beim Ziehen an Kanten/Mitten benachbarter Objekte einrasten (nicht nur ans
-    Grid). Deutlich schnelleres, saubereres Layouten.
-
+E10 Snap an andere Objekte / Hilfslinien beim Ziehen (nicht nur ans Grid).
 
 ================================================================================
- ANHANG – DATEI/ZEILEN-INDEX (Kurzreferenz)
-================================================================================
- js/collab.js   C1:361  C2:339/347  C3:334  C5:undo  C6:386  C7:353  C8:113
- js/state.js    C4:pushOp/siteIdx  C5:notify  D4:454  D5:41  A:importJSON
- js/ui.js       X1:70/634/744/927/957/1252/1970/2907  escapeHtml:2783
- js/io.js       X1:315  X2:1267  A:34(append) importTab
- js/tools.js    D7:209/224  D10:1009  D15:326
- js/canvas.js   D8:927  D9:2255/2468  D11:488  D12:252
- js/app.js      D1:57/112  D2:20  D3:storage  D6:88
- api/room-ops.php     C1/C4/S5/S9
- api/room-create.php  S2/S7
- api/room-sse.php     C10/S8
- api/db.php           S6/S12
- api/admin.php        S2/S3/S4
- viewer.html          C14/S3
- index.html           X3(CSP)  D:Cache-Busting
- maptiles.js          S3(Tiles)  Attribution fehlt
-
-================================================================================
- ENDE. Nächster sinnvoller Schritt bei Freigabe: X1 (XSS) + C1/C2/C3 zusammen,
- da beide klein und maximal wirksam für "sicher + funktional".
+ ENDE
 ================================================================================
