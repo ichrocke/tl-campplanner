@@ -1,5 +1,11 @@
 # Changelog
 
+## [6.9.4] - 2026-07-09
+
+### Fixed
+- **Multi-tab safety**: If you open the same plan in a second browser tab, you now get a warning, because editing the same plan in two tabs can make them overwrite each other's autosave.
+- **Undo uses far less memory with background images**: Large background images are no longer copied into every entry of the undo history, preventing high memory use / crashes on tablets when working with image-heavy plans.
+
 ## [6.9.3] - 2026-07-09
 
 ### Fixed
