@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.11.0] - 2026-07-09
+
+### Fixed
+- **Collaboration: objects no longer get lost or land on the wrong tab**: The room sync was reworked to fix several data-loss bugs. Structural changes (deleting/adding/renaming a tab, importing, undo) are no longer silently dropped when object edits happen at the same time; object edits now address their tab by a stable ID instead of its position, so they can't land on the wrong plan; each client now adopts other participants' concurrent changes instead of missing them; queued edits are retried after a network hiccup instead of being lost; remote updates no longer pollute your local undo history; disconnecting fully resets sync state; and edits made while a room is locked are sent once it is unlocked.
+
 ## [6.10.2] - 2026-07-09
 
 ### Changed

@@ -50,9 +50,22 @@ try {
     // Operationen anwenden
     foreach ($ops as $op) {
         $type = $op['type'] ?? '';
-        $siteIdx = intval($op['siteIdx'] ?? 0);
-        if (!isset($state['sites'][$siteIdx])) continue;
-        $site = &$state['sites'][$siteIdx];
+        // C4: address the target site by stable ID first, fall back to index for
+        // older clients. This prevents ops from landing on the wrong tab when the
+        // tab order differs between clients.
+        $targetIdx = -1;
+        $siteId = $op['siteId'] ?? null;
+        if ($siteId) {
+            foreach ($state['sites'] as $i => $s) {
+                if (($s['id'] ?? null) === $siteId) { $targetIdx = $i; break; }
+            }
+        }
+        if ($targetIdx < 0) {
+            $ti = intval($op['siteIdx'] ?? 0);
+            if (isset($state['sites'][$ti])) $targetIdx = $ti;
+        }
+        if ($targetIdx < 0) continue;
+        $site = &$state['sites'][$targetIdx];
         if (!isset($site['objects'])) $site['objects'] = [];
 
         switch ($type) {
@@ -126,6 +139,7 @@ try {
                 }
                 break;
         }
+        unset($site); // break the reference before the next iteration
     }
 
     // State zurueckschreiben
@@ -144,7 +158,9 @@ try {
     $newVersion = intval($verStmt->fetchColumn());
 
     $pdo->commit();
-    jsonResponse(['ok' => true, 'version' => $newVersion]);
+    // C1: return the merged state so the sender adopts other clients' concurrent
+    // changes it may not have seen yet (it only applied its own ops locally).
+    jsonResponse(['ok' => true, 'version' => $newVersion, 'state' => $newJson]);
 
 } catch (Exception $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();

@@ -334,7 +334,7 @@ const State = (() => {
             site.objects.push(obj);
             // Collab: Object-Level Op
             if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
-                Collab.pushOp({ type: 'add', siteIdx: _activeSiteIndex, object: JSON.parse(JSON.stringify(obj)) });
+                Collab.pushOp({ type: 'add', siteIdx: _activeSiteIndex, siteId: (_sites[_activeSiteIndex] && _sites[_activeSiteIndex].id), object: JSON.parse(JSON.stringify(obj)) });
             }
             notify();
             return obj;
@@ -352,7 +352,7 @@ const State = (() => {
             obj.y += 1;
             site.objects.push(obj);
             if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
-                Collab.pushOp({ type: 'add', siteIdx: _activeSiteIndex, object: JSON.parse(JSON.stringify(obj)) });
+                Collab.pushOp({ type: 'add', siteIdx: _activeSiteIndex, siteId: (_sites[_activeSiteIndex] && _sites[_activeSiteIndex].id), object: JSON.parse(JSON.stringify(obj)) });
             }
             notify();
             return obj;
@@ -363,7 +363,7 @@ const State = (() => {
             if (!site) return;
             site.objects = site.objects.filter(o => o.id !== id);
             if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
-                Collab.pushOp({ type: 'remove', siteIdx: _activeSiteIndex, objectId: id });
+                Collab.pushOp({ type: 'remove', siteIdx: _activeSiteIndex, siteId: (_sites[_activeSiteIndex] && _sites[_activeSiteIndex].id), objectId: id });
             }
             notify();
         },
@@ -375,7 +375,7 @@ const State = (() => {
             if (!obj) return;
             Object.assign(obj, props);
             if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
-                Collab.pushOp({ type: 'update', siteIdx: _activeSiteIndex, objectId: id, props });
+                Collab.pushOp({ type: 'update', siteIdx: _activeSiteIndex, siteId: (_sites[_activeSiteIndex] && _sites[_activeSiteIndex].id), objectId: id, props });
             }
             notify();
         },
@@ -386,7 +386,7 @@ const State = (() => {
             if (!site || !ids || !ids.length) return;
             ids.forEach(id => { const o = site.objects.find(x => x.id === id); if (o) Object.assign(o, props); });
             if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
-                ids.forEach(id => Collab.pushOp({ type: 'update', siteIdx: _activeSiteIndex, objectId: id, props }));
+                ids.forEach(id => Collab.pushOp({ type: 'update', siteIdx: _activeSiteIndex, siteId: (_sites[_activeSiteIndex] && _sites[_activeSiteIndex].id), objectId: id, props }));
             }
             notify();
         },
@@ -398,7 +398,7 @@ const State = (() => {
             const idSet = new Set(ids);
             site.objects = site.objects.filter(o => !idSet.has(o.id));
             if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
-                ids.forEach(id => Collab.pushOp({ type: 'remove', siteIdx: _activeSiteIndex, objectId: id }));
+                ids.forEach(id => Collab.pushOp({ type: 'remove', siteIdx: _activeSiteIndex, siteId: (_sites[_activeSiteIndex] && _sites[_activeSiteIndex].id), objectId: id }));
             }
             notify();
         },
@@ -463,7 +463,7 @@ const State = (() => {
                 newIds.push(obj.id);
                 // Collab: send individual ops for each pasted object
                 if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
-                    Collab.pushOp({ type: 'add', siteIdx: _activeSiteIndex, object: JSON.parse(JSON.stringify(obj)) });
+                    Collab.pushOp({ type: 'add', siteIdx: _activeSiteIndex, siteId: (_sites[_activeSiteIndex] && _sites[_activeSiteIndex].id), object: JSON.parse(JSON.stringify(obj)) });
                 }
             });
             notify(false, true); // skipSync=true since ops are sent individually
@@ -499,7 +499,7 @@ const State = (() => {
                 const firstNewIndex = _sites.length;
                 prepared.forEach(s => _sites.push(s));
                 _activeSiteIndex = firstNewIndex;
-                notify(false, skipSync);
+                notify(skipSync === true, skipSync);
                 return;
             }
 
@@ -542,7 +542,7 @@ const State = (() => {
                 _activeSiteIndex = 0;
             }
 
-            notify(false, skipSync);
+            notify(skipSync === true, skipSync);
         },
 
         clear() {

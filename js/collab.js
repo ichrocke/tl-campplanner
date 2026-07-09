@@ -113,13 +113,21 @@ const Collab = (() => {
     function disconnect() {
         if (_eventSource) { _eventSource.close(); _eventSource = null; }
         if (_pollTimer) { clearInterval(_pollTimer); _pollTimer = null; }
-        if (_pushTimer) { clearTimeout(_pushTimer); _pushTimer = null; }
+        if (_syncTimer) { clearTimeout(_syncTimer); _syncTimer = null; }
         if (_cursorTimer) { clearInterval(_cursorTimer); _cursorTimer = null; }
         _roomId = null;
         _version = 0;
         _sseErrors = 0;
         _onlineUsers = [];
         _remoteCursors = [];
+        // C8: reset all sync state so nothing leaks into the next room joined
+        _pendingOps = [];
+        _needFullPush = false;
+        _opsInFlight = false;
+        _opSinceLastPush = false;
+        _lastMsgId = 0;
+        _locked = false;
+        _wasLocked = false;
         if (_onUsersChange) _onUsersChange([]);
         updateUrl();
         Canvas.render();
@@ -140,7 +148,10 @@ const Collab = (() => {
                 '&uname=' + encodeURIComponent(_userName);
             _eventSource = new EventSource(url);
 
+            _eventSource.onopen = () => { _sseErrors = 0; };
+
             _eventSource.onmessage = (e) => {
+                _sseErrors = 0; // C12: a working stream clears the error counter
                 try {
                     const data = JSON.parse(e.data);
                     if (data.version && data.version > _version) {
@@ -192,6 +203,9 @@ const Collab = (() => {
                         } else if (!_locked && _wasLocked) {
                             UI.showHint(I18n.t('collab.roomUnlocked'));
                             setTimeout(() => UI.showHint(''), 3000);
+                            // C9: push local edits made while the room was locked
+                            _needFullPush = true;
+                            scheduleSync(200);
                         }
                         _wasLocked = _locked;
                         if (_onUsersChange) _onUsersChange(_onlineUsers);
@@ -284,6 +298,9 @@ const Collab = (() => {
     // --- Remote Update empfangen ---
 
     function onRemoteUpdate(stateJson, version) {
+        // While our own sync round-trip is in flight, let it reconcile instead of
+        // racing it (prevents flicker / lost in-flight ops).
+        if (_opsInFlight) return;
         _version = version;
 
         // Save pending ops before overwriting state – they haven't been sent yet
@@ -297,13 +314,12 @@ const Collab = (() => {
         }
         _syncLock = false;
 
-        // Re-apply pending ops locally so they aren't lost
+        // Re-apply pending ops locally so they aren't lost (address site by ID)
         if (savedOps.length > 0) {
             savedOps.forEach(op => {
-                const site = State.sites[op.siteIdx];
+                const site = (op.siteId && State.sites.find(s => s.id === op.siteId)) || State.sites[op.siteIdx];
                 if (!site) return;
                 if (op.type === 'add' && op.object) {
-                    // Only re-add if not already present (server may have it)
                     if (!site.objects.find(o => o.id === op.object.id)) {
                         site.objects.push(JSON.parse(JSON.stringify(op.object)));
                     }
@@ -314,79 +330,107 @@ const Collab = (() => {
                     site.objects = site.objects.filter(o => o.id !== op.objectId);
                 }
             });
-            // Re-queue ops so they get flushed to server
             _pendingOps.push(...savedOps);
-            clearTimeout(_opsTimer);
-            _opsTimer = setTimeout(flushOps, 300);
+            scheduleSync(300);
         }
 
         Canvas.render();
     }
 
-    // --- Operations-basierter Sync ---
+    // --- Operations-basierter Sync (serialisiert) ---
 
     let _pendingOps = [];
-    let _opsTimer = null;
+    let _syncTimer = null;
+    let _needFullPush = false;   // a structural/full-state change is waiting to be sent
+    let _opsInFlight = false;    // guards against overlapping sync round-trips
+    let _opSinceLastPush = false; // did the current change emit an object op?
 
+    // Called by app.js onChange for EVERY local change. If the change did not emit
+    // an object op, it is structural and needs a full-state push (C3).
     function pushState() {
-        // Fallback: wenn keine Ops gesammelt, ganzen State senden
         if (!_roomId || _syncLock || _locked) return;
-        if (_pendingOps.length > 0) {
-            flushOps();
-        } else {
-            // Full-state push als Fallback (z.B. fuer Site-Aenderungen)
-            // Debounce at 150ms to batch rapid changes without losing data
-            clearTimeout(_opsTimer);
-            _opsTimer = setTimeout(doFullPush, 150);
-        }
+        if (!_opSinceLastPush) _needFullPush = true;
+        _opSinceLastPush = false;
+        scheduleSync(150);
     }
 
     function pushOp(op) {
         if (!_roomId || _syncLock || _locked) return;
         _pendingOps.push(op);
-        clearTimeout(_opsTimer);
-        _opsTimer = setTimeout(flushOps, 300);
+        _opSinceLastPush = true;
+        scheduleSync(250);
     }
 
-    async function flushOps() {
-        if (!_roomId || _syncLock || _pendingOps.length === 0) return;
-        const ops = _pendingOps.splice(0);
+    function scheduleSync(delay) {
+        if (_opsInFlight) return; // runSync reschedules itself when it finishes
+        clearTimeout(_syncTimer);
+        _syncTimer = setTimeout(runSync, delay || 200);
+    }
+
+    // Serialized sync: flush object ops first, then a full push if needed. This
+    // avoids the previous shared-timer bug where an op cancelled a pending full
+    // push (C2) and where a structural change was never sent while ops were
+    // queued (C3).
+    async function runSync() {
+        if (!_roomId || _syncLock || _locked || _opsInFlight) return;
+        if (_pendingOps.length === 0 && !_needFullPush) return;
+        _opsInFlight = true;
         try {
-            const resp = await fetch(API_BASE + 'room-ops.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ roomId: _roomId, ops }),
-            });
-            const data = await resp.json();
-            if (data.ok) {
-                _version = data.version;
-            } else {
-                console.warn('Collab: Ops failed:', data.error);
+            // 1) flush queued object ops
+            if (_pendingOps.length > 0) {
+                const ops = _pendingOps.slice();
+                _opSinceLastPush = false;
+                const resp = await fetch(API_BASE + 'room-ops.php', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ roomId: _roomId, ops }),
+                });
+                const data = await resp.json();
+                if (data.ok) {
+                    _pendingOps.splice(0, ops.length); // keep ops queued during the await (C7)
+                    _version = data.version;
+                    // C1: adopt merged server state (others' concurrent changes)
+                    // when no local ops are still pending.
+                    if (data.state && _pendingOps.length === 0) adoptRemoteState(data.state);
+                } else {
+                    return; // keep ops queued for retry (C7); reschedule in finally
+                }
+            }
+            // 2) full-state push for structural changes, after ops are in (C2/C3)
+            if (_needFullPush && _pendingOps.length === 0) {
+                _needFullPush = false;
+                await doFullPush();
             }
         } catch (e) {
-            console.warn('Collab: Ops push failed:', e);
+            console.warn('Collab: sync failed:', e); // ops stay queued (C7)
+        } finally {
+            _opsInFlight = false;
+            if (_pendingOps.length > 0 || _needFullPush) scheduleSync(300);
         }
     }
 
+    function adoptRemoteState(stateJson) {
+        _syncLock = true;
+        try { State.importJSON(stateJson, true); }
+        catch (e) { console.warn('Collab: adopt state failed:', e); }
+        _syncLock = false;
+        if (typeof Canvas !== 'undefined') Canvas.render();
+    }
+
     async function doFullPush() {
-        if (!_roomId || _syncLock) return;
         try {
             const resp = await fetch(API_BASE + 'room-update.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    roomId: _roomId,
-                    state: State.exportJSON(),
-                    expectedVersion: _version,
-                }),
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ roomId: _roomId, state: State.exportJSON(), expectedVersion: _version }),
             });
             const data = await resp.json();
             if (data.ok) {
                 _version = data.version;
             } else if (data.conflict) {
-                // Conflict: server has newer version – merge via onRemoteUpdate
-                // which preserves any pending ops
-                onRemoteUpdate(data.state, data.currentVersion);
+                // Someone else changed the room first – adopt their state.
+                // (A purely structural local change may be lost here; full
+                // op-based structural sync is a later improvement – C6/C16.)
+                _version = data.currentVersion;
+                adoptRemoteState(data.state);
             }
         } catch (e) {
             console.warn('Collab: Push failed:', e);
