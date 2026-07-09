@@ -5,7 +5,7 @@
 const Collab = (() => {
     const API_BASE = 'api/';
     const POLL_INTERVAL = 1000;       // State-Polling alle 1 Sekunde
-    const CURSOR_INTERVAL = 300;      // Cursor senden alle 300ms
+    const CURSOR_INTERVAL = 500;      // Cursor senden alle 500ms (S8: weniger Server-Last)
     const CURSOR_COLORS = ['#e74c3c','#3498db','#2ecc71','#f39c12','#9b59b6','#1abc9c','#e67e22','#e91e63'];
 
     let _roomId = null;

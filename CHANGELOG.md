@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.10.2] - 2026-07-09
+
+### Changed
+- **Lower collaboration server load**: Remote cursor positions are sent slightly less often (every 500 ms instead of 300 ms), reducing load on the shared server without a noticeable difference for users.
+
 ## [6.10.1] - 2026-07-09
 
 ### Security
