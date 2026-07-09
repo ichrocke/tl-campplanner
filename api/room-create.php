@@ -34,6 +34,11 @@ $emptyState = json_encode([
 
 $pdo = getDB();
 
+// S12: opportunistic cleanup of expired rooms on creation too (not only on
+// room-state), so the DB doesn't grow unbounded between reads. A real cron job
+// is still recommended for rooms that never get read.
+cleanupExpiredRooms();
+
 // Insert with a few retries in case of an (astronomically unlikely) ID collision
 $stmt = $pdo->prepare('INSERT INTO rooms (id, name, state_json, expires_at) VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 8 HOUR))');
 $id = null;

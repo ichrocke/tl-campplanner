@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.12.1] - 2026-07-09
+
+### Security
+- **Backend housekeeping**: Expired collaboration rooms are also cleaned up when a new room is created (not only when a room is read), and setup can be disabled after initial deployment. Documented optional config for CORS origins and SSE tuning.
+
 ## [6.12.0] - 2026-07-09
 
 ### Added

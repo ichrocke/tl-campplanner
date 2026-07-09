@@ -3,6 +3,13 @@
 // Aufruf: php api/setup.php  ODER  im Browser: api/setup.php?key=ADMIN_KEY
 require_once __DIR__ . '/db.php';
 
+// S10: allow disabling setup entirely after initial deployment by adding
+// define('SETUP_ENABLED', false); to config.php. Defaults to enabled so
+// nothing breaks if the constant is absent.
+if (defined('SETUP_ENABLED') && !SETUP_ENABLED) {
+    jsonResponse(['error' => 'Setup disabled'], 403);
+}
+
 if (php_sapi_name() !== 'cli') {
     if (($_GET['key'] ?? '') !== ADMIN_KEY) {
         jsonResponse(['error' => 'Unauthorized'], 403);
