@@ -1991,6 +1991,23 @@ const UI = (() => {
             <label>${I18n.t('props.bulkColor')} <span style="display:inline-flex;align-items:center;gap:4px"><input type="color" id="prop-bulk-color" value="#4a90d9"><button type="button" id="prop-bulk-color-pick" class="eyedropper-btn" title="${I18n.t('props.color.eyedropper')}">&#127777;&#65039;</button></span></label>
         </div>`;
 
+        // Move selection to another layer (only if >1 layer exists)
+        if (site && site.layers && site.layers.length > 1) {
+            const layerIds = [...new Set(selObjs.map(o => o.layerId))];
+            const commonLayer = layerIds.length === 1 ? layerIds[0] : '';
+            const opts = site.layers.map(l =>
+                `<option value="${l.id}" ${l.id === commonLayer ? 'selected' : ''}>${escapeHtml(l.name)}</option>`
+            ).join('');
+            html += `<div class="prop-section">
+                <label>${I18n.t('layer.moveToLayer')}
+                    <select id="prop-multi-layer">
+                        ${commonLayer ? '' : `<option value="" selected>—</option>`}
+                        ${opts}
+                    </select>
+                </label>
+            </div>`;
+        }
+
         // Ground diagonals (when any ground is selected)
         const selGrounds = selObjs.filter(o => o.type === 'ground');
         if (selGrounds.length > 0) {
@@ -2034,6 +2051,20 @@ const UI = (() => {
             mDiag.addEventListener('change', () => {
                 selGrounds.forEach(o => State.updateObject(o.id, { showDiagonals: mDiag.checked }));
                 Canvas.render();
+            });
+        }
+
+        // Move-to-layer handler (applies to all selected objects at once)
+        const mLayer = document.getElementById('prop-multi-layer');
+        if (mLayer) {
+            mLayer.addEventListener('change', () => {
+                const targetId = mLayer.value;
+                if (!targetId) return;
+                [...Canvas.selectedIds].forEach(id => State.updateObject(id, { layerId: targetId }));
+                Canvas.render();
+                buildPlacedList();
+                buildLayers();
+                showMultiProperties();
             });
         }
 

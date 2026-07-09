@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.5.0] - 2026-07-09
+
+### Added
+- **Mehrfachauswahl in andere Ebene verschieben**: Sind mehrere Objekte gleichzeitig ausgewählt, gibt es im Eigenschaften-Panel jetzt eine Auswahl "In Ebene verschieben", mit der alle ausgewählten Objekte gemeinsam auf dieselbe Ebene gelegt werden. Erscheint nur, wenn der Zeltplatz mehr als eine Ebene hat. Liegen die ausgewählten Objekte auf unterschiedlichen Ebenen, zeigt die Auswahl "—", bis eine Ziel-Ebene gewählt wird.
+
 ## [6.4.0] - 2026-07-08
 
 ### Added
