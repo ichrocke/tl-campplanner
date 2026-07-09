@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.5.1] - 2026-07-09
+
+### Fixed
+- **Symbole, Post-its und Bilder respektieren jetzt Ebenen**: Diese Objekttypen ignorierten bisher die Ebenen-Sichtbarkeit und -Deckkraft – beim Ausblenden einer Ebene blieben Symbole sichtbar (waren aber nicht mehr anklickbar). Jetzt werden sie wie alle anderen Objekte ausgeblendet, wenn ihre Ebene unsichtbar ist, und übernehmen auch die Ebenen-Deckkraft.
+
 ## [6.5.0] - 2026-07-09
 
 ### Added

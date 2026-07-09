@@ -923,6 +923,13 @@ const Canvas = (() => {
         // --- Background image and ground (rendered separately) ---
         if (obj.type === 'bgimage' || obj.type === 'ground') return;
 
+        // Skip objects on hidden layers – applies to ALL object types
+        // (incl. symbol/postit/image, deren Spezialfälle vorher zurückkehren)
+        if (!isLayerVisible(State.activeSite, obj.layerId)) return;
+
+        // Ebenen-Deckkraft (gilt ebenfalls für alle Typen)
+        const layerOpacity = getLayerOpacity(State.activeSite, obj.layerId);
+
         // --- Image object (like bgimage but in object layer) ---
         if (obj.type === 'image' && obj.dataUrl) {
             const img = loadBgImage(obj.dataUrl);
@@ -932,7 +939,7 @@ const Canvas = (() => {
                 ctx.save();
                 ctx.translate(pos.x, pos.y);
                 ctx.rotate((obj.rotation || 0) * Math.PI / 180);
-                ctx.globalAlpha = obj.opacity != null ? obj.opacity : 1;
+                ctx.globalAlpha = (obj.opacity != null ? obj.opacity : 1) * layerOpacity;
                 ctx.drawImage(img, -w/2, -h/2, w, h);
                 ctx.globalAlpha = 1;
                 if (isSel) {
@@ -968,6 +975,7 @@ const Canvas = (() => {
             ctx.save();
             ctx.translate(pos.x, pos.y);
             ctx.rotate((obj.rotation || 0) * Math.PI / 180);
+            if (layerOpacity < 1) ctx.globalAlpha = layerOpacity;
             // Shadow
             ctx.shadowColor = 'rgba(0,0,0,0.15)';
             ctx.shadowBlur = 6;
@@ -1011,24 +1019,15 @@ const Canvas = (() => {
 
         // --- Symbol ---
         if (obj.type === 'symbol') {
+            if (layerOpacity < 1) ctx.globalAlpha = layerOpacity;
             drawSymbol(obj, z, isSel, isHov);
             ctx.globalAlpha = 1;
             return;
         }
 
-        // Skip objects on hidden layers
-        if (obj.layerId) {
-            const site = State.activeSite;
-            if (site && site.layers) {
-                const layer = site.layers.find(l => l.id === obj.layerId);
-                if (layer && !layer.visible) return;
-            }
-        }
-
         // Apply layer + object opacity
-        const layerOp = getLayerOpacity(State.activeSite, obj.layerId);
         const objOp = obj.objectOpacity !== undefined ? obj.objectOpacity : 1;
-        const combinedOp = layerOp * objOp;
+        const combinedOp = layerOpacity * objOp;
         if (combinedOp < 1) ctx.globalAlpha = combinedOp;
 
         // --- Area annotation ---
