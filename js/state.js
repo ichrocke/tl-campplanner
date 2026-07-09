@@ -183,7 +183,7 @@ const State = (() => {
         get activeSite() { return _sites[_activeSiteIndex]; },
         get defaultTemplates() { return defaultTemplates(); },
         get minDistance() { return _minDistance; },
-        set minDistance(v) { _minDistance = v; },
+        set minDistance(v) { _minDistance = v; if (typeof Canvas !== 'undefined' && Canvas.markDistancesDirty) Canvas.markDistancesDirty(); },
         showDistances: false,
         _minimapEnabled: true,
         get displaySettings() { return _displaySettings; },

@@ -89,6 +89,7 @@
 
     // State change handler
     State.onChange((skipSync) => {
+        if (Canvas.markDistancesDirty) Canvas.markDistancesDirty(); // D12: geometry changed
         UI.buildTabs();
         UI.buildPalette();
         UI.buildPlacedList();

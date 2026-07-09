@@ -500,6 +500,10 @@ const Tools = (() => {
         }
 
         if (drag) {
+            // D12: keep live min-distance lines fresh while manipulating geometry
+            if (drag.type === 'move' || drag.type === 'rotate' || drag.type === 'resize' || drag.type === 'areaVertex') {
+                if (Canvas.markDistancesDirty) Canvas.markDistancesDirty();
+            }
             switch (drag.type) {
                 case 'minimapDrag': {
                     const rr = Canvas.canvas.getBoundingClientRect();

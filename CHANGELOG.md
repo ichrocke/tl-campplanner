@@ -1,5 +1,13 @@
 # Changelog
 
+## [6.9.3] - 2026-07-09
+
+### Fixed
+- **Correct distance measurement for fences and areas**: The minimum-distance check now measures to the actual edges of fences (polyline) and areas (polygon) instead of to their centre point, so a tent next to a long fence is evaluated correctly.
+
+### Changed
+- **Faster distance display**: When "show distances" is on, the distance lines are cached and only recomputed when the layout changes, instead of every frame – large plans stay smooth while panning and hovering.
+
 ## [6.9.2] - 2026-07-09
 
 ### Fixed

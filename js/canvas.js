@@ -247,24 +247,21 @@ const Canvas = (() => {
         // Draw only the active site (grounds + objects, ordered by layer z-order)
         drawObjects(activeSite);
 
-        // Permanent distances
+        // Permanent distances (cached; recomputed only on geometry change)
         if (State.showDistances) {
-            activeSite.objects.forEach(obj => {
-                if (obj.type === 'ground' || obj.type === 'bgimage' || obj.type === 'image' || obj.type === 'guideline' || obj.type === 'symbol') return;
-                computeDistancesForObj(obj.id).forEach(d => {
-                    const p1 = w2s(d.x1, d.y1), p2 = w2s(d.x2, d.y2);
-                    ctx.strokeStyle = d.color; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
-                    ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
-                    ctx.setLineDash([]);
-                    const text = d.dist.toFixed(1) + ' m';
-                    ctx.font = 'bold 10px sans-serif';
-                    const tw = ctx.measureText(text).width;
-                    const mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2;
-                    ctx.fillStyle = 'rgba(255,255,255,0.8)';
-                    ctx.fillRect(mx-tw/2-2, my-7, tw+4, 14);
-                    ctx.fillStyle = d.color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-                    ctx.fillText(text, mx, my);
-                });
+            getDistanceLines(activeSite).forEach(d => {
+                const p1 = w2s(d.x1, d.y1), p2 = w2s(d.x2, d.y2);
+                ctx.strokeStyle = d.color; ctx.lineWidth = 1; ctx.setLineDash([4, 3]);
+                ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke();
+                ctx.setLineDash([]);
+                const text = d.dist.toFixed(1) + ' m';
+                ctx.font = 'bold 10px sans-serif';
+                const tw = ctx.measureText(text).width;
+                const mx = (p1.x+p2.x)/2, my = (p1.y+p2.y)/2;
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.fillRect(mx-tw/2-2, my-7, tw+4, 14);
+                ctx.fillStyle = d.color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText(text, mx, my);
             });
         }
 
@@ -2509,16 +2506,34 @@ const Canvas = (() => {
     }
 
     // Distance between object BODIES (not guy ropes)
+    // Edge segments of an object in world coordinates (D9): point-based objects
+    // (area/ground closed polygon, fence open polyline) use their real geometry
+    // instead of collapsing to the centroid; shape objects use their corners.
+    function getObjSegments(obj) {
+        const segs = [];
+        if ((obj.type === 'area' || obj.type === 'ground') && obj.points && obj.points.length >= 2) {
+            const n = obj.points.length;
+            for (let i = 0; i < n; i++) segs.push([obj.points[i], obj.points[(i + 1) % n]]); // closed
+            return segs;
+        }
+        if (obj.type === 'fence' && obj.points && obj.points.length >= 2) {
+            for (let i = 0; i < obj.points.length - 1; i++) segs.push([obj.points[i], obj.points[i + 1]]); // open
+            return segs;
+        }
+        const c = getObjCorners(obj, false);
+        for (let i = 0; i < c.length; i++) segs.push([c[i], c[(i + 1) % c.length]]);
+        return segs;
+    }
+
     function objDistance(obj1, obj2) {
-        const c1 = getObjCorners(obj1, false);
-        const c2 = getObjCorners(obj2, false);
-        const n1 = c1.length, n2 = c2.length;
+        const s1 = getObjSegments(obj1);
+        const s2 = getObjSegments(obj2);
 
         let minDist = Infinity, bestP1 = null, bestP2 = null;
 
-        for (let i = 0; i < n1; i++) {
-            for (let j = 0; j < n2; j++) {
-                const r = segDist(c1[i], c1[(i + 1) % n1], c2[j], c2[(j + 1) % n2]);
+        for (let i = 0; i < s1.length; i++) {
+            for (let j = 0; j < s2.length; j++) {
+                const r = segDist(s1[i][0], s1[i][1], s2[j][0], s2[j][1]);
                 if (r.dist < minDist) {
                     minDist = r.dist;
                     bestP1 = r.p1;
@@ -2533,6 +2548,29 @@ const Canvas = (() => {
         }
 
         return { dist: minDist, p1: bestP1, p2: bestP2 };
+    }
+
+    // D12: cache all min-distance lines (world coords) and recompute only when
+    // the geometry changes, not on every render (pan/hover redraw uses the cache).
+    let _distCache = null;
+    function markDistancesDirty() { _distCache = null; }
+    const _DIST_SKIP = { ground: 1, bgimage: 1, image: 1, guideline: 1, symbol: 1 };
+    function getDistanceLines(site) {
+        if (_distCache) return _distCache;
+        const lines = [];
+        const minD = State.minDistance;
+        const objs = site.objects.filter(o => !_DIST_SKIP[o.type]);
+        for (let i = 0; i < objs.length; i++) {
+            for (let j = i + 1; j < objs.length; j++) { // unique pairs only
+                const r = objDistance(objs[i], objs[j]);
+                if (r.dist < minD * 2 && r.p1 && r.p2) {
+                    const color = r.dist < minD ? '#ef4444' : (r.dist < minD * 1.5 ? '#f59e0b' : '#22c55e');
+                    lines.push({ dist: r.dist, color, x1: r.p1.x, y1: r.p1.y, x2: r.p2.x, y2: r.p2.y });
+                }
+            }
+        }
+        _distCache = lines;
+        return lines;
     }
 
     function computeDistancesForObj(objId) {
@@ -2743,6 +2781,7 @@ const Canvas = (() => {
         objInRect,
         isObjSelectable,
         hitTest,
+        markDistancesDirty,
         get hoveredId() { return hoveredId; },
         set hoveredId(id) { hoveredId = id; },
         get dragDistances() { return dragDistances; },
