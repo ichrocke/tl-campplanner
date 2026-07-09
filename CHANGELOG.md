@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.9.1] - 2026-07-09
+
+### Fixed
+- **No more "sticky" drag**: If you release the mouse button outside the canvas (e.g. over the sidebar or outside the window) while moving an object, the drag now ends correctly instead of the object continuing to follow the cursor. Pressing Escape during a move/rotate/resize/vertex drag cancels it and restores the original position.
+- **Locked objects are properly protected**: Locked objects can no longer be resized, have their vertices dragged, be deleted with Delete/Backspace, or be recoloured with the paint tool.
+- **Ground tool double-click**: Double-clicking to finish a ground area no longer adds a duplicate corner at the same spot.
+
 ## [6.9.0] - 2026-07-09
 
 ### Fixed

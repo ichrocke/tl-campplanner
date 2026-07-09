@@ -205,8 +205,8 @@ const Tools = (() => {
                 return;
             }
 
-            // 1a. Check resize handle (bgimage)
-            if (sel && sel.type === 'bgimage') {
+            // 1a. Check resize handle (bgimage) – not while locked
+            if (sel && sel.type === 'bgimage' && !sel.locked) {
                 const corner = Canvas.pointOnResizeHandle(world.x, world.y, sel);
                 if (corner >= 0) {
                     drag = {
@@ -220,11 +220,11 @@ const Tools = (() => {
                 }
             }
 
-            // 1b. Check area/fence/guideline/ground vertex drag
-            if (sel && (sel.type === 'area' || sel.type === 'fence' || sel.type === 'guideline' || sel.type === 'ground') && sel.points) {
+            // 1b. Check area/fence/guideline/ground vertex drag – not while locked
+            if (sel && !sel.locked && (sel.type === 'area' || sel.type === 'fence' || sel.type === 'guideline' || sel.type === 'ground') && sel.points) {
                 const vi = findAreaVertex(world, sel);
                 if (vi >= 0) {
-                    drag = { type: 'areaVertex', objId: sel.id, vertexIndex: vi };
+                    drag = { type: 'areaVertex', objId: sel.id, vertexIndex: vi, origPoints: sel.points.map(p => ({ ...p })) };
                     return;
                 }
             }
@@ -317,6 +317,11 @@ const Tools = (() => {
     }
 
     function onGroundClick(pos, site) {
+        // D15: debounce so the double-click that finishes the polygon doesn't
+        // also add a duplicate vertex at the same spot.
+        const now = Date.now();
+        if (now - lastClickTime < 300) return;
+        lastClickTime = now;
         const preview = Canvas.groundPreview;
         // No more replacement confirm - multiple grounds allowed
         if (preview.length >= 3) {
@@ -429,7 +434,7 @@ const Tools = (() => {
     // --- Paint tool ---
     function onPaintClick(world, site) {
         const hit = Canvas.hitTest(world.x, world.y, { selectableOnly: true });
-        if (hit && hit.type !== 'guideline') {
+        if (hit && hit.type !== 'guideline' && !hit.locked) {
             const color = UI.getActiveColor();
             if (color) {
                 State.updateObject(hit.id, { color: color });
@@ -443,9 +448,47 @@ const Tools = (() => {
         UI.openTextModal(pos);
     }
 
+    // D6: revert an in-progress manipulation drag (called by ESC)
+    function cancelActiveDrag() {
+        if (!drag) return false;
+        const site = State.activeSite;
+        if (site) {
+            if (drag.type === 'move' && drag.origPositions) {
+                Object.keys(drag.origPositions).forEach(id => {
+                    const o = site.objects.find(x => x.id === id);
+                    const orig = drag.origPositions[id];
+                    if (o && orig) { o.x = orig.x; o.y = orig.y; if (orig.points && o.points) o.points = orig.points.map(p => ({ ...p })); }
+                });
+            } else if (drag.type === 'rotate') {
+                if (drag.origStates) {
+                    drag.origStates.forEach(st => { const o = site.objects.find(x => x.id === st.id); if (o) { o.x = st.x; o.y = st.y; o.rotation = st.rotation; if (st.points && o.points) o.points = st.points.map(p => ({ ...p })); } });
+                } else {
+                    const o = site.objects.find(x => x.id === drag.objId);
+                    if (o) { o.rotation = drag.origRotation; if (drag.origPoints && o.points) o.points = drag.origPoints.map(p => ({ ...p })); }
+                }
+            } else if (drag.type === 'resize') {
+                const o = site.objects.find(x => x.id === drag.objId);
+                if (o) { o.width = drag.origWidth; o.height = drag.origHeight; o.x = drag.origX; o.y = drag.origY; }
+            } else if (drag.type === 'areaVertex' && drag.origPoints) {
+                const o = site.objects.find(x => x.id === drag.objId);
+                if (o) o.points = drag.origPoints.map(p => ({ ...p }));
+            }
+        }
+        drag = null;
+        Canvas.selectionRect = null;
+        Canvas.measureLine = null;
+        Canvas.dragDistances = [];
+        Canvas.render();
+        return true;
+    }
+
     function onMouseMove(e) {
         const site = State.activeSite;
         if (!site) return;
+        // D6: while NOT dragging, only react to moves over the canvas itself
+        // (so a drag started on the canvas keeps working outside it, but hover
+        // does not fire over the sidebar/other UI).
+        if (!drag && e.target !== Canvas.canvas) return;
         const world = getMouseWorld(e);
         const snapped = snapWorld(world);
 
@@ -968,6 +1011,7 @@ const Tools = (() => {
                 break;
             case 'Escape':
                 if (_eyedropperMode) { Tools.cancelEyedropper(); break; }
+                if (drag && (drag.type === 'move' || drag.type === 'rotate' || drag.type === 'resize' || drag.type === 'areaVertex')) { cancelActiveDrag(); break; }
                 if (activeTool === 'ground') {
                     Canvas.groundPreview = [];
                     setTool('select');
@@ -992,9 +1036,13 @@ const Tools = (() => {
             case 'x': case 'X':
                 if ((e.key === 'x' || e.key === 'X') && (e.ctrlKey || e.metaKey)) break;
                 if (Canvas.selectionCount > 0) {
-                    [...Canvas.selectedIds].forEach(id => State.removeObject(id));
-                    Canvas.clearSelection();
-                    UI.hideProperties();
+                    // Skip locked objects (D7)
+                    const del = [...Canvas.selectedIds].filter(id => {
+                        const o = State.activeSite && State.activeSite.objects.find(x => x.id === id);
+                        return o && !o.locked;
+                    });
+                    del.forEach(id => { State.removeObject(id); Canvas.removeFromSelection(id); });
+                    if (Canvas.selectionCount === 0) UI.hideProperties();
                     Canvas.render();
                 }
                 break;

@@ -105,8 +105,10 @@
     // Canvas events (mouse)
     const c = Canvas.canvas;
     c.addEventListener('mousedown', (e) => Tools.onMouseDown(e));
-    c.addEventListener('mousemove', (e) => Tools.onMouseMove(e));
-    c.addEventListener('mouseup', (e) => Tools.onMouseUp(e));
+    // D6: move/up on window so a drag that leaves the canvas keeps working and
+    // always ends on release (no "sticky" object following the cursor).
+    window.addEventListener('mousemove', (e) => Tools.onMouseMove(e));
+    window.addEventListener('mouseup', (e) => Tools.onMouseUp(e));
     c.addEventListener('wheel', (e) => Tools.onWheel(e), { passive: false });
     c.addEventListener('contextmenu', (e) => Tools.onContextMenu(e));
     c.addEventListener('dblclick', (e) => Tools.onDblClick(e));
