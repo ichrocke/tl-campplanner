@@ -305,6 +305,7 @@
   "ground.import": "Import ground area",
   "ground.printOnly": "Print only this ground area",
   "props.showDiagonals": "Show diagonals with measurements",
+  "props.showMeasurements": "Show measurements",
   "props.locked": "Locked",
   "props.lockObj": "Lock position",
   "shortcut.gridSize": "Grid size +/-",

@@ -1284,6 +1284,10 @@ const UI = (() => {
                 texOpts += `<option value="${t.id}" ${(obj.texture || 'solid') === t.id ? 'selected' : ''}>${I18n.t('texture.' + t.id)}</option>`;
             });
             html += `<label>${I18n.t('props.texture')} <select id="prop-texture">${texOpts}</select></label>`;
+            html += `<div class="prop-grid" style="margin-top:6px">
+                <label style="flex-direction:row !important;align-items:center !important;gap:4px"><input type="checkbox" id="prop-area-measurements" ${obj.showMeasurements ? 'checked' : ''} style="width:auto"> ${I18n.t('props.showMeasurements')}</label>
+                <label style="flex-direction:row !important;align-items:center !important;gap:4px"><input type="checkbox" id="prop-area-diagonals" ${obj.showDiagonals ? 'checked' : ''} style="width:auto"> ${I18n.t('props.showDiagonals')}</label>
+            </div>`;
         }
         if (obj.type !== 'guideline' && obj.type !== 'bgimage' && obj.type !== 'image') {
             html += `<div class="prop-grid" style="margin-top:6px">
@@ -1618,6 +1622,23 @@ const UI = (() => {
             });
         });
         bind('prop-texture', 'texture');
+        // Area: optional measurements + diagonals
+        const areaMeas = document.getElementById('prop-area-measurements');
+        if (areaMeas) {
+            areaMeas.addEventListener('change', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                State.updateObject(obj.id, { showMeasurements: areaMeas.checked });
+                Canvas.render();
+            });
+        }
+        const areaDiag = document.getElementById('prop-area-diagonals');
+        if (areaDiag) {
+            areaDiag.addEventListener('change', () => {
+                if (!Canvas.isSelected(obj.id)) return;
+                State.updateObject(obj.id, { showDiagonals: areaDiag.checked });
+                Canvas.render();
+            });
+        }
         bind('prop-desc-color', 'descColor');
         bind('prop-desc-size', 'descSize', parseFloat);
         // Entrance position
@@ -2020,6 +2041,23 @@ const UI = (() => {
             </div>`;
         }
 
+        // Area measurements + diagonals (when any area is selected)
+        const selAreas = selObjs.filter(o => o.type === 'area');
+        if (selAreas.length > 0) {
+            const allMeas = selAreas.every(o => o.showMeasurements);
+            const allADiag = selAreas.every(o => o.showDiagonals);
+            html += `<div class="prop-section">
+                <label style="flex-direction:row !important;align-items:center !important;gap:6px !important;cursor:pointer;margin-bottom:4px">
+                    <input type="checkbox" id="prop-multi-area-meas" ${allMeas ? 'checked' : ''} style="width:auto">
+                    ${I18n.t('props.showMeasurements')}
+                </label>
+                <label style="flex-direction:row !important;align-items:center !important;gap:6px !important;cursor:pointer">
+                    <input type="checkbox" id="prop-multi-area-diag" ${allADiag ? 'checked' : ''} style="width:auto">
+                    ${I18n.t('props.showDiagonals')}
+                </label>
+            </div>`;
+        }
+
         // Align buttons
         html += `<div class="prop-section">
             <div class="prop-section-title">${I18n.t('ctx.align')}</div>
@@ -2050,6 +2088,22 @@ const UI = (() => {
         if (mDiag) {
             mDiag.addEventListener('change', () => {
                 selGrounds.forEach(o => State.updateObject(o.id, { showDiagonals: mDiag.checked }));
+                Canvas.render();
+            });
+        }
+
+        // Area measurements/diagonals handlers (apply to all selected areas)
+        const mAreaMeas = document.getElementById('prop-multi-area-meas');
+        if (mAreaMeas) {
+            mAreaMeas.addEventListener('change', () => {
+                selAreas.forEach(o => State.updateObject(o.id, { showMeasurements: mAreaMeas.checked }));
+                Canvas.render();
+            });
+        }
+        const mAreaDiag = document.getElementById('prop-multi-area-diag');
+        if (mAreaDiag) {
+            mAreaDiag.addEventListener('change', () => {
+                selAreas.forEach(o => State.updateObject(o.id, { showDiagonals: mAreaDiag.checked }));
                 Canvas.render();
             });
         }

@@ -662,6 +662,61 @@ const Canvas = (() => {
         return { x: cx, y: cy };
     }
 
+    // Edge lengths for a polygon (world-coord points), label above each edge midpoint
+    function drawEdgeLengths(pts, textColor) {
+        ctx.font = '10px sans-serif';
+        ctx.fillStyle = textColor;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        for (let i = 0; i < pts.length; i++) {
+            const a = pts[i];
+            const b = pts[(i + 1) % pts.length];
+            if (i === pts.length - 1 && pts.length < 3) break;
+            const dist = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
+            const mp = w2s((a.x + b.x) / 2, (a.y + b.y) / 2);
+            ctx.fillText(dist.toFixed(1) + ' m', mp.x, mp.y - 4);
+        }
+    }
+
+    // Dashed diagonals of a polygon with their length labels
+    function drawPolygonDiagonals(pts, strokeColor, textColor) {
+        const n = pts.length;
+        if (n < 4) return;
+        const isDiag = (i, j) => j !== (i + 1) % n && i !== (j + 1) % n;
+        ctx.strokeStyle = strokeColor;
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 4]);
+        for (let i = 0; i < n; i++) {
+            for (let j = i + 2; j < n; j++) {
+                if (!isDiag(i, j)) continue;
+                const pa = w2s(pts[i].x, pts[i].y);
+                const pb = w2s(pts[j].x, pts[j].y);
+                ctx.beginPath();
+                ctx.moveTo(pa.x, pa.y);
+                ctx.lineTo(pb.x, pb.y);
+                ctx.stroke();
+            }
+        }
+        ctx.setLineDash([]);
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        for (let i = 0; i < n; i++) {
+            for (let j = i + 2; j < n; j++) {
+                if (!isDiag(i, j)) continue;
+                const a = pts[i], b = pts[j];
+                const dist = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
+                const dmp = w2s((a.x + b.x) / 2, (a.y + b.y) / 2);
+                const label = dist.toFixed(1) + ' m';
+                const tw = ctx.measureText(label).width;
+                ctx.fillStyle = 'rgba(255,255,255,0.75)';
+                ctx.fillRect(dmp.x - tw / 2 - 2, dmp.y - 7, tw + 4, 14);
+                ctx.fillStyle = textColor;
+                ctx.fillText(label, dmp.x, dmp.y);
+            }
+        }
+    }
+
     function drawGround(site) {
         // Draw ground-type objects (rendered before other objects)
         site.objects.forEach(obj => {
@@ -746,59 +801,11 @@ const Canvas = (() => {
                 ctx.setLineDash([]);
             }
 
-            // Edge lengths (skip in treasure mode)
-            if (!_treasureMode) {
-                ctx.font = '10px sans-serif';
-                ctx.fillStyle = darkColor;
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'bottom';
-                for (let i = 0; i < pts.length; i++) {
-                    const a = pts[i];
-                    const b = pts[(i + 1) % pts.length];
-                    if (i === pts.length - 1 && pts.length < 3) break;
-                    const dist = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
-                    const mp = w2s((a.x + b.x) / 2, (a.y + b.y) / 2);
-                    ctx.fillText(dist.toFixed(1) + ' m', mp.x, mp.y - 4);
-                }
-            }
+            // Edge lengths (skip in treasure mode) – always shown for grounds
+            if (!_treasureMode) drawEdgeLengths(pts, darkColor);
 
-            // Diagonals (dashed) with measurements
-            if (obj.showDiagonals && pts.length >= 4 && !_treasureMode) {
-                const n = pts.length;
-                const isDiag = (i, j) => j !== (i + 1) % n && i !== (j + 1) % n;
-                ctx.strokeStyle = darkColor;
-                ctx.lineWidth = 1;
-                ctx.setLineDash([5, 4]);
-                for (let i = 0; i < n; i++) {
-                    for (let j = i + 2; j < n; j++) {
-                        if (!isDiag(i, j)) continue;
-                        const pa = w2s(pts[i].x, pts[i].y);
-                        const pb = w2s(pts[j].x, pts[j].y);
-                        ctx.beginPath();
-                        ctx.moveTo(pa.x, pa.y);
-                        ctx.lineTo(pb.x, pb.y);
-                        ctx.stroke();
-                    }
-                }
-                ctx.setLineDash([]);
-                ctx.font = '10px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                for (let i = 0; i < n; i++) {
-                    for (let j = i + 2; j < n; j++) {
-                        if (!isDiag(i, j)) continue;
-                        const a = pts[i], b = pts[j];
-                        const dist = Math.sqrt((b.x - a.x) ** 2 + (b.y - a.y) ** 2);
-                        const dmp = w2s((a.x + b.x) / 2, (a.y + b.y) / 2);
-                        const label = dist.toFixed(1) + ' m';
-                        const tw = ctx.measureText(label).width;
-                        ctx.fillStyle = 'rgba(255,255,255,0.75)';
-                        ctx.fillRect(dmp.x - tw / 2 - 2, dmp.y - 7, tw + 4, 14);
-                        ctx.fillStyle = darkColor;
-                        ctx.fillText(label, dmp.x, dmp.y);
-                    }
-                }
-            }
+            // Diagonals (dashed) with measurements (opt-in per ground)
+            if (obj.showDiagonals && !_treasureMode) drawPolygonDiagonals(pts, darkColor, darkColor);
 
             // Area + name display
             if (pts.length >= 3) {
@@ -1666,6 +1673,10 @@ const Canvas = (() => {
             ctx.fillStyle = '#2563eb'; ctx.fill();
             ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
         }
+
+        // Optional edge measurements + diagonals (both off by default)
+        if (obj.showMeasurements) drawEdgeLengths(obj.points, color);
+        if (obj.showDiagonals) drawPolygonDiagonals(obj.points, color, color);
 
         // Label at centroid (with offset)
         const center = polygonCentroid(obj.points);

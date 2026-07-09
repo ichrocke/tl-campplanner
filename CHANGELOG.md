@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.6.0] - 2026-07-09
+
+### Added
+- **Areas: optional measurements and diagonals**: An area's properties now include two checkboxes — "Show measurements" (edge lengths) and "Show diagonals with measurements" (dashed diagonals). Both are off by default. They can also be toggled for several selected areas at once. The edge-length and diagonal rendering is now shared with ground areas for consistent behavior.
+
 ## [6.5.1] - 2026-07-09
 
 ### Fixed
