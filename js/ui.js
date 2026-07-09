@@ -171,7 +171,9 @@ const UI = (() => {
                 e.stopPropagation();
                 layer.visible = !layer.visible;
                 State.notifyChange(true);
+                if (Canvas.pruneSelection()) refreshPropertiesForSelection();
                 buildLayers();
+                buildPlacedList();
                 Canvas.render();
             });
 
@@ -180,7 +182,10 @@ const UI = (() => {
                 e.stopPropagation();
                 layer.locked = !layer.locked;
                 State.notifyChange(true);
+                if (Canvas.pruneSelection()) refreshPropertiesForSelection();
                 buildLayers();
+                buildPlacedList();
+                Canvas.render();
             });
 
             // Reorder
@@ -926,7 +931,7 @@ const UI = (() => {
             gh.className = 'placed-group-header' + (anySelected ? ' active' : '');
             gh.innerHTML = `<span class="placed-group-icon">&#9654;</span> <strong>${gName}</strong> <span class="placed-item-dims">${members.length}</span>`;
             gh.addEventListener('click', () => {
-                Canvas.selectMultiple(members.map(o => o.id));
+                Canvas.selectMultiple(members.filter(o => Canvas.isObjSelectable(o)).map(o => o.id));
                 showMultiProperties();
                 Canvas.render();
                 buildPlacedList();
@@ -961,10 +966,10 @@ const UI = (() => {
                 Canvas.toggleSelection(obj.id);
             } else {
                 Canvas.selectedId = obj.id;
-                // Auto-select group
+                // Auto-select group (skip members on hidden/locked layers)
                 if (obj.groupId) {
                     const site = State.activeSite;
-                    site.objects.forEach(o => { if (o.groupId === obj.groupId) Canvas.addToSelection(o.id); });
+                    site.objects.forEach(o => { if (o.groupId === obj.groupId && Canvas.isObjSelectable(o)) Canvas.addToSelection(o.id); });
                 }
             }
             if (Canvas.selectionCount === 1) {
@@ -2279,6 +2284,18 @@ const UI = (() => {
 
     function hideProperties() {
         document.getElementById('properties').classList.add('hidden');
+    }
+
+    // Show the correct properties panel for the current selection count
+    function refreshPropertiesForSelection() {
+        const site = State.activeSite;
+        if (!site || Canvas.selectionCount === 0) { hideProperties(); return; }
+        if (Canvas.selectionCount === 1) {
+            const obj = site.objects.find(o => o.id === Canvas.selectedId);
+            if (obj) showProperties(obj); else hideProperties();
+        } else {
+            showMultiProperties();
+        }
     }
 
     // --- Modals ---

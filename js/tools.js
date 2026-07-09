@@ -278,9 +278,9 @@ const Tools = (() => {
                     site.activeLayerId = hit.layerId;
                     UI.buildLayers();
                 }
-                // Auto-select group members
+                // Auto-select group members (skip members on hidden/locked layers)
                 if (hit.groupId) {
-                    site.objects.forEach(o => { if (o.groupId === hit.groupId) Canvas.addToSelection(o.id); });
+                    site.objects.forEach(o => { if (o.groupId === hit.groupId && Canvas.isObjSelectable(o)) Canvas.addToSelection(o.id); });
                 }
                 if (Canvas.selectionCount === 1) {
                     UI.showProperties(hit);
@@ -856,7 +856,7 @@ const Tools = (() => {
                 const site = State.activeSite;
                 const r = Canvas.selectionRect;
                 if (site && r) {
-                    const hits = site.objects.filter(o => Canvas.objInRect(o, r.x1, r.y1, r.x2, r.y2));
+                    const hits = site.objects.filter(o => Canvas.isObjSelectable(o) && Canvas.objInRect(o, r.x1, r.y1, r.x2, r.y2));
                     if (!drag.additive) Canvas.clearSelection();
                     hits.forEach(o => Canvas.addToSelection(o.id));
                     if (Canvas.selectionCount === 1) {
@@ -922,7 +922,7 @@ const Tools = (() => {
                     e.preventDefault();
                     const s = State.activeSite;
                     if (s) {
-                        const layerObjs = s.objects.filter(o => o.layerId === s.activeLayerId);
+                        const layerObjs = s.objects.filter(o => o.layerId === s.activeLayerId && Canvas.isObjSelectable(o));
                         Canvas.selectMultiple(layerObjs.map(o => o.id));
                         if (Canvas.selectionCount > 1) UI.showMultiProperties();
                         else if (Canvas.selectionCount === 1) UI.showProperties(s.objects.find(o => o.id === Canvas.selectedId));

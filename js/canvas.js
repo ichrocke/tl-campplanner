@@ -499,6 +499,15 @@ const Canvas = (() => {
         return !layer || layer.visible;
     }
 
+    // An object may only be selected if its layer is neither hidden nor locked –
+    // mirrors the click hit-test rule, so you can never select what you can't click.
+    function isObjSelectable(obj) {
+        const site = State.activeSite;
+        if (!obj || !obj.layerId || !site || !site.layers) return true;
+        const layer = site.layers.find(l => l.id === obj.layerId);
+        return !layer || (layer.visible && !layer.locked);
+    }
+
     function getLayerOpacity(site, layerId) {
         if (!layerId || !site.layers) return 1;
         const layer = site.layers.find(l => l.id === layerId);
@@ -2666,11 +2675,23 @@ const Canvas = (() => {
         removeFromSelection(id) { selectedIds.delete(id); },
         toggleSelection(id) { if (selectedIds.has(id)) selectedIds.delete(id); else selectedIds.add(id); },
         clearSelection() { selectedIds.clear(); },
+        // Drop any selected objects that are no longer selectable (layer hidden/locked)
+        pruneSelection() {
+            const site = State.activeSite;
+            if (!site) return false;
+            let changed = false;
+            [...selectedIds].forEach(id => {
+                const o = site.objects.find(x => x.id === id);
+                if (!o || !isObjSelectable(o)) { selectedIds.delete(id); changed = true; }
+            });
+            return changed;
+        },
         isSelected(id) { return selectedIds.has(id); },
         get selectionCount() { return selectedIds.size; },
         get selectionRect() { return selectionRect; },
         set selectionRect(r) { selectionRect = r; },
         objInRect,
+        isObjSelectable,
         get hoveredId() { return hoveredId; },
         set hoveredId(id) { hoveredId = id; },
         get dragDistances() { return dragDistances; },

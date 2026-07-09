@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.6.1] - 2026-07-09
+
+### Fixed
+- **Objects on hidden or locked layers can no longer be selected**: Rubber-band (box) selection, group auto-selection (on the canvas and via the sidebar list/group header) and select-all (Ctrl+A) now skip objects whose layer is hidden or locked — matching the existing click behavior. This fixes the effect where copying a selection would silently duplicate objects that were never intentionally selected (e.g. hidden group members). Toggling a layer to hidden/locked now also removes any of its objects from the current selection.
+
 ## [6.6.0] - 2026-07-09
 
 ### Added
