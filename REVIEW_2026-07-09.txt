@@ -10,9 +10,9 @@ Diese Datei ist eine Bestandsaufnahme (Code-Review) UND ein priorisierter
 Umsetzungsplan. Sie kann jederzeit erneut geöffnet und abgearbeitet werden.
 
 Vorgehensvereinbarung mit dem Nutzer (vom 2026-07-09):
-  - Import-UX-Fix: NUR planen (nicht umsetzen). -> siehe Teil A.
   - Sicherheitslücken: NUR dokumentieren (nicht automatisch fixen).
   - Fokus des Tools: SICHER und FUNKTIONAL.
+  - Import-UX-Fix (ehem. Teil A) am 2026-07-09 verworfen/gelöscht.
 
 Der Zeltplatzplaner wurde ursprünglich mit einem älteren Modell erstellt.
 Reviewed wurden BEIDE Varianten:
@@ -55,45 +55,6 @@ die größten Risiken dort sind Autosave-Datenverlust bei großen Bildern und
 
 
 ================================================================================
- TEIL A – DER GEMELDETE IMPORT-/TAB-BUG (Analyse + geplanter Fix)
-================================================================================
-
-MELDUNG (Nutzer): "Wenn ich einfüge, erscheint es auf beiden Zeltplätzen
-gleichzeitig und das vorher gezeichnete verschwindet."
-
-BEWERTUNG
---------------------------------------------------------------------------------
-Es gibt ZWEI grundverschiedene Ursachen – je nachdem, ob ein Raum aktiv ist:
-
-A) STANDALONE (kein Raum): rein ein UX-/Wahrnehmungsproblem, KEIN Datenverlust.
-   Seit dem Append-Import (2026-07-08) legt ein Import neue Tabs an, statt zu
-   überschreiben, und springt automatisch auf den ersten neuen Tab. Importiert
-   der Nutzer einen älteren Export DESSELBEN Plans, entstehen zwei gleich
-   benannte Tabs; er blickt plötzlich auf die alte Kopie -> "verschwunden".
-   Das Original ist unversehrt im anderen Tab. Es fehlt nur jedes Feedback.
-   [V] state.js importJSON(append)  |  io.js:34
-
-B) COLLAB (Raum aktiv): ECHTER Datenverlust, siehe Teil C (C1–C4).
-   Hier ist die Meldung wörtlich zutreffend und schwerwiegend.
-
-GEPLANTER FIX (Teil A, nur Standalone-UX – NICHT umgesetzt)
---------------------------------------------------------------------------------
- A-Fix-1  Namenskollision auflösen: importierte Tabs mit gleichem Namen als
-          "<Name> (2)", "<Name> (3)" ... benennen.
-          Ort: state.js importJSON() Append-Zweig; io.js importTab().
- A-Fix-2  Bestätigungs-/Hinweis-Toast nach Import:
-          "N Plan/Pläne als neue Tabs hinzugefügt." (UI.showHint/Toast).
- A-Fix-3  Optional: vor dem Anlegen prüfen, ob ein inhaltlich identischer Plan
-          bereits offen ist (Objektanzahl + Bounds vergleichen) und nachfragen
-          "Als neuen Tab hinzufügen oder abbrechen?".
- A-Fix-4  Import atomar machen (siehe D-Fund D4): Sites erst vollständig
-          validieren/migrieren, dann anhängen – sonst halbfertiger Import bei
-          Fehler in einer Site.
-
-Aufwand: klein (A-Fix-1/2), mittel (A-Fix-3/4). Kein Backend nötig.
-
-
-================================================================================
  TEIL B – SICHERHEIT
 ================================================================================
  (B teilt sich in FRONTEND-XSS und BACKEND/PHP. Alles NUR dokumentiert.)
@@ -110,44 +71,14 @@ Positiv vorweg:
  B.1  FRONTEND – STORED / SELF XSS
 --------------------------------------------------------------------------------
 
-X1  KRITISCH  Ungefilterte Nutzerdaten in innerHTML (Stored XSS via Collab)
-    Der Helfer escapeHtml() EXISTIERT (ui.js:2783) und wird für Chat genutzt,
-    aber an den State-Feldern NICHT angewandt. [V ui.js:957, :2783]
-    Betroffene Sinks (Objekt-/Gruppen-/Layer-/Ordner-/Template-Felder, die
-    über den Raum-State an alle Clients synchronisiert werden):
-      - ui.js:957      placed-list  title="${obj.name}${desc}" + Text  [V]
-      - ui.js:2907     Hover-Tooltip  ${obj.name}   (Trigger: bloßes Hovern)
-      - ui.js:744      Palette Template-Name  ${t.name}
-      - ui.js:634-635  Palette Ordner-Name  ${fname}
-      - ui.js:927      Gruppenname  <strong>${gName}</strong>
-      - ui.js:1970     Gruppen-Input  value="${groupName}"  (Attribut-Ausbruch)
-      - ui.js:70       Layer-Name  title + Text  (2 Sinks)
-      - ui.js:1252-1271 Properties: name/desc/text nur teil-escaped;
-                        obj.color/descColor roh im Attribut
-      - io.js:315      Druck-Fenster  <title>${title||site.name}</title>
-    Angriff: Teilnehmer benennt ein Objekt
-      <img src=x onerror=alert(document.cookie)>
-    -> bei anderen Clients Codeausführung (localStorage-Diebstahl inkl.
-    gespeicherter Pläne + collab_userName, Session-Übernahme, Weiterverbreitung).
-    Auch OHNE Raum relevant als Self-XSS über importierte Fremd-JSON-Dateien.
-    FIX: zentralen esc() (Text) + escAttr() (zusätzl. " ') an allen o.g.
-    Stellen anwenden; Farbwerte gegen /^#[0-9a-fA-F]{3,8}$/ validieren
-    (Muster existiert bereits in io.js:1188). io.js:315 title/site.name escapen.
+X1  [ERLEDIGT 2026-07-09, v6.8.1]  Stored/Self-XSS behoben: escAttr()+safeColor()
+    hinzugefügt und an allen innerHTML-Sinks (placed list, Hover-Tooltip, Palette,
+    Layer-Panel, Properties, Gruppen-Input, Druck-Titel) angewandt; Farbwerte
+    validiert. Umgesetzt und deployed.
 
-X2  MITTEL  Import ohne Strukturvalidierung
-    - ground_area/objects-Import ui.js:~2442: data.ground/data.objects nur auf
-      Array geprüft; fehlende x/y -> NaN-Koordinaten -> unsichtbares,
-      nicht anklickbares Objekt. Kein type-Whitelist (beliebige Typen/Felder).
-    - importTab io.js:1267: site.objects/site.layers.forEach ohne Existenzprüfung
-      -> TypeError bei manipulierter Datei.
-    FIX: pro Objekt Pflichtfelder + type gegen Whitelist prüfen,
-    Zahlen via Number.isFinite absichern; fehlende Arrays defaulten.
-
-X3  MITTEL  Keine Content-Security-Policy / Security-Header (index.html)
-    Kein CSP-Meta-Tag, kein X-Content-Type-Options. Eine CSP mit
-    script-src 'self' würde onerror=-Injection (X1) als Defense-in-Depth
-    blocken. img-src müsste die Tile-Hosts erlauben.
-    FIX: restriktive CSP als Meta-Tag oder Server-Header.
+(B.1 Frontend-XSS: X1/X2/X3 vollständig abgearbeitet am 2026-07-09.
+ Hinweis: CSP nutzt 'unsafe-inline' für Scripts wegen statischem Hosting +
+ Inline-Bootstrap/Druck-Popup; strikte nonce/hash-CSP wäre späterer Ausbau.)
 
 --------------------------------------------------------------------------------
  B.2  BACKEND – PHP (api/)
@@ -162,42 +93,16 @@ S1  HOCH  Raum-ID ist einziges Zugriffstoken (kein Schreib-Token)
     erzeugen, speichern, für alle schreibenden Endpunkte verpflichtend prüfen.
     Lesen darf ID-basiert bleiben.
 
-S2  HOCH  Schwache/vorhersagbare Raum-ID-Generierung
-    room-create.php:16 / admin.php:51:
-      substr(str_shuffle('a-z0-9'), 0, 8)
-    str_shuffle = nicht-kryptographischer Mersenne-Twister; substr(...,0,8)
-    erzeugt Permutation ohne Zeichenwiederholung -> reduzierter Schlüsselraum.
-    Da die ID das einzige Token ist (S1), ist Erratbarkeit direkt kritisch.
-    FIX: random_int()-basiert, 10–12 Zeichen, Kollision beim INSERT abfangen:
-      $a='abcdefghijklmnopqrstuvwxyz0123456789'; $id='';
-      for($i=0;$i<10;$i++) $id.=$a[random_int(0,strlen($a)-1)];
-
-S3  HOCH  ADMIN_KEY wandert als GET-Parameter in URLs -> Referer-Leak
-    admin.php (?key=), setup.php, viewer.html?key=...
-    viewer.html lädt externe Karten-Kacheln (maptiles.js:57/61/64 von
-    arcgisonline.com / cartocdn.com via new Image().src). Der Browser sendet
-    dabei den Referer MIT der vollständigen URL inkl. ?key=ADMIN_KEY an die
-    Dritt-CDNs -> Admin-Schlüssel leakt. Zudem in Server-/Proxy-Logs & History.
-    FIX (kurzfristig): <meta name="referrer" content="no-referrer"> in
-    viewer.html und admin.php. Besser: Admin-Auth über Session/HTTP-Basic
-    statt GET; Admin-Aktionen per POST.
+(ERLEDIGT & live 2026-07-09: S2 CSPRNG-Raum-IDs (room-create + admin; alte IDs
+ gültig), S3 no-referrer in viewer.html/admin.php/index.html, S5 Größenlimit in
+ room-ops, S6 CORS auf eigene Domain (live verifiziert), S9 Fehler-Leak weg,
+ S11 .htaccess Apache-2.2-Fallback. DB/Daten unberührt.)
 
 S4  MITTEL  Zustandsändernde Admin-Aktionen via GET (CSRF)
     admin.php: create/delete/purge/purge_all/lock/... alle über $_GET, teils
     als <a href>-Link. purge_all löscht das gesamte Archiv ohne serverseitige
     Bestätigung. Mit bekanntem Key (S3) per <img src> auslösbar.
     FIX: schreibende Aktionen auf POST + CSRF-Token; purge/delete absichern.
-
-S5  HOCH  room-ops.php ohne Größenlimit
-    room-update.php prüft MAX_STATE_SIZE (10 MB), room-ops.php NICHT. Über eine
-    add/update-Op mit großem bgimage-dataURL wächst der State unbegrenzt; er
-    wird bei jedem SSE/Poll komplett an alle Clients ausgeliefert (Traffic-
-    Multiplikator). FIX: nach Anwenden der Ops strlen($newJson) prüfen,
-    sonst rollBack + 413.
-
-S6  MITTEL  Wildcard-CORS auf allen Endpunkten (db.php:19-21, room-sse.php:17)
-    Access-Control-Allow-Origin: * . In Kombination mit S1 kann jede Seite
-    Räume lesen/schreiben. FIX: auf eigene Domain beschränken.
 
 S7  MITTEL  Kein Rate-Limiting / unbegrenzte Raum- & Nachrichten-Erstellung
     room-create.php völlig unauthentifiziert -> DB/Storage-Flut möglich;
@@ -210,18 +115,10 @@ S8  MITTEL  SSE-Last auf Shared Hosting (room-sse.php:31-91)
     (DoS für ganze Domain). FIX: SSE-Dauer reduzieren / pro-IP-Limit /
     ggf. reines Long-Poll; Cursor-Intervall erhöhen.
 
-S9  NIEDRIG  DB-Fehler-Leak room-ops.php:145
-    'Server error: '.$e->getMessage() an Client -> kann Schema offenbaren.
-    FIX: generische Meldung, Details serverseitig loggen.
-
 S10 NIEDRIG  setup.php im Live-Betrieb
     Key-geschützt und nicht destruktiv (nur CREATE/ALTER IF NOT EXISTS).
     Restrisiko nur bei ADMIN_KEY-Leak. FIX (optional): nach Deploy entfernen
     oder per .htaccess sperren.
-
-S11 NIEDRIG  .htaccess: Require-all-denied nur Apache 2.4; Kommentar irreführend
-    Sperrt nur config.php/db.php (reiner PHP-Code). FIX: Kommentar korrigieren,
-    Apache-2.2-Fallback ergänzen, aktiven PHP-Handler sicherstellen.
 
 S12 NIEDRIG  Raum-Lebenszyklus / DB-Wachstum (db.php:27-38)
     Cleanup nur opportunistisch bei room-state.php-Aufruf; Räume ohne TTL
@@ -238,16 +135,14 @@ ARCHITEKTUR-KONTEXT
   objectId) + Full-State-Push (Last-Writer-Wins mit Versionsprüfung) als
   Fallback. Genau an den Nahtstellen dieser zwei Pfade liegen die Bugs.
 
-C1  KRITISCH  flushOps() setzt _version fort OHNE Server-State zu übernehmen
-    [V collab.js:361-362]  Server (room-ops.php) gibt nur die neue Versionsnr.
-    zurück, nicht den gemergten State. Client übernimmt die Nummer, aber nicht
-    den Inhalt -> überspringt alle zwischenzeitlichen fremden Änderungen; Poll
-    (since=_version) meldet danach dauerhaft "changed:false".
-    FOLGE: Ein späterer eigener Full-Push (z.B. Drag) schreibt den lokalen
-    State OHNE die fremde Arbeit -> beim anderen verschwinden dessen Objekte.
-    FIX: room-ops.php gibt state_json zurück; Client behandelt Antwort wie
-    onRemoteUpdate(state, version). Minimal-invasiv: _version in flushOps NICHT
-    setzen (nächster Poll holt gemergten State).
+(ERLEDIGT & LIVE-VERIFIZIERT 2026-07-09: C1 (room-ops gibt gemergten State
+ zurück, Client übernimmt ihn), C2/C3 (serialisierter runSync: Ops flushen +
+ danach Full-Push; Strukturänderungen gehen nicht mehr verloren), C4 (Ops mit
+ siteId; Server-Lookup per ID, Index-Fallback; live getestet: Objekt landete
+ per siteId auf der richtigen Site), C5(a) (Remote-Importe nicht mehr im
+ Undo-Stack). Client-Logik per Node-Harness geprüft, Server per Live-API-Test.
+ Offen bleibt C5(b): op-basiertes Undo, damit eigenes Ctrl+Z fremde Arbeit
+ nicht global überschreibt.)
 
 C2  KRITISCH  Geteilter _opsTimer: pushOp cancelt den Full-Push
     [V collab.js:339 vs. 347-348]  pushState() plant doFullPush auf _opsTimer
@@ -285,54 +180,32 @@ C5  HOCH  Undo/Redo verwirft im Raum global fremde Arbeit
     FIX (a, Zweizeiler): Remote-Imports mit skipUndo=true (bei skipSync===true
     notify(true, skipSync)). FIX (b, sauber): op-basiertes Undo nur eigener Ops.
 
-C6  HOCH  Full-Push-Konflikt verwirft lokale Änderungen ersatzlos
-    [V collab.js:386-389]  Bei conflict -> onRemoteUpdate(server); nur
-    _pendingOps bleiben erhalten, kein Retry/Merge/Hinweis. Append-Import, der
-    mit einer fremden Änderung kollidiert, ist danach kommentarlos weg.
-    FIX: verlorene lokale Änderung nach Merge erneut anwenden + erneut pushen;
-    Append-Sites (frische IDs) vor Merge sichern und danach wieder anhängen.
+C6  HOCH (TEILWEISE 2026-07-09)  Full-Push-Konflikt verwirft lokale Änderungen
+    Serialisierter Sync mildert das (Ops werden separat behbuilt + gemergter
+    State übernommen), aber ein rein struktureller lokaler Full-Push, der mit
+    einer fremden Änderung KOLLIDIERT, kann weiterhin verloren gehen.
+    REST-FIX: verlorene strukturelle Änderung nach Konflikt-Merge erneut
+    anwenden + erneut pushen (bzw. Strukturänderungen als Ops, s. C16).
 
-C7  HOCH  flushOps verliert Ops bei Netzwerk-/Serverfehler
-    [V collab.js:353]  _pendingOps.splice(0) VOR dem await; bei !ok (locked/403)
-    oder catch werden Ops NICHT re-queued -> endgültig weg.
-    FIX: Ops erst nach bestätigtem ok entfernen (Doppelsendung ist idempotent).
+(ERLEDIGT 2026-07-09: C7 (Ops bleiben bei Fehler in der Queue + Retry –
+ Node-Harness bestätigt), C8 (disconnect() setzt allen Sync-State zurück),
+ C9 (lokale Änderungen während Raum-Sperre werden beim Entsperren nachgesendet).)
 
-C8  MITTEL  disconnect() räumt nicht auf
-    [A collab.js:113-126]  _pendingOps/_opsTimer/_lastMsgId bleiben -> lecken
-    in den nächsten Raum (alte Ops mit fremdem siteIdx; _lastMsgId unterdrückt
-    Nachrichten). _pushTimer ist toter Code. FIX: alles zurücksetzen.
-
-C9  MITTEL  Bei gesperrtem Raum werden lokale Änderungen still verworfen
-    [A collab.js:333/345]  Mutation ist schon passiert; nach Unlock kein
-    Nachsenden. FIX: Eingaben bei Lock hart blockieren ODER Ops queuen und
-    beim erkannten Unlock (startPolling) flushen.
-
-C10 MITTEL  SSE-Loop zerstört Cursor-Daten (REPLACE INTO)
-    [A room-sse.php:73-74]  REPLACE = DELETE+INSERT -> cursor_x/y/color fallen
-    alle 2s auf Defaults (0,0,#ff0000). Remote-Cursor springt periodisch nach
-    (0,0) und wird rot. FIX: INSERT ... ON DUPLICATE KEY UPDATE.
+(C10 ERLEDIGT 2026-07-09: room-sse.php + room-cursors.php nutzen jetzt
+ INSERT ... ON DUPLICATE KEY UPDATE statt REPLACE.)
 
 C11 MITTEL  Cursor/Presence ohne Site-Bezug
     [A collab.js:235-242]  Cursor wird auf dem aktiven Tab des Betrachters
     gezeichnet, egal auf welchem Tab der andere ist. FIX: siteId mitsenden +
     beim Zeichnen filtern.
 
-C12 NIEDRIG  SSE nach 3 Fehlern dauerhaft tot (_sseErrors nie zurückgesetzt)
-    [A collab.js:164-170]  1s-Poll bleibt als Fallback (daher niedrig), aber
-    Latenz steigt (vergrößert C1-Fenster). FIX: _sseErrors bei onmessage/open
-    zurücksetzen; Reconnect mit Backoff.
+(C12 ERLEDIGT 2026-07-09: _sseErrors wird bei onopen/onmessage zurückgesetzt.)
 
-C13 NIEDRIG  Chat: sendMessage nirgends aufgerufen; beim Join Toast-Flut
-    [A collab.js:267-282]  Nur Admin-Broadcast; _lastMsgId startet 0 -> alle
-    historischen Nachrichten werden nachgespielt. FIX: Chat-UI verdrahten oder
-    sendMessage entfernen; _lastMsgId auf höchste vorhandene ID initialisieren.
+(C13 ERLEDIGT 2026-07-09: Chat-Historie wird beim Join nicht mehr als
+ Toast-Flut nachgespielt; nur neue Nachrichten. sendMessage bleibt für spätere
+ Chat-UI erhalten.)
 
-C14 NIEDRIG (Viewer)  fitToContent verrechnet Punkt-Objekte doppelt
-    [A viewer.html:107-110]  Punkte sind absolute Weltkoordinaten; Viewer
-    addiert o.x/o.y obendrauf -> falsche Bounds bei Ground/Area/Fence.
-    FIX: acc(p.x, p.y) statt acc(o.x+p.x, o.y+p.y).
-    POSITIV: Viewer nutzt dieselben Engine-Dateien (keine Render-Drift),
-    ist bewusst schreibfrei, Tabs via textContent (kein XSS).
+(C14 ERLEDIGT 2026-07-09: Viewer fitToContent nutzt absolute Punkt-Koordinaten.)
 
 C15 ANMERKUNG  Tote Server-Optypen (reorder/site_props/state_props)
     room-ops.php:93-127 implementiert sie, KEIN Client sendet sie -> Z-Order-
@@ -360,88 +233,8 @@ dangling layerId macht Objekte NICHT unsichtbar (robuster Default); keine
 Listener-/Interval-Leaks im Kern; Touch-Handling durchdacht; segDist numerisch
 robust; renderOffscreen stellt View/Selektion nach Druck wieder her.
 
-D1  HOCH  Autosave-Quota-Fehler werden still verschluckt
-    [A app.js:57-59, :112-114]  Großes Hintergrundbild (~5MB dataURL) ->
-    QuotaExceededError -> leerer catch -> Nutzer glaubt gespeichert, verliert
-    nach Neustart Arbeit. FIX: Fehler sichtbar melden ("Autosave fehlgeschlagen
-    – bitte JSON exportieren"); Bilder beim Import rekomprimieren; Autosave
-    ohne Pretty-Print (spart 20–30%).
+(Teil D vollständig abgearbeitet am 2026-07-09.)
 
-D2  HOCH  Korruptes Autosave wird beim Start unwiderruflich gelöscht
-    [A app.js:20-33 + state.js clear()]  Wirft importJSON beim Restore -> clear()
-    -> removeItem. Einziger Datenbestand weg, obwohl evtl. reparabel.
-    FIX: bei Fehlschlag unter Backup-Key sichern statt löschen, Nutzer
-    informieren.
-
-D3  HOCH  Zwei offene Browser-Tabs: Last-Writer-Wins ohne Erkennung
-    [A kein storage-Event-Listener]  Tab A (alt) überschreibt beim Schließen
-    die Arbeit aus Tab B. FIX: window 'storage'-Listener + Timestamp-Vergleich
-    oder Tab-Lock/Heartbeat; Warnung anzeigen.
-
-D4  HOCH  importJSON mutiert State vor Validierung
-    [A state.js:454-463]  _sites=data.sites vor migrateSite; Site ohne objects
-    -> TypeError, State bleibt korrupt; fehlendes view -> Canvas.w2s wirft bei
-    jedem Render. Append-Zweig: Fehler bei Site 3/5 -> Sites 1–2 schon gepusht
-    (halbfertig, wird persistiert). FIX: erst vollständig validieren/migrieren
-    (Defaults objects:[], view, layers, rotation), dann atomar übernehmen.
-    (Deckt sich mit A-Fix-4.)
-
-D5  HOCH  Undo-Stack: 50 Voll-Snapshots inkl. aller dataURLs
-    [A state.js:41-47]  4-MB-Bild x 50 Aktionen ~ 200–400MB Heap -> Tab-Crash
-    auf Tablets; jede Aktion O(Gesamtstate). FIX: dataURLs per ID referenzieren
-    (Bild-Store), Snapshot speichert nur ID; oder Diff-Undo.
-
-D6  MITTEL  "Klebender" Drag: mouse-Listener nur auf Canvas
-    [A app.js:88-90]  Maus außerhalb loslassen -> onMouseUp feuert nie, Objekt
-    folgt der Maus ohne Taste; ESC bricht Drag nicht ab. FIX: mousemove/mouseup
-    auf window; ESC -> drag aus origPositions zurücksetzen.
-
-D7  MITTEL  "Gesperrt" ist nicht überall gesperrt  [V tools.js:209, :224]
-    Verifiziert: locked bgimage lässt sich noch resizen (Resize-Check außerhalb
-    des locked-else-if); Vertex-Drag gesperrter area/ground/fence/guideline ohne
-    locked-Check. [A] zusätzlich: Delete/Backspace/x löscht gesperrte Objekte;
-    Paint-Tool färbt sie um. FIX: sel.locked-Guard vor Resize/Vertex-Drag;
-    !o.locked-Filter bei Delete und Paint.
-
-D8  MITTEL  Layer-Sichtbarkeit ignoriert für image/postit/symbol
-    [V canvas.js:927 image rendert vor dem Hidden-Layer-Check ~1019]  Objekte
-    bleiben sichtbar, aber nicht anklickbar (Hit-Test respektiert hidden) ->
-    "Geisterobjekte". FIX: Sichtbarkeits-Check an den Anfang von drawObject.
-
-D9  MITTEL  Distanzberechnung falsch für punktbasierte Objekte
-    [A canvas.js:2468-2495 / getObjCorners:2255]  Für fence/area (w/h=0)
-    kollabieren die "Ecken" auf den Zentroid -> Zelt neben 30m-Zaun zeigt evtl.
-    grün, obwohl Mindestabstand verletzt. FIX: für Objekte mit points die echten
-    Segmente messen oder Typen ausschließen.
-
-D10 MITTEL  Multi-Aktionen: N Undo-Snapshots + N UI-Rebuilds
-    [A tools.js:1009/1067/1093]  30 Objekte löschen -> 30x stringify + 30x
-    Rebuild; Undo braucht 30 Klicks. FIX: Batch-APIs removeObjects/updateObjects
-    mit einem notify().
-
-D11 MITTEL  loadBgImage: kein onerror, kein Loading-Cache
-    [A canvas.js:488-494]  Bis onload feuert, erzeugt JEDER render ein neues
-    Image mit MB-dataURL; defekte dataURL -> Dauer-Churn. FIX: Placeholder
-    sofort cachen, onerror behandeln, Eviction.
-
-D12 MITTEL  showDistances: O(n^2) pro Frame
-    [A canvas.js:252-270]  150 Objekte ~ 22.500 Paarberechnungen pro
-    Mausbewegung -> Lag. FIX: Ergebnis cachen, nur bei Objektänderung
-    invalidieren; Bounding-Box-Vorfilter.
-
-D13 NIEDRIG  notify(true)-Aktionen nicht undo-bar, aber vom Undo zurückgerollt
-    [A renameSite, addTemplate, Grid +/-]  FIX: eigene Undo-Punkte oder Felder
-    konsistent aus Snapshots halten.
-
-D14 NIEDRIG  Fehlende Defaults für Alt-/Fremd-JSON in migrateSite
-    [A]  rotation nicht defaultet -> NaN in Hit-Test (Objekt nicht anklickbar);
-    view fehlt (siehe D4); minDistance = data.minDistance||2 macht bewusste 0
-    zu 2. FIX: rotation??=0, view??={...}, width/height??=0; ?? statt || bei
-    minDistance. (Auch relevant für C4: if(!s.id) s.id=generateId().)
-
-D15 NIEDRIG  Ground-Tool ohne Doppelklick-Debounce
-    [A tools.js:326-336 vs. Area-Tool:378]  Doppelklick zum Abschließen erzeugt
-    degenerierten Doppel-Vertex. FIX: gleicher lastClickTime-Guard wie Area.
 
 
 ================================================================================
@@ -449,16 +242,13 @@ D15 NIEDRIG  Ground-Tool ohne Doppelklick-Debounce
 ================================================================================
  (Priorität nach Nutzen/Aufwand. Alles optional, nichts umgesetzt.)
 
-E1  Auto-Backup-Rotation (SICHERHEIT/DATEN, hoher Nutzen, kleiner Aufwand)
-    Neben dem einen Autosave-Slot rollierend die letzten N Stände (z.B. 5) in
-    IndexedDB (kein 5-MB-Limit wie localStorage) sichern, mit Zeitstempel und
-    "Wiederherstellen"-Dialog. Adressiert D1/D2/D5 zugleich. IndexedDB löst auch
-    das Quota-Problem bei großen Hintergrundbildern.
+(E1 ERLEDIGT & live 2026-07-09: js/backup.js – rollierende Auto-Backups (letzte
+ 10, gedrosselt) in IndexedDB; Dialog "Sicherungen" (Einstellungen) zum
+ Auflisten/Wiederherstellen/Löschen. IndexedDB-Roundtrip im echten Browser
+ verifiziert.)
 
-E2  Versions-/Änderungsverlauf pro Plan (mittel)
-    Snapshots mit Notiz ("Stand vor Aufbauplan") manuell benennen und wieder
-    laden. Baut auf E1 auf. Für ein Planungstool sehr wertvoll (Varianten
-    vergleichen).
+(E2 ERLEDIGT & live 2026-07-09: benannte manuelle Sicherungen im selben Dialog
+ ("Benannte Sicherung erstellen").)
 
 E3  Kollisions-/Mindestabstands-Report (funktional, hoch)
     Ein Panel, das ALLE Verstöße gegen den Mindestabstand als Liste zeigt
