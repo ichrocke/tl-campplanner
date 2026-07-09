@@ -97,6 +97,8 @@
         UI.syncSettings();
         Canvas.render();
         autoSave();
+        // E1: throttled rolling backup to IndexedDB (safety net beyond localStorage)
+        if (typeof Backup !== 'undefined') Backup.autoBackup();
         // Collab: State zum Server pushen (wenn nicht vom Server empfangen)
         if (!skipSync && typeof Collab !== 'undefined' && Collab.isConnected()) {
             Collab.pushState();

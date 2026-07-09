@@ -1139,6 +1139,78 @@ const UI = (() => {
             IO.downloadOffline();
         });
 
+        const backupsBtn = document.getElementById('btn-backups');
+        if (backupsBtn) backupsBtn.addEventListener('click', () => { if (typeof Backup !== 'undefined') showBackups(); });
+
+    }
+
+    // E1/E2: backups dialog – list rolling auto-backups + named manual snapshots,
+    // restore or delete them.
+    function showBackups() {
+        let overlay = document.getElementById('backup-overlay');
+        if (overlay) overlay.remove();
+        overlay = document.createElement('div');
+        overlay.id = 'backup-overlay';
+        overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center';
+        overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+        const box = document.createElement('div');
+        box.style.cssText = 'background:var(--surface,#fff);color:var(--text,#1a1a2e);border-radius:12px;max-width:520px;width:92%;max-height:80vh;overflow:auto;padding:18px;box-shadow:0 10px 40px rgba(0,0,0,0.3)';
+        overlay.appendChild(box);
+        document.body.appendChild(overlay);
+
+        const fmt = (ts) => { const d = new Date(ts); return d.toLocaleString(); };
+        const render = async () => {
+            let list = [];
+            try { list = await Backup.list(); } catch (e) {}
+            let html = `<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <strong style="font-size:15px">${I18n.t('backup.title')}</strong>
+                <button id="backup-close" class="btn-secondary" style="font-size:12px">${I18n.t('backup.close')}</button>
+            </div>
+            <button id="backup-create" class="btn-primary" style="width:100%;font-size:12px;margin-bottom:12px">${I18n.t('backup.createNamed')}</button>`;
+            if (!list.length) {
+                html += `<div style="color:var(--text-secondary,#64748b);font-size:12px;text-align:center;padding:12px">${I18n.t('backup.empty')}</div>`;
+            } else {
+                html += '<div style="display:flex;flex-direction:column;gap:6px">';
+                list.forEach(s => {
+                    const kb = Math.round(s.size / 1024);
+                    const tag = s.manual ? `<strong>${escapeHtml(s.label || I18n.t('backup.named'))}</strong>` : `<span style="color:var(--text-secondary,#64748b)">${I18n.t('backup.auto')}</span>`;
+                    html += `<div style="display:flex;align-items:center;gap:8px;border:1px solid var(--border,#e2e8f0);border-radius:8px;padding:8px">
+                        <div style="flex:1;min-width:0">
+                            <div style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${tag}</div>
+                            <div style="font-size:11px;color:var(--text-secondary,#64748b)">${fmt(s.ts)} · ${kb} KB</div>
+                        </div>
+                        <button class="btn-secondary backup-restore" data-id="${s.id}" style="font-size:11px">${I18n.t('backup.restore')}</button>
+                        <button class="btn-secondary backup-del" data-id="${s.id}" style="font-size:11px">&times;</button>
+                    </div>`;
+                });
+                html += '</div>';
+            }
+            box.innerHTML = html;
+            box.querySelector('#backup-close').addEventListener('click', () => overlay.remove());
+            box.querySelector('#backup-create').addEventListener('click', async () => {
+                const name = prompt(I18n.t('backup.namePrompt'), '');
+                if (name === null) return;
+                await Backup.saveNamed(name.trim());
+                render();
+            });
+            box.querySelectorAll('.backup-restore').forEach(b => b.addEventListener('click', async () => {
+                if (!confirm(I18n.t('backup.confirmRestore'))) return;
+                const json = await Backup.get(parseInt(b.dataset.id, 10));
+                if (!json) return;
+                try {
+                    State.importJSON(json, false, false); // replace current state
+                    Canvas.clearSelection();
+                    hideProperties();
+                    overlay.remove();
+                    closeModal();
+                } catch (e) { alert(I18n.t('msg.importError') + e.message); }
+            }));
+            box.querySelectorAll('.backup-del').forEach(b => b.addEventListener('click', async () => {
+                await Backup.remove(parseInt(b.dataset.id, 10));
+                render();
+            }));
+        };
+        render();
     }
 
     function updateToolButtons(activeName) {

@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.12.0] - 2026-07-09
+
+### Added
+- **Automatic backups + named versions**: The app now keeps rolling automatic backups of your plan in the browser's IndexedDB (which handles large background images far better than the normal autosave). Open Settings → "Backups" to see the recent automatic backups, restore any of them, or create your own named snapshot (e.g. "before rearranging") to return to later. This is an extra safety net on top of autosave and manual JSON export.
+
 ## [6.11.1] - 2026-07-09
 
 ### Fixed
