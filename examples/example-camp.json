@@ -1294,25 +1294,11 @@
       },
       "layers": [
         {
-          "id": "lyr_grounds",
-          "name": "Grundflächen",
+          "id": "lyr_symbols",
+          "name": "Symbole",
           "visible": true,
           "locked": false,
-          "color": "#22c55e"
-        },
-        {
-          "id": "lyr_areas",
-          "name": "Gebiete",
-          "visible": true,
-          "locked": false,
-          "color": "#d4a574"
-        },
-        {
-          "id": "lyr_tents",
-          "name": "Zelte",
-          "visible": true,
-          "locked": false,
-          "color": "#3b82f6"
+          "color": "#64748b"
         },
         {
           "id": "lyr_objects",
@@ -1322,11 +1308,25 @@
           "color": "#9333ea"
         },
         {
-          "id": "lyr_symbols",
-          "name": "Symbole",
+          "id": "lyr_tents",
+          "name": "Zelte",
           "visible": true,
           "locked": false,
-          "color": "#64748b"
+          "color": "#3b82f6"
+        },
+        {
+          "id": "lyr_areas",
+          "name": "Gebiete",
+          "visible": true,
+          "locked": false,
+          "color": "#d4a574"
+        },
+        {
+          "id": "lyr_grounds",
+          "name": "Grundflächen",
+          "visible": true,
+          "locked": false,
+          "color": "#22c55e"
         }
       ],
       "activeLayerId": "lyr_tents",

@@ -3,7 +3,7 @@
 ## [6.7.0] - 2026-07-09
 
 ### Changed
-- **Example site now uses five layers**: The prebuilt example camp is organised into five named layers instead of a single one — "Grundflächen" (grounds), "Gebiete" (areas), "Zelte" (tents), "Ausstattung" (other objects such as fence, bar, entrance, fire pit and custom objects) and "Symbole" (symbols). This showcases the layer feature and makes it easy to toggle each category on and off.
+- **Example site now uses five layers**: The prebuilt example camp is organised into five named layers instead of a single one. Top to bottom in the layer panel: "Symbole" (symbols), "Ausstattung" (other objects such as fence, bar, entrance, fire pit and custom objects), "Zelte" (tents), "Gebiete" (areas) and "Grundflächen" (grounds). This showcases the layer feature and makes it easy to toggle each category on and off.
 
 ## [6.6.1] - 2026-07-09
 
