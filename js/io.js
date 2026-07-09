@@ -1266,19 +1266,10 @@ ${els}</svg>`;
                 try {
                     const data = JSON.parse(e.target.result);
                     if (data.type === 'single-tab' && data.site) {
-                        const site = data.site;
-                        // Give new IDs to avoid conflicts
-                        site.id = State.generateId();
-                        site.objects.forEach(o => { o.id = State.generateId(); });
-                        site.layers.forEach(l => {
-                            const oldId = l.id;
-                            const newId = State.generateId();
-                            l.id = newId;
-                            site.objects.forEach(o => { if (o.layerId === oldId) o.layerId = newId; });
-                            if (site.activeLayerId === oldId) site.activeLayerId = newId;
-                        });
-                        State.sites.push(site);
-                        State.activeSiteIndex = State.sites.length - 1;
+                        // Route through the robust, atomic import path (validates/
+                        // migrates the site and reassigns IDs) instead of trusting
+                        // the file's structure. Appends as a new tab.
+                        State.importJSON(JSON.stringify({ sites: [data.site] }), false, true);
                     } else if (data.sites && Array.isArray(data.sites)) {
                         // Full export file - alle Tabs als neue Tabs hinzufügen
                         State.importJSON(e.target.result, false, true);

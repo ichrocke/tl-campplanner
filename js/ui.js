@@ -2542,7 +2542,8 @@ const UI = (() => {
                             const data = JSON.parse(ev.target.result);
                             const site = State.activeSite;
                             if (data.type === 'ground_area' && data.ground && site) {
-                                const pts = data.ground;
+                                const pts = sanitizeImportedPoints(data.ground);
+                                if (pts.length < 3) throw new Error('Invalid ground area');
                                 // Center on click position
                                 let cx = 0, cy = 0;
                                 pts.forEach(p => { cx += p.x; cy += p.y; });
@@ -2559,36 +2560,37 @@ const UI = (() => {
                                 // Import contained objects with offset
                                 if (data.objects && Array.isArray(data.objects)) {
                                     data.objects.forEach(o => {
-                                        o.id = State.generateId();
-                                        o.x += dx; o.y += dy;
-                                        if (o.points) o.points.forEach(p => { p.x += dx; p.y += dy; });
-                                        site.objects.push(o);
+                                        const so = sanitizeImportedObject(o, site);
+                                        if (!so) return;
+                                        so.x += dx; so.y += dy;
+                                        if (so.points) so.points.forEach(p => { p.x += dx; p.y += dy; });
+                                        site.objects.push(so);
                                     });
                                 }
                                 State.notifyChange();
                                 Canvas.render();
                             } else if (data.type === 'object_export' && data.object && site) {
-                                const o = data.object;
+                                const o = sanitizeImportedObject(data.object, site);
+                                if (!o) throw new Error('Invalid object');
                                 const dx = worldPos.x - o.x;
                                 const dy = worldPos.y - o.y;
                                 o.x = worldPos.x; o.y = worldPos.y;
                                 if (o.points) o.points.forEach(p => { p.x += dx; p.y += dy; });
-                                o.id = State.generateId();
-                                o.layerId = site.activeLayerId;
                                 site.objects.push(o);
                                 State.notifyChange();
                                 Canvas.render();
                             } else if (data.type === 'objects_export' && data.objects && site) {
                                 // Multi-object import - center on click position
+                                const objs = (Array.isArray(data.objects) ? data.objects : [])
+                                    .map(o => sanitizeImportedObject(o, site)).filter(Boolean);
+                                if (!objs.length) throw new Error('No valid objects');
                                 let cx = 0, cy = 0;
-                                data.objects.forEach(o => { cx += o.x; cy += o.y; });
-                                cx /= data.objects.length; cy /= data.objects.length;
+                                objs.forEach(o => { cx += o.x; cy += o.y; });
+                                cx /= objs.length; cy /= objs.length;
                                 const dx = worldPos.x - cx, dy = worldPos.y - cy;
-                                data.objects.forEach(o => {
+                                objs.forEach(o => {
                                     o.x += dx; o.y += dy;
                                     if (o.points) o.points.forEach(p => { p.x += dx; p.y += dy; });
-                                    o.id = State.generateId();
-                                    o.layerId = site.activeLayerId;
                                     site.objects.push(o);
                                 });
                                 State.notifyChange();
@@ -2893,6 +2895,26 @@ const UI = (() => {
         return String(str == null ? '' : str)
             .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    }
+
+    // X2: sanitise an object coming from an imported (untrusted) file so it can't
+    // inject NaN coordinates, unknown types or malformed points into the state.
+    const _IMPORT_TYPES = new Set(['tent', 'firepit', 'bar', 'entrance', 'custom', 'area', 'ground', 'fence', 'guideline', 'text', 'postit', 'symbol', 'bgimage', 'image']);
+    function _finiteNum(n, d) { return (typeof n === 'number' && isFinite(n)) ? n : d; }
+    function sanitizeImportedObject(o, site) {
+        if (!o || typeof o !== 'object' || !_IMPORT_TYPES.has(o.type)) return null;
+        o.id = State.generateId();
+        o.x = _finiteNum(o.x, 0); o.y = _finiteNum(o.y, 0);
+        o.rotation = _finiteNum(o.rotation, 0);
+        o.width = _finiteNum(o.width, 0); o.height = _finiteNum(o.height, 0);
+        if (o.points != null) {
+            o.points = Array.isArray(o.points) ? o.points.filter(p => p && isFinite(p.x) && isFinite(p.y)) : [];
+        }
+        o.layerId = site.activeLayerId;
+        return o;
+    }
+    function sanitizeImportedPoints(pts) {
+        return Array.isArray(pts) ? pts.filter(p => p && isFinite(p.x) && isFinite(p.y)) : [];
     }
 
     // Validate a colour value before putting it into an attribute/style; fall

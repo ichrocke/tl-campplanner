@@ -1,5 +1,11 @@
 # Changelog
 
+## [6.10.0] - 2026-07-09
+
+### Security
+- **Content-Security-Policy added**: index.html now ships a defense-in-depth CSP (restricts default/object/base/form origins) plus a no-referrer policy, on top of the existing output escaping.
+- **Hardened file import**: Importing ground areas, single objects or object groups from a file now validates the structure — unknown object types and invalid/NaN coordinates are rejected instead of creating broken, unclickable objects. Single-tab import is routed through the same robust, atomic validation as full imports.
+
 ## [6.9.4] - 2026-07-09
 
 ### Fixed
