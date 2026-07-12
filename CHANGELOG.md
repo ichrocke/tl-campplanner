@@ -1,5 +1,11 @@
 # Changelog
 
+## [6.12.2] - 2026-07-12
+
+### Fixed
+- **Collaboration: layers no longer disappear while working together**: Layer changes (creating, renaming, deleting, reordering, recoloring, visibility/lock/opacity, merging, flattening, copying to another tab) were sent as a full-state upload, which lost the race against incoming updates from the other participant — a freshly created layer could vanish within a second. Layer changes are now sent as merge-safe operations (like object edits already were) and are preserved locally when a remote update arrives before they have been sent.
+- **Deleting the active layer no longer breaks**: Removing the currently active layer hit a JavaScript error and left the layer list in a stale state; the next remaining layer is now activated correctly.
+
 ## [6.12.1] - 2026-07-09
 
 ### Security

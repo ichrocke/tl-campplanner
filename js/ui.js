@@ -37,6 +37,24 @@ const UI = (() => {
     }
 
     // --- Layers ---
+
+    // Collab: Ebenen-Aenderungen als site_props-Op senden statt Full-State-Push.
+    // Ein Full-Push verliert bei gleichzeitigem Arbeiten das Rennen gegen
+    // eintreffende Remote-States – neu angelegte Ebenen verschwanden dadurch.
+    function collabPushOp(site, op) {
+        if (typeof Collab === 'undefined' || !Collab.isConnected() || Collab.syncLock) return;
+        op.siteId = site.id;
+        op.siteIdx = State.sites.indexOf(site);
+        Collab.pushOp(op);
+    }
+
+    function collabSyncLayers(site) {
+        collabPushOp(site, { type: 'site_props', props: {
+            layers: JSON.parse(JSON.stringify(site.layers)),
+            activeLayerId: site.activeLayerId,
+        } });
+    }
+
     function bindLayers() {
         document.getElementById('btn-add-layer').addEventListener('click', () => {
             const site = State.activeSite;
@@ -46,6 +64,7 @@ const UI = (() => {
             const newLayer = { id: State.generateId(), name: name.trim(), visible: true, locked: false };
             site.layers.unshift(newLayer);
             site.activeLayerId = newLayer.id;
+            collabSyncLayers(site);
             State.notifyChange(true);
             buildLayers();
         });
@@ -80,6 +99,7 @@ const UI = (() => {
                 if (e.target.closest('.layer-vis-btn') || e.target.closest('.layer-lock-btn') ||
                     e.target.closest('.layer-order-btn') || e.target.closest('.layer-del-btn')) return;
                 site.activeLayerId = layer.id;
+                collabSyncLayers(site);
                 State.notifyChange(true);
                 buildLayers();
             });
@@ -89,6 +109,7 @@ const UI = (() => {
                 e.stopPropagation();
                 openColorPicker(layer.color || '#888', (c) => {
                     layer.color = c;
+                    collabSyncLayers(site);
                     State.notifyChange(true);
                     buildLayers();
                 });
@@ -101,11 +122,11 @@ const UI = (() => {
                 const items = [
                     { label: I18n.t('tab.rename'), action: () => {
                         const n = prompt(I18n.t('layer.rename'), layer.name);
-                        if (n && n.trim()) { layer.name = n.trim(); State.notifyChange(true); buildLayers(); }
+                        if (n && n.trim()) { layer.name = n.trim(); collabSyncLayers(site); State.notifyChange(true); buildLayers(); }
                     }},
                     { label: I18n.t('layer.opacity'), action: () => {
                         const o = prompt(I18n.t('layer.opacity') + ' (0.1-1.0):', layer.opacity !== undefined ? layer.opacity : 1);
-                        if (o !== null) { layer.opacity = Math.max(0.1, Math.min(1, parseFloat(o) || 1)); State.notifyChange(true); Canvas.render(); }
+                        if (o !== null) { layer.opacity = Math.max(0.1, Math.min(1, parseFloat(o) || 1)); collabSyncLayers(site); State.notifyChange(true); Canvas.render(); }
                     }},
                 ];
                 if (State.sites.length > 1) {
@@ -125,11 +146,13 @@ const UI = (() => {
                         const newLayer = JSON.parse(JSON.stringify(layer));
                         newLayer.id = newLayerId;
                         target.layers.push(newLayer);
+                        collabPushOp(target, { type: 'site_props', props: { layers: JSON.parse(JSON.stringify(target.layers)) } });
                         site.objects.filter(o => o.layerId === layer.id).forEach(o => {
                             const copy = JSON.parse(JSON.stringify(o));
                             copy.id = genId();
                             copy.layerId = newLayerId;
                             target.objects.push(copy);
+                            collabPushOp(target, { type: 'add', object: JSON.parse(JSON.stringify(copy)) });
                         });
                         State.notifyChange();
                     }});
@@ -137,18 +160,30 @@ const UI = (() => {
                 if (i < site.layers.length - 1) {
                     items.push({ label: I18n.t('layer.merge'), action: () => {
                         const targetId = site.layers[i + 1].id;
-                        site.objects.forEach(o => { if (o.layerId === layer.id) o.layerId = targetId; });
+                        site.objects.forEach(o => {
+                            if (o.layerId === layer.id) {
+                                o.layerId = targetId;
+                                collabPushOp(site, { type: 'update', objectId: o.id, props: { layerId: targetId } });
+                            }
+                        });
                         site.layers.splice(i, 1);
                         if (site.activeLayerId === layer.id) site.activeLayerId = targetId;
+                        collabSyncLayers(site);
                         State.notifyChange(); buildLayers(); buildPlacedList(); Canvas.render();
                     }});
                 }
                 if (site.layers.length > 1) {
                     items.push({ label: I18n.t('layer.flatten'), action: () => {
                         const keepId = site.layers[site.layers.length - 1].id;
-                        site.objects.forEach(o => { o.layerId = keepId; });
+                        site.objects.forEach(o => {
+                            if (o.layerId !== keepId) {
+                                o.layerId = keepId;
+                                collabPushOp(site, { type: 'update', objectId: o.id, props: { layerId: keepId } });
+                            }
+                        });
                         site.layers = [site.layers[site.layers.length - 1]];
                         site.activeLayerId = keepId;
+                        collabSyncLayers(site);
                         State.notifyChange(); buildLayers(); buildPlacedList(); Canvas.render();
                     }});
                 }
@@ -161,6 +196,7 @@ const UI = (() => {
                 const newName = prompt(I18n.t('layer.rename'), layer.name);
                 if (newName && newName.trim()) {
                     layer.name = newName.trim();
+                    collabSyncLayers(site);
                     State.notifyChange(true);
                     buildLayers();
                 }
@@ -170,6 +206,7 @@ const UI = (() => {
             el.querySelector('.layer-vis-btn').addEventListener('click', (e) => {
                 e.stopPropagation();
                 layer.visible = !layer.visible;
+                collabSyncLayers(site);
                 State.notifyChange(true);
                 if (Canvas.pruneSelection()) refreshPropertiesForSelection();
                 buildLayers();
@@ -181,6 +218,7 @@ const UI = (() => {
             el.querySelector('.layer-lock-btn').addEventListener('click', (e) => {
                 e.stopPropagation();
                 layer.locked = !layer.locked;
+                collabSyncLayers(site);
                 State.notifyChange(true);
                 if (Canvas.pruneSelection()) refreshPropertiesForSelection();
                 buildLayers();
@@ -198,6 +236,7 @@ const UI = (() => {
                     } else if (dir === 'down' && i < site.layers.length - 1) {
                         [site.layers[i], site.layers[i + 1]] = [site.layers[i + 1], site.layers[i]];
                     }
+                    collabSyncLayers(site);
                     State.notifyChange(true);
                     buildLayers();
                     Canvas.render();
@@ -211,10 +250,15 @@ const UI = (() => {
                     e.stopPropagation();
                     if (!confirm(I18n.t('layer.deleteConfirm', { name: layer.name }))) return;
                     // Delete objects on this layer
+                    const removedIds = site.objects.filter(o => o.layerId === layer.id).map(o => o.id);
                     site.objects = site.objects.filter(o => o.layerId !== layer.id);
                     Canvas.clearSelection();
                     site.layers.splice(i, 1);
-                    if (site.activeLayerId === layer.id) site.activeLayerId = targetId;
+                    if (site.activeLayerId === layer.id) {
+                        site.activeLayerId = (site.layers[i] || site.layers[i - 1] || site.layers[0]).id;
+                    }
+                    removedIds.forEach(id => collabPushOp(site, { type: 'remove', objectId: id }));
+                    collabSyncLayers(site);
                     State.notifyChange();
                     buildLayers();
                     buildPlacedList();

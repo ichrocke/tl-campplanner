@@ -331,6 +331,15 @@ const Collab = (() => {
                     if (obj) Object.assign(obj, op.props);
                 } else if (op.type === 'remove' && op.objectId) {
                     site.objects = site.objects.filter(o => o.id !== op.objectId);
+                } else if (op.type === 'site_props' && op.props) {
+                    // Structural props (layers etc.) – without this, a freshly
+                    // created layer is wiped by the remote state before its op
+                    // has been sent.
+                    Object.keys(op.props).forEach(k => {
+                        if (k === 'objects' || k === 'id') return;
+                        const v = op.props[k];
+                        site[k] = (v && typeof v === 'object') ? JSON.parse(JSON.stringify(v)) : v;
+                    });
                 }
             });
             _pendingOps.push(...savedOps);
