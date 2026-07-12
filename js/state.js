@@ -420,24 +420,74 @@ const State = (() => {
 
         notifyChange(skipUndo) { notify(skipUndo); },
 
+        // Collab: Undo/Redo darf NICHT den kompletten Snapshot pushen – der
+        // enthaelt alle Tabs zum damaligen Zeitpunkt und wuerde alles ueber-
+        // schreiben, was andere Nutzer seitdem geaendert haben (auch auf
+        // anderen Tabs). Stattdessen: nur den aktiven Tab wiederherstellen und
+        // die Differenz als merge-faehige Ops senden.
+        _applySnapshotCollab(data) {
+            const site = _sites[_activeSiteIndex];
+            if (!site) return;
+            const snap = (data.sites || []).find(s => s.id === site.id);
+            if (!snap) return; // Tab existierte im Snapshot noch nicht
+            const restored = JSON.parse(JSON.stringify(snap));
+            restored.view = site.view; // Kamera ist lokal, nicht Teil des Undo
+
+            if (typeof Collab !== 'undefined' && Collab.isConnected() && !Collab.syncLock) {
+                const push = (op) => {
+                    op.siteIdx = _activeSiteIndex;
+                    op.siteId = site.id;
+                    Collab.pushOp(op);
+                };
+                const oldObjs = site.objects || [];
+                const newObjs = restored.objects || [];
+                const newById = new Map(newObjs.map(o => [o.id, o]));
+                const oldById = new Map(oldObjs.map(o => [o.id, o]));
+                oldObjs.forEach(o => { if (!newById.has(o.id)) push({ type: 'remove', objectId: o.id }); });
+                newObjs.forEach(o => {
+                    const prev = oldById.get(o.id);
+                    if (!prev) push({ type: 'add', object: JSON.parse(JSON.stringify(o)) });
+                    else if (JSON.stringify(prev) !== JSON.stringify(o)) push({ type: 'update', objectId: o.id, props: JSON.parse(JSON.stringify(o)) });
+                });
+                // Strukturelle Site-Props (Layers etc.); 'view' bleibt pro Nutzer
+                const props = {};
+                new Set([...Object.keys(site), ...Object.keys(restored)]).forEach(k => {
+                    if (k === 'objects' || k === 'id' || k === 'view') return;
+                    if (JSON.stringify(site[k]) !== JSON.stringify(restored[k])) props[k] = restored[k];
+                });
+                if (Object.keys(props).length > 0) push({ type: 'site_props', props: JSON.parse(JSON.stringify(props)) });
+            }
+            _sites[_activeSiteIndex] = restored;
+        },
+
         undo() {
             if (_undoPointer <= 0) return;
             _undoPointer--;
             const data = parseSnapshot(_undoStack[_undoPointer]);
-            _sites = data.sites;
-            _activeSiteIndex = data.activeSiteIndex;
-            _minDistance = data.minDistance;
-            _listeners.forEach(fn => fn(false)); // explicit skipSync=false → triggers full push
+            if (typeof Collab !== 'undefined' && Collab.isConnected()) {
+                this._applySnapshotCollab(data);
+                _listeners.forEach(fn => fn(true)); // Ops bereits gesendet – kein Full-Push
+            } else {
+                _sites = data.sites;
+                _activeSiteIndex = data.activeSiteIndex;
+                _minDistance = data.minDistance;
+                _listeners.forEach(fn => fn(false)); // explicit skipSync=false → triggers full push
+            }
         },
 
         redo() {
             if (_undoPointer >= _undoStack.length - 1) return;
             _undoPointer++;
             const data = parseSnapshot(_undoStack[_undoPointer]);
-            _sites = data.sites;
-            _activeSiteIndex = data.activeSiteIndex;
-            _minDistance = data.minDistance;
-            _listeners.forEach(fn => fn(false)); // explicit skipSync=false → triggers full push
+            if (typeof Collab !== 'undefined' && Collab.isConnected()) {
+                this._applySnapshotCollab(data);
+                _listeners.forEach(fn => fn(true)); // Ops bereits gesendet – kein Full-Push
+            } else {
+                _sites = data.sites;
+                _activeSiteIndex = data.activeSiteIndex;
+                _minDistance = data.minDistance;
+                _listeners.forEach(fn => fn(false)); // explicit skipSync=false → triggers full push
+            }
         },
 
         // Clipboard

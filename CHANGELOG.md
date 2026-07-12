@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.12.3] - 2026-07-12
+
+### Fixed
+- **Collaboration: undo no longer wipes other participants' work**: Pressing undo/redo restored a full snapshot of all tabs and uploaded it as the new room state — everything the other participant had changed since that snapshot (including on other tabs) silently disappeared. In a collaboration room, undo/redo now only affects the tab you are currently viewing and sends the difference as merge-safe operations, so concurrent work on other tabs is preserved. Outside of collaboration, undo/redo behaves as before.
+
 ## [6.12.2] - 2026-07-12
 
 ### Fixed
