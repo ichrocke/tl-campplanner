@@ -236,8 +236,10 @@ const IO = (() => {
             allPages.push(mapCanvas);
         }
 
-        // Object list page
-        if (showObjList && site.objects.length > 0) {
+        // Object list page (only objects on visible layers)
+        const listObjects = site.objects.filter(obj =>
+            obj.type !== 'bgimage' && obj.type !== 'guideline' && Canvas.isLayerVisible(site, obj.layerId));
+        if (showObjList && listObjects.length > 0) {
             const page2 = document.createElement('canvas');
             page2.width = Math.round(canvasW * dpiScale);
             page2.height = Math.round(canvasH * dpiScale);
@@ -265,8 +267,7 @@ const IO = (() => {
             p2.fillStyle = '#333'; p2.textAlign = 'left'; p2.textBaseline = 'middle';
             let cx = tx;
             headers.forEach((h, i) => { p2.fillText(h, cx + 4, headerY + rowH / 2); cx += colW[i]; });
-            site.objects.forEach((obj, idx) => {
-                if (obj.type === 'bgimage' || obj.type === 'guideline') return;
+            listObjects.forEach((obj, idx) => {
                 const rowY = headerY + rowH + idx * rowH;
                 if (rowY + rowH > canvasH - marginPx) return;
                 if (idx % 2 === 1) { p2.fillStyle = '#fafafa'; p2.fillRect(tx, rowY, totalW, rowH); }
@@ -334,12 +335,14 @@ const IO = (() => {
             if (x < minX) minX = x; if (x > maxX) maxX = x;
             if (y < minY) minY = y; if (y > maxY) maxY = y;
         };
+        // Only visible objects count – hidden layers are excluded from print/export
+        const visibleObjects = site.objects.filter(obj => Canvas.isLayerVisible(site, obj.layerId));
         // Ground objects have points
-        site.objects.forEach(obj => {
+        visibleObjects.forEach(obj => {
             if (obj.type === 'ground' && obj.points) obj.points.forEach(p => expand(p.x, p.y));
         });
         (site.grounds || []).forEach(g => g.forEach(p => expand(p.x, p.y))); // legacy
-        site.objects.forEach(obj => {
+        visibleObjects.forEach(obj => {
             let maxRope = obj.guyRopeDistance || 0;
             if (obj.shape === 'rect' && Canvas.getEffectiveSideDistance) {
                 maxRope = Math.max(
@@ -599,6 +602,9 @@ const IO = (() => {
         const bounds = getContentBounds(site);
         if (!bounds) return;
 
+        // Only objects on visible layers are exported
+        const visObjects = site.objects.filter(obj => Canvas.isLayerVisible(site, obj.layerId));
+
         const pad = 2;
         const s = 30; // pixels per meter
         const vbX = (bounds.minX - pad) * s;
@@ -652,7 +658,7 @@ const IO = (() => {
         }
 
         // Ground areas
-        site.objects.forEach(obj => {
+        visObjects.forEach(obj => {
             if (obj.type !== 'ground' || !obj.points || obj.points.length < 3) return;
             const fill = obj.color || '#22c55e';
             els += `<polygon points="${polyPoints(obj.points)}" fill="${fill}" fill-opacity="0.08" stroke="${fill}" stroke-width="2"/>\n`;
@@ -662,7 +668,7 @@ const IO = (() => {
         });
 
         // Areas
-        site.objects.forEach(obj => {
+        visObjects.forEach(obj => {
             if (obj.type !== 'area' || !obj.points || obj.points.length < 3) return;
             const fill = obj.color || '#d4a574';
             els += `<polygon points="${polyPoints(obj.points)}" fill="${fill}" fill-opacity="0.15" stroke="${fill}" stroke-width="1.5" stroke-dasharray="6,4"/>\n`;
@@ -672,7 +678,7 @@ const IO = (() => {
         });
 
         // Fences/Pipes
-        site.objects.forEach(obj => {
+        visObjects.forEach(obj => {
             if (obj.type !== 'fence' || !obj.points || obj.points.length < 2) return;
             const color = obj.color || '#8B4513';
             const thick = obj.lineThickness || 4;
@@ -690,7 +696,7 @@ const IO = (() => {
         });
 
         // Guidelines
-        site.objects.forEach(obj => {
+        visObjects.forEach(obj => {
             if (obj.type !== 'guideline' || !obj.points || obj.points.length !== 2) return;
             const color = obj.color || '#6366f1';
             const a = obj.points[0], b = obj.points[1];
@@ -710,7 +716,7 @@ const IO = (() => {
         });
 
         // Post-its
-        site.objects.forEach(obj => {
+        visObjects.forEach(obj => {
             if (obj.type !== 'postit') return;
             const w = (obj.width || 3), h = (obj.height || 3);
             const color = obj.color || '#fef08a';
@@ -719,7 +725,7 @@ const IO = (() => {
         });
 
         // Text objects
-        site.objects.forEach(obj => {
+        visObjects.forEach(obj => {
             if (obj.type !== 'text') return;
             const fs = (obj.fontSize || 1) * s;
             const color = obj.color || '#1a1a2e';
@@ -757,7 +763,7 @@ const IO = (() => {
         });
         await Promise.all(symLoadPromises);
 
-        site.objects.forEach(obj => {
+        visObjects.forEach(obj => {
             if (obj.type !== 'symbol') return;
             const sz = Math.max(obj.width || 1, obj.height || 1) * s;
             const sx = obj.x * s - sz / 2, sy = obj.y * s - sz / 2;
@@ -773,7 +779,7 @@ const IO = (() => {
         });
 
         // Tents & other objects (rect, circle, polygon shapes)
-        site.objects.forEach(obj => {
+        visObjects.forEach(obj => {
             if (!obj.width && !obj.height) return;
             if (['ground','area','fence','guideline','postit','text','symbol','bgimage'].includes(obj.type)) return;
             const color = obj.color || '#4a90d9';

@@ -2780,6 +2780,7 @@ const Canvas = (() => {
         set selectionRect(r) { selectionRect = r; },
         objInRect,
         isObjSelectable,
+        isLayerVisible,
         hitTest,
         markDistancesDirty,
         get hoveredId() { return hoveredId; },

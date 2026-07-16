@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.12.4] - 2026-07-16
+
+### Fixed
+- **Print/PNG/SVG export no longer sized by hidden layers**: The printable area was computed from all objects, including those on hidden layers, so the exported map was much larger (and the content much smaller) than what was actually visible. Prints, PNG/JPEG exports and the SVG export now only consider objects on visible layers — both for the page area and for the drawn content. The printed object list also no longer includes objects on hidden layers.
+
 ## [6.12.3] - 2026-07-12
 
 ### Fixed
