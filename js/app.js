@@ -32,7 +32,7 @@
                 const saved = localStorage.getItem(STORAGE_KEY);
                 if (saved) localStorage.setItem(STORAGE_KEY + '_broken', saved);
             } catch (ex) { /* ignore */ }
-            setTimeout(() => { try { alert(I18n.t('msg.autosaveCorrupt')); } catch (ex) {} }, 600);
+            setTimeout(() => { try { UI.infoDialog(I18n.t('msg.autosaveCorrupt')); } catch (ex) {} }, 600);
         }
     }
     if (!restored) {
@@ -66,7 +66,7 @@
             console.warn('Autosave failed:', e);
             if (!_quotaWarned) {
                 _quotaWarned = true;
-                try { alert(I18n.t('msg.autosaveFailed')); } catch (ex) {}
+                try { UI.infoDialog(I18n.t('msg.autosaveFailed')); } catch (ex) {}
             }
             return false;
         }
@@ -153,7 +153,7 @@
         if (typeof Collab !== 'undefined' && Collab.isConnected()) return;
         if (_multiTabWarned) return;
         _multiTabWarned = true;
-        try { alert(I18n.t('msg.multiTab')); } catch (ex) {}
+        try { UI.infoDialog(I18n.t('msg.multiTab')); } catch (ex) {}
     });
 
     // Legal modal (Impressum / Datenschutz)
@@ -343,7 +343,7 @@
                 if (ok) {
                     UI.updateCollabStatus();
                 } else {
-                    alert(I18n.t('collab.roomNotFound'));
+                    UI.infoDialog(I18n.t('collab.roomNotFound'));
                     // URL bereinigen
                     const url = new URL(window.location);
                     url.searchParams.delete('room');

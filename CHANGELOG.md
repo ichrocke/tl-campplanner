@@ -1,5 +1,14 @@
 # Changelog
 
+## [6.13.0] - 2026-07-17
+
+### Added
+- **Select and edit multiple layers at once**: Layers can now be multi-selected with Ctrl/Cmd+click (toggle) and Shift+click (range). A small action bar appears above the layer list showing the selection count with one-click actions: show, hide, lock, unlock, and delete all selected layers. Deleting asks for confirmation once (including how many layers and objects are affected), and a single undo restores everything. Deleting every layer is blocked — at least one layer must remain.
+- **Layer quick actions**: New "show all" / "hide all" buttons in the layers panel header. The layer context menu gained "Show only this layer" (solo), "Show all" and "Hide all". Alt+click on a layer's eye icon also toggles solo mode.
+
+### Fixed
+- **Browser can no longer permanently block deleting**: All confirmations, prompts and notices now use the app's own dialogs instead of the browser's native popups. Previously, ticking the browser's "prevent this page from creating additional dialogs" checkbox silently answered every confirmation with "cancel" — deleting, renaming and similar actions stopped working until the page was reloaded. The new dialogs cannot be suppressed, match the app's design, support Enter/Escape, and keyboard shortcuts no longer leak to the canvas while a dialog is open.
+
 ## [6.12.4] - 2026-07-16
 
 ### Fixed

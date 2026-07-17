@@ -104,9 +104,14 @@
                 <div class="sidebar-section sidebar-layers">
                     <div class="layers-header">
                         <h3 data-i18n="layer.title">Layers</h3>
-                        <button id="btn-add-layer" class="layers-add-btn" title="+" >+</button>
+                        <div class="layers-header-btns">
+                            <button id="btn-layers-show-all" class="layers-add-btn" data-i18n-title="layer.showAll">&#128065;</button>
+                            <button id="btn-layers-hide-all" class="layers-add-btn dim-btn" data-i18n-title="layer.hideAll">&#128065;</button>
+                            <button id="btn-add-layer" class="layers-add-btn" title="+" >+</button>
+                        </div>
                     </div>
-                    <div id="layers-list"></div>
+                    <div id="layers-bulkbar" style="display:none"></div>
+                    <div id="layers-list" data-i18n-title="layer.multiHint"></div>
                 </div>
             </aside>
 

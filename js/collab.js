@@ -55,9 +55,9 @@ const Collab = (() => {
 
     // --- Name abfragen ---
 
-    function promptName() {
+    async function promptName() {
         const saved = localStorage.getItem('collab_userName') || '';
-        const name = prompt(I18n.t('collab.enterName'), saved);
+        const name = await UI.promptDialog(I18n.t('collab.enterName'), saved);
         if (name && name.trim()) {
             _userName = name.trim();
             localStorage.setItem('collab_userName', _userName);
@@ -72,7 +72,7 @@ const Collab = (() => {
         if (!roomId) return false;
 
         // Name abfragen beim Beitreten
-        promptName();
+        await promptName();
         if (typeof window.showDataWarning === 'function') window.showDataWarning();
 
         try {

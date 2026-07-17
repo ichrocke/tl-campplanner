@@ -36,6 +36,84 @@ const UI = (() => {
         // (responsive sidebar removed)
     }
 
+    // --- In-App-Dialoge (Ersatz fuer native confirm/prompt/alert) ---
+    // Native Dialoge kann der Browser dauerhaft unterdruecken ("Weitere
+    // Dialoge unterbinden"); confirm() liefert dann immer false und z.B.
+    // Loeschen ist blockiert, bis die Seite neu geladen wird.
+
+    function showDialog(opts) {
+        return new Promise((resolve) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'dialog-overlay';
+            const box = document.createElement('div');
+            box.className = 'dialog-box';
+            const msg = document.createElement('div');
+            msg.className = 'dialog-message';
+            msg.textContent = opts.message || '';
+            box.appendChild(msg);
+            let input = null;
+            if (opts.input) {
+                input = document.createElement('input');
+                input.type = 'text';
+                input.className = 'dialog-input';
+                input.value = opts.defaultValue != null ? String(opts.defaultValue) : '';
+                box.appendChild(input);
+            }
+            const actions = document.createElement('div');
+            actions.className = 'dialog-actions';
+            if (opts.showCancel) {
+                const cancelBtn = document.createElement('button');
+                cancelBtn.className = 'btn-secondary';
+                cancelBtn.textContent = I18n.t('dialog.cancel');
+                cancelBtn.addEventListener('click', () => close(opts.cancelValue));
+                actions.appendChild(cancelBtn);
+            }
+            const okBtn = document.createElement('button');
+            okBtn.className = opts.danger ? 'btn-primary dialog-danger' : 'btn-primary';
+            okBtn.textContent = I18n.t('dialog.ok');
+            okBtn.addEventListener('click', ok);
+            actions.appendChild(okBtn);
+            box.appendChild(actions);
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+
+            function ok() {
+                close(input ? input.value : true);
+            }
+            function close(result) {
+                document.removeEventListener('keydown', onKey, true);
+                overlay.remove();
+                resolve(result);
+            }
+            // Capture-Phase, damit Canvas-Shortcuts (Entf, Escape, ...) nicht
+            // feuern, solange der Dialog offen ist.
+            function onKey(e) {
+                if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); ok(); }
+                else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(opts.cancelValue); }
+                else { e.stopPropagation(); }
+            }
+            document.addEventListener('keydown', onKey, true);
+            overlay.addEventListener('mousedown', (e) => {
+                if (e.target === overlay) close(opts.cancelValue);
+            });
+            if (input) { input.focus(); input.select(); }
+            else okBtn.focus();
+        });
+    }
+
+    // Ersatz fuer confirm(): Promise<boolean>
+    function confirmDialog(message, opts) {
+        return showDialog({ message, showCancel: true, cancelValue: false, danger: opts && opts.danger });
+    }
+    // Ersatz fuer prompt(): Promise<string|null>
+    function promptDialog(message, defaultValue) {
+        return showDialog({ message, input: true, defaultValue, showCancel: true, cancelValue: null });
+    }
+    // Ersatz fuer alert(): Promise (fire-and-forget moeglich)
+    function infoDialog(message) {
+        return showDialog({ message, showCancel: false, cancelValue: true });
+    }
+
     // --- Layers ---
 
     // Collab: Ebenen-Aenderungen als site_props-Op senden statt Full-State-Push.
@@ -56,10 +134,10 @@ const UI = (() => {
     }
 
     function bindLayers() {
-        document.getElementById('btn-add-layer').addEventListener('click', () => {
+        document.getElementById('btn-add-layer').addEventListener('click', async () => {
             const site = State.activeSite;
             if (!site) return;
-            const name = prompt(I18n.t('layer.rename'), I18n.t('layer.title') + ' ' + (site.layers.length + 1));
+            const name = await promptDialog(I18n.t('layer.rename'), I18n.t('layer.title') + ' ' + (site.layers.length + 1));
             if (!name || !name.trim()) return;
             const newLayer = { id: State.generateId(), name: name.trim(), visible: true, locked: false };
             site.layers.unshift(newLayer);
@@ -68,6 +146,103 @@ const UI = (() => {
             State.notifyChange(true);
             buildLayers();
         });
+        const showAllBtn = document.getElementById('btn-layers-show-all');
+        if (showAllBtn) showAllBtn.addEventListener('click', () => setLayersVisible(true, null));
+        const hideAllBtn = document.getElementById('btn-layers-hide-all');
+        if (hideAllBtn) hideAllBtn.addEventListener('click', () => setLayersVisible(false, null));
+    }
+
+    // --- Ebenen-Mehrfachauswahl (Strg/Shift+Klick) ---
+    const _layerSel = new Set();      // IDs der markierten Ebenen
+    let _layerSelAnchorId = null;     // Anker fuer Shift-Bereichsauswahl
+    let _layerSelSiteId = null;       // Auswahl beim Tab-Wechsel zuruecksetzen
+
+    // Gemeinsamer Abschluss fuer Sichtbarkeits-/Sperr-Aenderungen
+    function afterLayerViewChange(site) {
+        collabSyncLayers(site);
+        State.notifyChange(true);
+        if (Canvas.pruneSelection()) refreshPropertiesForSelection();
+        buildLayers();
+        buildPlacedList();
+        Canvas.render();
+    }
+
+    // idSet null → alle Ebenen
+    function setLayersVisible(vis, idSet) {
+        const site = State.activeSite;
+        if (!site) return;
+        site.layers.forEach(l => { if (!idSet || idSet.has(l.id)) l.visible = vis; });
+        afterLayerViewChange(site);
+    }
+
+    function setLayersLocked(locked, idSet) {
+        const site = State.activeSite;
+        if (!site) return;
+        site.layers.forEach(l => { if (!idSet || idSet.has(l.id)) l.locked = locked; });
+        afterLayerViewChange(site);
+    }
+
+    // Solo: nur diese Ebene anzeigen; erneut angewendet → wieder alle anzeigen
+    function soloLayer(site, layer) {
+        const isSolo = layer.visible && !site.layers.some(l => l.id !== layer.id && l.visible);
+        if (isSolo) site.layers.forEach(l => { l.visible = true; });
+        else site.layers.forEach(l => { l.visible = (l.id === layer.id); });
+        afterLayerViewChange(site);
+    }
+
+    async function bulkDeleteLayers() {
+        const site = State.activeSite;
+        if (!site) return;
+        const sel = site.layers.filter(l => _layerSel.has(l.id));
+        if (!sel.length) return;
+        if (sel.length >= site.layers.length) {
+            infoDialog(I18n.t('layer.bulkDeleteAllBlocked'));
+            return;
+        }
+        const removedIds = site.objects.filter(o => _layerSel.has(o.layerId)).map(o => o.id);
+        const ok = await confirmDialog(
+            I18n.t('layer.bulkDeleteConfirm', { layers: sel.length, objects: removedIds.length }),
+            { danger: true });
+        if (!ok) return;
+        site.objects = site.objects.filter(o => !_layerSel.has(o.layerId));
+        Canvas.clearSelection();
+        site.layers = site.layers.filter(l => !_layerSel.has(l.id));
+        if (!site.layers.some(l => l.id === site.activeLayerId)) site.activeLayerId = site.layers[0].id;
+        removedIds.forEach(id => collabPushOp(site, { type: 'remove', objectId: id }));
+        collabSyncLayers(site);
+        _layerSel.clear();
+        State.notifyChange();
+        buildLayers();
+        buildPlacedList();
+        Canvas.render();
+    }
+
+    function buildLayersBulkbar(site) {
+        const bulkbar = document.getElementById('layers-bulkbar');
+        if (!bulkbar) return;
+        if (_layerSel.size === 0) {
+            bulkbar.style.display = 'none';
+            bulkbar.innerHTML = '';
+            return;
+        }
+        bulkbar.style.display = 'flex';
+        bulkbar.innerHTML = `
+            <span class="bulkbar-label">${I18n.t('layer.selected', { n: _layerSel.size })}</span>
+            <button class="bulkbar-btn" data-act="show" title="${escAttr(I18n.t('layer.bulkShow'))}">\u{1F441}</button>
+            <button class="bulkbar-btn dim" data-act="hide" title="${escAttr(I18n.t('layer.bulkHide'))}">\u{1F441}</button>
+            <button class="bulkbar-btn" data-act="lock" title="${escAttr(I18n.t('layer.bulkLock'))}">\u{1F6AB}</button>
+            <button class="bulkbar-btn" data-act="unlock" title="${escAttr(I18n.t('layer.bulkUnlock'))}">\u{1F513}</button>
+            <button class="bulkbar-btn danger" data-act="delete" title="${escAttr(I18n.t('layer.bulkDelete'))}">\u{1F5D1}</button>
+            <button class="bulkbar-btn" data-act="clear" title="${escAttr(I18n.t('layer.clearSelection'))}">&times;</button>`;
+        bulkbar.querySelectorAll('.bulkbar-btn').forEach(b => b.addEventListener('click', () => {
+            const act = b.dataset.act;
+            if (act === 'show') setLayersVisible(true, _layerSel);
+            else if (act === 'hide') setLayersVisible(false, _layerSel);
+            else if (act === 'lock') setLayersLocked(true, _layerSel);
+            else if (act === 'unlock') setLayersLocked(false, _layerSel);
+            else if (act === 'delete') bulkDeleteLayers();
+            else if (act === 'clear') { _layerSel.clear(); buildLayers(); }
+        }));
     }
 
     function buildLayers() {
@@ -76,9 +251,19 @@ const UI = (() => {
         const site = State.activeSite;
         if (!site || !site.layers) return;
 
+        // Auswahl bereinigen: Tab-Wechsel oder geloeschte/entfernte Ebenen
+        if (site.id !== _layerSelSiteId) {
+            _layerSel.clear();
+            _layerSelAnchorId = null;
+            _layerSelSiteId = site.id;
+        }
+        [..._layerSel].forEach(id => { if (!site.layers.some(l => l.id === id)) _layerSel.delete(id); });
+        buildLayersBulkbar(site);
+
         site.layers.forEach((layer, i) => {
             const el = document.createElement('div');
-            el.className = 'layer-item' + (layer.id === site.activeLayerId ? ' active' : '');
+            el.className = 'layer-item' + (layer.id === site.activeLayerId ? ' active' : '')
+                + (_layerSel.has(layer.id) ? ' multi-selected' : '');
             const objCount = site.objects.filter(o => o.layerId === layer.id).length;
 
             const lColor = layer.color || '#888';
@@ -94,10 +279,29 @@ const UI = (() => {
                 </div>
                 ${site.layers.length > 1 ? '<button class="layer-del-btn" title="Delete">&times;</button>' : ''}`;
 
-            // Click to set active layer
+            // Click: aktive Ebene setzen; Strg/Shift+Klick: Mehrfachauswahl
             el.addEventListener('click', (e) => {
                 if (e.target.closest('.layer-vis-btn') || e.target.closest('.layer-lock-btn') ||
                     e.target.closest('.layer-order-btn') || e.target.closest('.layer-del-btn')) return;
+                if (e.ctrlKey || e.metaKey) {
+                    if (_layerSel.has(layer.id)) _layerSel.delete(layer.id);
+                    else _layerSel.add(layer.id);
+                    _layerSelAnchorId = layer.id;
+                    buildLayers();
+                    return;
+                }
+                if (e.shiftKey) {
+                    const anchorId = _layerSelAnchorId || site.activeLayerId;
+                    const a = site.layers.findIndex(l => l.id === anchorId);
+                    const from = a < 0 ? i : Math.min(a, i);
+                    const to = a < 0 ? i : Math.max(a, i);
+                    _layerSel.clear();
+                    for (let k = from; k <= to; k++) _layerSel.add(site.layers[k].id);
+                    buildLayers();
+                    return;
+                }
+                _layerSel.clear();
+                _layerSelAnchorId = layer.id;
                 site.activeLayerId = layer.id;
                 collabSyncLayers(site);
                 State.notifyChange(true);
@@ -120,23 +324,28 @@ const UI = (() => {
                 e.preventDefault();
                 e.stopPropagation();
                 const items = [
-                    { label: I18n.t('tab.rename'), action: () => {
-                        const n = prompt(I18n.t('layer.rename'), layer.name);
+                    { label: I18n.t('tab.rename'), action: async () => {
+                        const n = await promptDialog(I18n.t('layer.rename'), layer.name);
                         if (n && n.trim()) { layer.name = n.trim(); collabSyncLayers(site); State.notifyChange(true); buildLayers(); }
                     }},
-                    { label: I18n.t('layer.opacity'), action: () => {
-                        const o = prompt(I18n.t('layer.opacity') + ' (0.1-1.0):', layer.opacity !== undefined ? layer.opacity : 1);
+                    { label: I18n.t('layer.opacity'), action: async () => {
+                        const o = await promptDialog(I18n.t('layer.opacity') + ' (0.1-1.0):', layer.opacity !== undefined ? layer.opacity : 1);
                         if (o !== null) { layer.opacity = Math.max(0.1, Math.min(1, parseFloat(o) || 1)); collabSyncLayers(site); State.notifyChange(true); Canvas.render(); }
                     }},
+                    { sep: true },
+                    { label: I18n.t('layer.solo'), action: () => soloLayer(site, layer) },
+                    { label: I18n.t('layer.showAll'), action: () => setLayersVisible(true, null) },
+                    { label: I18n.t('layer.hideAll'), action: () => setLayersVisible(false, null) },
                 ];
+                if (State.sites.length > 1 || site.layers.length > 1) items.push({ sep: true });
                 if (State.sites.length > 1) {
-                    items.push({ label: I18n.t('layer.copyToTab'), action: () => {
+                    items.push({ label: I18n.t('layer.copyToTab'), action: async () => {
                         const otherSites = State.sites
                             .map((s, idx) => ({ s, idx }))
                             .filter(({ idx }) => idx !== State.activeSiteIndex);
                         const msg = I18n.t('layer.copyToTabPrompt') + '\n' +
                             otherSites.map((o, n) => (n + 1) + ': ' + o.s.name).join('\n');
-                        const choice = prompt(msg);
+                        const choice = await promptDialog(msg);
                         if (!choice) return;
                         const n = parseInt(choice) - 1;
                         if (isNaN(n) || n < 0 || n >= otherSites.length) return;
@@ -191,9 +400,9 @@ const UI = (() => {
             });
 
             // Double-click to rename
-            el.querySelector('.layer-name').addEventListener('dblclick', (e) => {
+            el.querySelector('.layer-name').addEventListener('dblclick', async (e) => {
                 e.stopPropagation();
-                const newName = prompt(I18n.t('layer.rename'), layer.name);
+                const newName = await promptDialog(I18n.t('layer.rename'), layer.name);
                 if (newName && newName.trim()) {
                     layer.name = newName.trim();
                     collabSyncLayers(site);
@@ -202,28 +411,19 @@ const UI = (() => {
                 }
             });
 
-            // Visibility toggle
+            // Visibility toggle (Alt+Klick: Solo)
             el.querySelector('.layer-vis-btn').addEventListener('click', (e) => {
                 e.stopPropagation();
+                if (e.altKey) { soloLayer(site, layer); return; }
                 layer.visible = !layer.visible;
-                collabSyncLayers(site);
-                State.notifyChange(true);
-                if (Canvas.pruneSelection()) refreshPropertiesForSelection();
-                buildLayers();
-                buildPlacedList();
-                Canvas.render();
+                afterLayerViewChange(site);
             });
 
             // Lock toggle
             el.querySelector('.layer-lock-btn').addEventListener('click', (e) => {
                 e.stopPropagation();
                 layer.locked = !layer.locked;
-                collabSyncLayers(site);
-                State.notifyChange(true);
-                if (Canvas.pruneSelection()) refreshPropertiesForSelection();
-                buildLayers();
-                buildPlacedList();
-                Canvas.render();
+                afterLayerViewChange(site);
             });
 
             // Reorder
@@ -246,9 +446,9 @@ const UI = (() => {
             // Delete
             const delBtn = el.querySelector('.layer-del-btn');
             if (delBtn) {
-                delBtn.addEventListener('click', (e) => {
+                delBtn.addEventListener('click', async (e) => {
                     e.stopPropagation();
-                    if (!confirm(I18n.t('layer.deleteConfirm', { name: layer.name }))) return;
+                    if (!(await confirmDialog(I18n.t('layer.deleteConfirm', { name: layer.name }), { danger: true }))) return;
                     // Delete objects on this layer
                     const removedIds = site.objects.filter(o => o.layerId === layer.id).map(o => o.id);
                     site.objects = site.objects.filter(o => o.layerId !== layer.id);
@@ -602,21 +802,21 @@ const UI = (() => {
         document.getElementById('map-cancel').addEventListener('click', closeModal);
 
         // Collab button
-        document.getElementById('btn-collab').addEventListener('click', () => {
+        document.getElementById('btn-collab').addEventListener('click', async () => {
             if (typeof Collab === 'undefined') return;
             if (Collab.isConnected()) {
-                if (confirm(I18n.t('collab.disconnectConfirm'))) {
+                if (await confirmDialog(I18n.t('collab.disconnectConfirm'))) {
                     Collab.disconnect();
                     updateCollabStatus();
                 }
             } else {
-                const roomId = prompt(I18n.t('collab.enterRoom'));
+                const roomId = await promptDialog(I18n.t('collab.enterRoom'));
                 if (roomId && roomId.trim()) {
                     Collab.joinRoom(roomId.trim()).then(ok => {
                         if (ok) {
                             updateCollabStatus();
                         } else {
-                            alert(I18n.t('collab.roomNotFound'));
+                            infoDialog(I18n.t('collab.roomNotFound'));
                         }
                     });
                 }
@@ -705,8 +905,8 @@ const UI = (() => {
                 e.preventDefault();
                 e.stopPropagation();
                 createContextMenuAt(e.clientX, e.clientY, [
-                    { label: I18n.t('tab.rename'), action: () => {
-                        const newName = prompt(I18n.t('btn.newFolderPrompt'), fname);
+                    { label: I18n.t('tab.rename'), action: async () => {
+                        const newName = await promptDialog(I18n.t('btn.newFolderPrompt'), fname);
                         if (newName && newName.trim() && newName.trim() !== fname) {
                             const nn = newName.trim();
                             templates.forEach(t => { if (t.folder === fname) t.folder = nn; });
@@ -810,14 +1010,14 @@ const UI = (() => {
             e.preventDefault();
             e.stopPropagation();
             createContextMenuAt(e.clientX, e.clientY, [
-                { label: I18n.t('tab.rename'), action: () => {
-                    const name = prompt(I18n.t('props.name') + ':', t.name);
+                { label: I18n.t('tab.rename'), action: async () => {
+                    const name = await promptDialog(I18n.t('props.name') + ':', t.name);
                     if (name && name.trim()) { t.name = name.trim(); State.notifyChange(true); buildPalette(); }
                 }},
-                { label: I18n.t('props.width') + ' / ' + I18n.t('props.depth'), action: () => {
-                    const w = prompt(I18n.t('props.width') + ' (m):', t.width);
+                { label: I18n.t('props.width') + ' / ' + I18n.t('props.depth'), action: async () => {
+                    const w = await promptDialog(I18n.t('props.width') + ' (m):', t.width);
                     if (w !== null) { t.width = parseFloat(w) || t.width; }
-                    const h = prompt(I18n.t('props.depth') + ' (m):', t.height);
+                    const h = await promptDialog(I18n.t('props.depth') + ' (m):', t.height);
                     if (h !== null) { t.height = parseFloat(h) || t.height; }
                     State.notifyChange(true); buildPalette();
                 }},
@@ -831,8 +1031,8 @@ const UI = (() => {
                     t.shape = shapes[next];
                     State.notifyChange(true); buildPalette();
                 }},
-                { label: I18n.t('props.guyRope.distance'), action: () => {
-                    const d = prompt(I18n.t('props.guyRope.distance') + ':', t.guyRopeDistance || 0);
+                { label: I18n.t('props.guyRope.distance'), action: async () => {
+                    const d = await promptDialog(I18n.t('props.guyRope.distance') + ':', t.guyRopeDistance || 0);
                     if (d !== null) { t.guyRopeDistance = parseFloat(d) || 0; State.notifyChange(true); buildPalette(); }
                 }},
                 { sep: true },
@@ -1068,8 +1268,8 @@ const UI = (() => {
                     { label: I18n.t('tab.export'), action: () => IO.exportTab(i) },
                     { label: I18n.t('tab.import'), action: () => IO.importTab() },
                     { sep: true },
-                    { label: I18n.t('tab.close'), className: 'danger', action: () => {
-                        if (State.sites.length > 1 && confirm(I18n.t('tab.confirmDelete', { name: site.name }))) {
+                    { label: I18n.t('tab.close'), className: 'danger', action: async () => {
+                        if (State.sites.length > 1 && await confirmDialog(I18n.t('tab.confirmDelete', { name: site.name }), { danger: true })) {
                             State.deleteSite(i);
                         }
                     }}
@@ -1117,7 +1317,7 @@ const UI = (() => {
             Canvas.render();
         });
 
-        document.getElementById('btn-add-tab').addEventListener('click', () => {
+        document.getElementById('btn-add-tab').addEventListener('click', async () => {
             if (document.activeElement && document.activeElement.blur) {
                 document.activeElement.blur();
             }
@@ -1130,7 +1330,7 @@ const UI = (() => {
             hideProperties();
             const currentSite = State.activeSite;
             const copyTemplates = currentSite && currentSite.templates && currentSite.templates.length > 0
-                && confirm(I18n.t('msg.copyTemplates'));
+                && await confirmDialog(I18n.t('msg.copyTemplates'));
             if (copyTemplates) {
                 State.createSiteFrom(currentSite);
             } else {
@@ -1142,8 +1342,8 @@ const UI = (() => {
             openModal('modal-custom-object');
         });
 
-        document.getElementById('btn-new-folder').addEventListener('click', () => {
-            const name = prompt(I18n.t('btn.newFolderPrompt'), I18n.t('btn.newFolder'));
+        document.getElementById('btn-new-folder').addEventListener('click', async () => {
+            const name = await promptDialog(I18n.t('btn.newFolderPrompt'), I18n.t('btn.newFolder'));
             if (!name || !name.trim()) return;
             // Create a dummy template in the folder to establish it, then remove it
             // Actually, just set the folder on the first root-level template, or create a marker
@@ -1169,8 +1369,8 @@ const UI = (() => {
             openModal('modal-notebook');
         });
 
-        document.getElementById('btn-clear-all').addEventListener('click', () => {
-            if (confirm(I18n.t('msg.confirmClearAll'))) {
+        document.getElementById('btn-clear-all').addEventListener('click', async () => {
+            if (await confirmDialog(I18n.t('msg.confirmClearAll'), { danger: true })) {
                 Canvas.clearSelection();
                 hideProperties();
                 State.clear();
@@ -1232,13 +1432,13 @@ const UI = (() => {
             box.innerHTML = html;
             box.querySelector('#backup-close').addEventListener('click', () => overlay.remove());
             box.querySelector('#backup-create').addEventListener('click', async () => {
-                const name = prompt(I18n.t('backup.namePrompt'), '');
+                const name = await promptDialog(I18n.t('backup.namePrompt'), '');
                 if (name === null) return;
                 await Backup.saveNamed(name.trim());
                 render();
             });
             box.querySelectorAll('.backup-restore').forEach(b => b.addEventListener('click', async () => {
-                if (!confirm(I18n.t('backup.confirmRestore'))) return;
+                if (!(await confirmDialog(I18n.t('backup.confirmRestore'), { danger: true }))) return;
                 const json = await Backup.get(parseInt(b.dataset.id, 10));
                 if (!json) return;
                 try {
@@ -1247,7 +1447,7 @@ const UI = (() => {
                     hideProperties();
                     overlay.remove();
                     closeModal();
-                } catch (e) { alert(I18n.t('msg.importError') + e.message); }
+                } catch (e) { infoDialog(I18n.t('msg.importError') + e.message); }
             }));
             box.querySelectorAll('.backup-del').forEach(b => b.addEventListener('click', async () => {
                 await Backup.remove(parseInt(b.dataset.id, 10));
@@ -2544,7 +2744,7 @@ const UI = (() => {
             if (typeof Collab !== 'undefined') {
                 Collab.joinRoom(id).then(ok => {
                     if (ok) { updateCollabStatus(); }
-                    else { alert(I18n.t('collab.roomNotFound')); }
+                    else { infoDialog(I18n.t('collab.roomNotFound')); }
                 });
             }
         });
@@ -2571,15 +2771,15 @@ const UI = (() => {
                                 // Link kopieren und anzeigen
                                 const url = location.origin + location.pathname + '?room=' + data.roomId;
                                 navigator.clipboard.writeText(url).catch(() => {});
-                                alert(I18n.t('collab.roomCreated') + '\n\n' + url + '\n\n' + I18n.t('collab.roomCreatedCopied'));
+                                infoDialog(I18n.t('collab.roomCreated') + '\n\n' + url + '\n\n' + I18n.t('collab.roomCreatedCopied'));
                             }
                         });
                     }
                 } else {
-                    alert(data.error || 'Fehler beim Erstellen');
+                    infoDialog(data.error || 'Fehler beim Erstellen');
                 }
             } catch (e) {
-                alert('Fehler: ' + e.message);
+                infoDialog('Fehler: ' + e.message);
             }
         });
 
@@ -2712,9 +2912,9 @@ const UI = (() => {
                                 State.notifyChange();
                                 Canvas.render();
                             } else {
-                                alert(I18n.t('msg.importError') + 'Unknown file format');
+                                infoDialog(I18n.t('msg.importError') + 'Unknown file format');
                             }
-                        } catch (err) { alert(I18n.t('msg.importError') + err.message); }
+                        } catch (err) { infoDialog(I18n.t('msg.importError') + err.message); }
                     };
                     reader.readAsText(file);
                 };
@@ -3095,7 +3295,7 @@ const UI = (() => {
         const remaining = deadline - Date.now();
         if (remaining <= 0) {
             Collab.disconnect();
-            alert(I18n.t('collab.roomExpired'));
+            infoDialog(I18n.t('collab.roomExpired'));
             return;
         }
         const users = Collab.getOnlineUsers();
@@ -3200,7 +3400,7 @@ const UI = (() => {
                 State.activeSiteIndex = State.sites.length - 1;
             })
             .catch(err => {
-                alert((I18n.t('msg.exampleError') || 'Could not load example: ') + err);
+                infoDialog((I18n.t('msg.exampleError') || 'Could not load example: ') + err);
                 throw err;
             });
     }
@@ -3214,5 +3414,6 @@ const UI = (() => {
         removeContextMenu, openTextModal, showMultiProperties,
         updateCollabStatus, openMaptilesModal,
         updateHoverTooltip, notifyEyedropperEnded,
+        confirmDialog, promptDialog, infoDialog,
     };
 })();

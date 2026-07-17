@@ -1853,6 +1853,58 @@ kbd {
 
 .btn-secondary:hover { background: var(--bg); }
 
+/* ---- In-App-Dialoge (confirm/prompt/alert-Ersatz) ---- */
+.dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 12000;
+}
+
+.dialog-box {
+    background: var(--surface);
+    border-radius: 10px;
+    box-shadow: var(--shadow-lg);
+    padding: 18px 20px;
+    min-width: 320px;
+    max-width: min(480px, 90vw);
+}
+
+.dialog-message {
+    font-size: 13px;
+    color: var(--text);
+    white-space: pre-line;
+    word-break: break-word;
+    max-height: 50vh;
+    overflow-y: auto;
+    line-height: 1.5;
+}
+
+.dialog-input {
+    width: 100%;
+    margin-top: 12px;
+    padding: 7px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    font-size: 13px;
+    background: var(--surface);
+    color: var(--text);
+    box-sizing: border-box;
+}
+
+.dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 16px;
+}
+
+.btn-primary.dialog-danger { background: var(--danger); }
+.btn-primary.dialog-danger:hover { background: var(--danger); opacity: 0.85; }
+
 /* ---- Context Menu ---- */
 .context-menu {
     position: fixed;
@@ -2040,10 +2092,63 @@ kbd {
     cursor: pointer;
     transition: background 0.1s;
     position: relative;
+    user-select: none;
 }
 
 .layer-item:hover { background: var(--bg); }
 .layer-item.active { background: var(--primary-light); color: var(--primary); font-weight: 600; }
+.layer-item.multi-selected { background: var(--primary-light); box-shadow: inset 0 0 0 1px var(--primary); }
+
+/* Mehrfachauswahl-Aktionsleiste */
+#layers-bulkbar {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    padding: 3px 4px;
+    margin-bottom: 4px;
+    border: 1px solid var(--primary);
+    border-radius: 4px;
+    background: var(--primary-light);
+    font-size: 10px;
+}
+
+#layers-bulkbar .bulkbar-label {
+    flex: 1;
+    color: var(--primary);
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bulkbar-btn {
+    width: 20px;
+    height: 20px;
+    border: none;
+    border-radius: 3px;
+    background: transparent;
+    font-size: 11px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.bulkbar-btn:hover { background: var(--surface); }
+.bulkbar-btn.danger:hover { color: var(--danger); }
+.bulkbar-btn.dim { opacity: 0.35; }
+
+.layers-header-btns {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+}
+
+.layers-add-btn.dim-btn { opacity: 0.45; }
+.layers-add-btn.dim-btn:hover { opacity: 1; }
 
 .layer-vis-btn, .layer-lock-btn {
     width: 18px;

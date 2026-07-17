@@ -416,16 +416,22 @@ const Tools = (() => {
     function finishFence(site) {
         const pts = Canvas.pathPreview;
         if (pts.length >= 2) {
-            const name = prompt(I18n.t('msg.nameFence'), I18n.t('msg.defaultFence')) || I18n.t('msg.defaultFence');
-            let cx = 0, cy = 0;
-            pts.forEach(p => { cx += p.x; cy += p.y; });
-            cx /= pts.length; cy /= pts.length;
-            const obj = State.addObject({
-                type: 'fence', name: name, width: 0, height: 0,
-                guyRopeDistance: 0, color: '#0ea5e9', shape: 'rect',
-                points: [...pts], fenceHeight: 1.5,
-            }, cx, cy);
-            if (obj) obj.points = [...pts];
+            UI.promptDialog(I18n.t('msg.nameFence'), I18n.t('msg.defaultFence')).then(entered => {
+                const name = (entered && entered.trim()) || I18n.t('msg.defaultFence');
+                let cx = 0, cy = 0;
+                pts.forEach(p => { cx += p.x; cy += p.y; });
+                cx /= pts.length; cy /= pts.length;
+                const obj = State.addObject({
+                    type: 'fence', name: name, width: 0, height: 0,
+                    guyRopeDistance: 0, color: '#0ea5e9', shape: 'rect',
+                    points: [...pts], fenceHeight: 1.5,
+                }, cx, cy);
+                if (obj) obj.points = [...pts];
+                Canvas.pathPreview = [];
+                setTool('select');
+                Canvas.render();
+            });
+            return;
         }
         Canvas.pathPreview = [];
         setTool('select');
@@ -1004,12 +1010,13 @@ const Tools = (() => {
                 if (Canvas.selectionCount === 1) {
                     const sel = State.activeSite?.objects.find(o => o.id === Canvas.selectedId);
                     if (sel) {
-                        const newName = prompt(I18n.t('props.name') + ':', sel.name);
-                        if (newName && newName.trim()) {
-                            State.updateObject(sel.id, { name: newName.trim() });
-                            Canvas.render();
-                            UI.showProperties(State.activeSite.objects.find(o => o.id === sel.id));
-                        }
+                        UI.promptDialog(I18n.t('props.name') + ':', sel.name).then(newName => {
+                            if (newName && newName.trim()) {
+                                State.updateObject(sel.id, { name: newName.trim() });
+                                Canvas.render();
+                                UI.showProperties(State.activeSite.objects.find(o => o.id === sel.id));
+                            }
+                        });
                     }
                 }
                 break;

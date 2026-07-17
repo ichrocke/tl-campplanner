@@ -33,7 +33,7 @@ const IO = (() => {
                     // Import fügt immer neue Tabs hinzu, ohne vorhandene zu überschreiben
                     State.importJSON(e.target.result, false, true);
                 } catch (err) {
-                    alert(I18n.t('msg.importError') + err.message);
+                    UI.infoDialog(I18n.t('msg.importError') + err.message);
                 }
             };
             reader.readAsText(file);
@@ -76,7 +76,7 @@ const IO = (() => {
         if (orientation === 'portrait') paper = { w: paper.h, h: paper.w };
 
         const bounds = getContentBounds(site);
-        if (!bounds) { alert(I18n.t('msg.noPrintContent')); return; }
+        if (!bounds) { UI.infoDialog(I18n.t('msg.noPrintContent')); return; }
 
         const basePxPerMm = 3.78; // 96 DPI
         const dpiScale = (format === 'png' || format === 'jpeg') ? 3 : 1;
@@ -311,7 +311,7 @@ const IO = (() => {
             }
         } else {
             const win = window.open('', '_blank');
-            if (!win) { alert(I18n.t('msg.popupBlocked')); return; }
+            if (!win) { UI.infoDialog(I18n.t('msg.popupBlocked')); return; }
             let imgsHtml = allPages.map(p => '<img src="' + p.toDataURL('image/png') + '">').join('\n');
             const safeTitle = String(title || site.name || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             win.document.write(`<!DOCTYPE html><html><head><title>${safeTitle}</title>
@@ -1155,7 +1155,7 @@ ${els}</svg>`;
         const site = State.activeSite;
         if (!site) return;
         const lines = csvText.trim().split('\n');
-        if (lines.length < 2) { alert('CSV leer oder ungueltig'); return; }
+        if (lines.length < 2) { UI.infoDialog('CSV leer oder ungueltig'); return; }
 
         // Parse header
         const header = lines[0].split(';').map(h => h.trim().toLowerCase().replace(/"/g, ''));
@@ -1167,7 +1167,7 @@ ${els}</svg>`;
         const iDesc = header.indexOf('beschreibung');
         const iEcken = header.indexOf('ecken');
         if (iName < 0 || iBreite < 0 || iTiefe < 0) {
-            alert('CSV-Header muss enthalten: name;breite;tiefe;abspann');
+            UI.infoDialog('CSV-Header muss enthalten: name;breite;tiefe;abspann');
             return;
         }
 
@@ -1198,7 +1198,7 @@ ${els}</svg>`;
             items.push({ name, breite, tiefe, abspann, farbe, beschreibung, ecken });
         }
 
-        if (items.length === 0) { alert('Keine Daten in CSV'); return; }
+        if (items.length === 0) { UI.infoDialog('Keine Daten in CSV'); return; }
 
         // Place objects in a grid layout
         const cols = Math.ceil(Math.sqrt(items.length));
@@ -1238,7 +1238,7 @@ ${els}</svg>`;
 
         State.notifyChange();
         Canvas.render();
-        alert(items.length + ' Objekte importiert');
+        UI.infoDialog(items.length + ' Objekte importiert');
     }
 
     function exportTab(siteIndex) {
@@ -1283,7 +1283,7 @@ ${els}</svg>`;
                         throw new Error('Unknown format');
                     }
                 } catch (err) {
-                    alert(I18n.t('msg.importError') + err.message);
+                    UI.infoDialog(I18n.t('msg.importError') + err.message);
                 }
             };
             reader.readAsText(file);
