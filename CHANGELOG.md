@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.13.1] - 2026-07-17
+
+### Fixed
+- **Layer multi-select now includes the active layer**: Ctrl/Cmd+clicking a second layer previously started the selection with only the clicked layer — the currently active layer was not part of it. The active layer is now automatically included when a multi-selection is started, so Ctrl/Cmd+click behaves like in file managers.
+
 ## [6.13.0] - 2026-07-17
 
 ### Added

@@ -284,8 +284,16 @@ const UI = (() => {
                 if (e.target.closest('.layer-vis-btn') || e.target.closest('.layer-lock-btn') ||
                     e.target.closest('.layer-order-btn') || e.target.closest('.layer-del-btn')) return;
                 if (e.ctrlKey || e.metaKey) {
-                    if (_layerSel.has(layer.id)) _layerSel.delete(layer.id);
-                    else _layerSel.add(layer.id);
+                    // Leere Auswahl: aktive Ebene gehoert implizit dazu, sonst
+                    // waere nach dem ersten Strg+Klick nur die neue markiert.
+                    if (_layerSel.size === 0 && site.activeLayerId) {
+                        _layerSel.add(site.activeLayerId);
+                        if (layer.id !== site.activeLayerId) _layerSel.add(layer.id);
+                    } else if (_layerSel.has(layer.id)) {
+                        _layerSel.delete(layer.id);
+                    } else {
+                        _layerSel.add(layer.id);
+                    }
                     _layerSelAnchorId = layer.id;
                     buildLayers();
                     return;
