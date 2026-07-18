@@ -1,5 +1,14 @@
 # Changelog
 
+## [6.18.0] - 2026-07-18
+
+### Added
+- **Slope map legend**: Loading the slope map now also inserts a legend into the plan — color swatches with degree ranges and plain-language labels (flat, gentle, moderate, steep, very steep, extremely steep), generated from the same color ramp as the slope data so they always match. The legend is a locked image object on the slope layer: it moves and resizes like any object once unlocked, hides together with the layer, and appears in print/export automatically.
+
+### Fixed
+- Loading the slope map a second time no longer duplicates already placed tiles.
+- Object list now shows rounded dimensions instead of long floating-point values for imported images.
+
 ## [6.17.1] - 2026-07-18
 
 ### Improved

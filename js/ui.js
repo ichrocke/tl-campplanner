@@ -1535,7 +1535,8 @@ const UI = (() => {
         const el = document.createElement('div');
         el.className = 'placed-item' + (Canvas.isSelected(obj.id) ? ' active' : '') + (indented ? ' placed-item-indented' : '');
         const typeLabel = obj.type === 'fence' ? 'pipe' : obj.type === 'postit' ? 'note' : obj.type;
-        const dims = (obj.type === 'area' || obj.type === 'text' || obj.type === 'fence' || obj.type === 'ground' || obj.type === 'bgimage' || obj.type === 'guideline') ? typeLabel : `${obj.width}\u00d7${obj.height}`;
+        const r1 = (v) => Math.round((v || 0) * 10) / 10;
+        const dims = (obj.type === 'area' || obj.type === 'text' || obj.type === 'fence' || obj.type === 'ground' || obj.type === 'bgimage' || obj.type === 'guideline') ? typeLabel : `${r1(obj.width)}\u00d7${r1(obj.height)}`;
         const desc = obj.description ? ` - ${obj.description.split('\n')[0]}` : '';
         const lockStr = obj.locked ? ' &#128274;' : '';
         el.innerHTML = `

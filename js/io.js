@@ -1203,8 +1203,71 @@ ${els}</svg>`;
         input.click();
     }
 
+    // Farbrampe fuer Hangneigung: [Grad, R, G, B] – wird sowohl an die API
+    // geschickt als auch fuer die Legende verwendet (bleibt so synchron).
+    const SLOPE_RAMP = [
+        [0, 0, 100, 0], [5, 0, 200, 0], [10, 100, 255, 0], [20, 200, 200, 0],
+        [30, 255, 150, 0], [40, 255, 100, 0], [45, 255, 0, 0], [60, 150, 0, 0], [90, 0, 0, 0],
+    ];
+
+    function slopeColorAt(deg) {
+        for (let i = 0; i < SLOPE_RAMP.length - 1; i++) {
+            const a = SLOPE_RAMP[i], b = SLOPE_RAMP[i + 1];
+            if (deg >= a[0] && deg <= b[0]) {
+                const t = (deg - a[0]) / (b[0] - a[0]);
+                return [
+                    Math.round(a[1] + (b[1] - a[1]) * t),
+                    Math.round(a[2] + (b[2] - a[2]) * t),
+                    Math.round(a[3] + (b[3] - a[3]) * t),
+                ];
+            }
+        }
+        return [0, 0, 0];
+    }
+
+    // Legende als PNG rendern; Rueckgabe { dataUrl, aspect (H/B) }
+    function buildSlopeLegend() {
+        const rows = [
+            { from: 0, to: 5, label: I18n.t('geotiff.legend0') },
+            { from: 5, to: 10, label: I18n.t('geotiff.legend5') },
+            { from: 10, to: 20, label: I18n.t('geotiff.legend10') },
+            { from: 20, to: 30, label: I18n.t('geotiff.legend20') },
+            { from: 30, to: 45, label: I18n.t('geotiff.legend30') },
+            { from: 45, to: 90, label: I18n.t('geotiff.legend45') },
+        ];
+        const W = 360, RH = 46, PAD = 14, TITLE = 46;
+        const H = TITLE + rows.length * RH + PAD;
+        const cnv = document.createElement('canvas');
+        cnv.width = W; cnv.height = H;
+        const ctx = cnv.getContext('2d');
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(0, 0, W, H);
+        ctx.strokeStyle = '#94a3b8';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, W - 2, H - 2);
+        ctx.fillStyle = '#1a1a2e';
+        ctx.font = 'bold 24px sans-serif';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(I18n.t('geotiff.slopeLayer'), PAD, TITLE / 2 + 4);
+        ctx.font = '20px sans-serif';
+        rows.forEach((r, i) => {
+            const y = TITLE + i * RH;
+            const mid = (r.from + r.to) / 2;
+            const c = slopeColorAt(mid);
+            ctx.fillStyle = 'rgb(' + c[0] + ',' + c[1] + ',' + c[2] + ')';
+            ctx.fillRect(PAD, y + 7, 46, RH - 14);
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(PAD + 0.5, y + 7.5, 46, RH - 15);
+            ctx.fillStyle = '#1a1a2e';
+            const range = r.to >= 90 ? '> ' + r.from + '°' : r.from + '–' + r.to + '°';
+            ctx.fillText(range + '  ' + r.label, PAD + 60, y + RH / 2 + 1);
+        });
+        return { dataUrl: cnv.toDataURL('image/png'), aspect: H / W };
+    }
+
     // Kern des GeoTIFF-Imports; opts: { layerName, opacity, quiet }
-    // Rueckgabe: { w, h } in Weltmetern bei georeferenzierter Platzierung, sonst null.
+    // Rueckgabe: { w, h, cx, cy } in Weltmetern bei georeferenzierter Platzierung, sonst null.
     async function placeGeoTIFFBuffer(site, buf, displayName, opts) {
         opts = opts || {};
         const tiff = await GeoTIFF.fromArrayBuffer(buf);
@@ -1300,7 +1363,7 @@ ${els}</svg>`;
             layerId: ensureImportLayer(site, opts.layerName || 'GeoTIFF').id,
         }, cx, cy);
         if (obj && rot) State.updateObject(obj.id, { rotation: rot });
-        return { w: wM, h: hM };
+        return { w: wM, h: hM, cx, cy };
     }
 
     // Hangneigungskarte (1x1-km-Kacheln) von hoehendaten.de laden – nur
@@ -1338,17 +1401,7 @@ ${els}</svg>`;
                         GradientAlgorithm: 'ZevenbergenThorne',
                         ColorTextFileContent: [
                             '# Zeltplatzplaner Hangneigungs-Farbschema (Wert R G B A)',
-                            '0 0 100 0 255',
-                            '5 0 200 0 255',
-                            '10 100 255 0 255',
-                            '20 200 200 0 255',
-                            '30 255 150 0 255',
-                            '40 255 100 0 255',
-                            '45 255 0 0 255',
-                            '60 150 0 0 255',
-                            '90 0 0 0 255',
-                            'nv 0 0 0 0',
-                        ],
+                        ].concat(SLOPE_RAMP.map(r => r.join(' ') + ' 255'), ['nv 0 0 0 0']),
                         ColoringAlgorithm: 'interpolation',
                     },
                 }),
@@ -1362,21 +1415,43 @@ ${els}</svg>`;
             }
             const slopes = at.Slopes || [];
             let placedN = 0;
+            let firstTile = null;
             const attributions = new Set();
             for (const s of slopes) {
                 if (!s.Data || (s.DataFormat || '').toLowerCase() !== 'geotiff') continue;
+                // Bereits geladene Kachel nicht doppelt platzieren
+                const tileName = 'Hangneigung ' + (s.TileIndex || '');
+                if (site.objects.some(o => o.name === tileName)) { placedN++; continue; }
                 const bin = atob(s.Data);
                 const arr = new Uint8Array(bin.length);
                 for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-                await placeGeoTIFFBuffer(site, arr.buffer, 'Hangneigung ' + (s.TileIndex || ''), {
+                const placed = await placeGeoTIFFBuffer(site, arr.buffer, tileName, {
                     layerName: I18n.t('geotiff.slopeLayer'),
                     opacity: 0.8,
                     quiet: true,
                 });
+                if (placed && !firstTile) firstTile = placed;
                 placedN++;
                 if (s.Attribution) attributions.add(s.Attribution);
             }
             if (!placedN) throw new Error(I18n.t('geotiff.slopeNoData'));
+
+            // Legende einmalig als gesperrtes Bild-Objekt auf der Hangneigungs-
+            // Ebene einfuegen (druckt mit, verschwindet mit der Ebene).
+            const legendName = I18n.t('geotiff.legendName');
+            if (firstTile && !site.objects.some(o => o.name === legendName)) {
+                const legend = buildSlopeLegend();
+                const lw = Math.round(Math.max(60, firstTile.w * 0.15));
+                const lh = Math.round(lw * legend.aspect * 10) / 10;
+                State.addObject({
+                    type: 'image', name: legendName,
+                    width: lw, height: lh,
+                    guyRopeDistance: 0, color: '#888', shape: 'rect',
+                    dataUrl: legend.dataUrl, opacity: 1, locked: true,
+                    layerId: ensureImportLayer(site, I18n.t('geotiff.slopeLayer')).id,
+                }, firstTile.cx - firstTile.w / 2 + lw / 2 + 15,
+                   firstTile.cy - firstTile.h / 2 + lh / 2 + 15);
+            }
             UI.buildLayers();
             UI.buildPlacedList();
             Canvas.render();
