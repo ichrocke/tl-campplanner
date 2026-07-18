@@ -496,10 +496,19 @@ const Canvas = (() => {
         return null;
     }
 
+    // Gruppe einer Ebene (oder null); Gruppenzustand wirkt auf alle Mitglieder
+    function layerGroupOf(site, layer) {
+        if (!layer || !layer.groupId || !site.layerGroups) return null;
+        return site.layerGroups.find(g => g.id === layer.groupId) || null;
+    }
+
     function isLayerVisible(site, layerId) {
         if (!layerId || !site.layers) return true;
         const layer = site.layers.find(l => l.id === layerId);
-        return !layer || layer.visible;
+        if (!layer) return true;
+        if (!layer.visible) return false;
+        const group = layerGroupOf(site, layer);
+        return !group || group.visible !== false;
     }
 
     // An object may only be selected if its layer is neither hidden nor locked –
@@ -508,7 +517,10 @@ const Canvas = (() => {
         const site = State.activeSite;
         if (!obj || !obj.layerId || !site || !site.layers) return true;
         const layer = site.layers.find(l => l.id === obj.layerId);
-        return !layer || (layer.visible && !layer.locked);
+        if (!layer) return true;
+        if (!layer.visible || layer.locked) return false;
+        const group = layerGroupOf(site, layer);
+        return !group || (group.visible !== false && !group.locked);
     }
 
     function getLayerOpacity(site, layerId) {

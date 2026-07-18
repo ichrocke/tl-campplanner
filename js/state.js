@@ -141,6 +141,11 @@ const State = (() => {
             s.activeLayerId = lid;
         }
         if (!s.activeLayerId) s.activeLayerId = s.layers[0].id;
+        // Migrate: ensure layer groups exist; drop dangling group references
+        if (!Array.isArray(s.layerGroups)) s.layerGroups = [];
+        s.layers.forEach(l => {
+            if (l.groupId && !s.layerGroups.some(g => g.id === l.groupId)) delete l.groupId;
+        });
         // Migrate: ensure guyRopeSides exists on all objects
         s.objects.forEach(o => {
             if (!o.id) o.id = generateId();
@@ -171,6 +176,12 @@ const State = (() => {
             (s.objects || []).forEach(o => { if (o.layerId === oldId) o.layerId = newId; });
             if (s.activeLayerId === oldId) s.activeLayerId = newId;
         });
+        (s.layerGroups || []).forEach(g => {
+            const oldId = g.id;
+            const newId = generateId();
+            g.id = newId;
+            (s.layers || []).forEach(l => { if (l.groupId === oldId) l.groupId = newId; });
+        });
     }
 
     function createSite(name) {
@@ -185,6 +196,7 @@ const State = (() => {
             bgImage: null,
             view: { panX: 0, panY: 0, zoom: 1 },
             layers: [{ id: generateId(), name: 'Default', visible: true, locked: false }],
+            layerGroups: [],
             activeLayerId: null,
             mapLayer: { enabled: false, lat: null, lng: null, source: 'osm', opacity: 0.5, rotation: 0, anchorWorldX: 0, anchorWorldY: 0 },
         };
@@ -227,6 +239,7 @@ const State = (() => {
                 bgImage: null,
                 view: { panX: 0, panY: 0, zoom: 1 },
                 layers: JSON.parse(JSON.stringify(srcSite.layers || [{ id: generateId(), name: 'Default', visible: true, locked: false }])),
+                layerGroups: JSON.parse(JSON.stringify(srcSite.layerGroups || [])),
                 mapLayer: srcSite.mapLayer ? JSON.parse(JSON.stringify(srcSite.mapLayer)) : { enabled: false, lat: null, lng: null, source: 'osm', opacity: 0.5, rotation: 0, anchorWorldX: 0, anchorWorldY: 0 },
             };
             site.activeLayerId = site.layers[0].id;

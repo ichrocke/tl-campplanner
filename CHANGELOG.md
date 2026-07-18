@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.15.0] - 2026-07-18
+
+### Added
+- **Layer groups**: Layers can now be organized into collapsible groups. Select multiple layers (Ctrl/Cmd or Shift+click) and click the new folder button in the selection bar to group them. A group has its own visibility eye and lock that apply to all member layers at once (each layer keeps its individual state for when the group is shown again), can be collapsed to keep the list tidy, renamed via double-click, and moved up/down as a whole block. The layer context menu offers "Move to group" and "Remove from group"; the group context menu offers "Ungroup (keep layers)" and "Delete group with content" (with a confirmation showing how many layers and objects are affected — undo restores everything in one step). Groups are saved in the plan, included in JSON export/import, and synced merge-safely in collaboration rooms.
+
 ## [6.14.0] - 2026-07-18
 
 ### Added

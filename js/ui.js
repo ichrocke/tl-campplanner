@@ -129,6 +129,7 @@ const UI = (() => {
     function collabSyncLayers(site) {
         collabPushOp(site, { type: 'site_props', props: {
             layers: JSON.parse(JSON.stringify(site.layers)),
+            layerGroups: JSON.parse(JSON.stringify(site.layerGroups || [])),
             activeLayerId: site.activeLayerId,
         } });
     }
@@ -190,6 +191,150 @@ const UI = (() => {
         afterLayerViewChange(site);
     }
 
+    // --- Ebenen-Gruppen ---
+    // Invariante: Ebenen einer Gruppe liegen zusammenhaengend im layers-Array,
+    // damit Zeichenreihenfolge und Anzeige uebereinstimmen.
+
+    function groupBlockRange(site, groupId) {
+        let start = -1, end = -1;
+        site.layers.forEach((l, i) => {
+            if (l.groupId === groupId) { if (start < 0) start = i; end = i; }
+        });
+        return [start, end];
+    }
+
+    // Repariert die Blockinvariante (z.B. nach Daten von aelteren Collab-Clients)
+    // und entfernt leere Gruppen. Bewusst ohne notify – reine Datenhygiene.
+    function normalizeLayerGroups(site) {
+        if (!site.layerGroups) site.layerGroups = [];
+        site.layerGroups = site.layerGroups.filter(g => site.layers.some(l => l.groupId === g.id));
+        const seen = [];
+        const blocks = new Map(); // groupId|null -> layers in Reihenfolge
+        site.layers.forEach(l => {
+            const key = l.groupId || ('__solo_' + l.id);
+            if (!blocks.has(key)) { blocks.set(key, []); seen.push(key); }
+            blocks.get(key).push(l);
+        });
+        const rebuilt = [];
+        seen.forEach(key => rebuilt.push(...blocks.get(key)));
+        if (rebuilt.length === site.layers.length) site.layers = rebuilt;
+    }
+
+    async function groupSelectedLayers() {
+        const site = State.activeSite;
+        if (!site) return;
+        const selected = site.layers.filter(l => _layerSel.has(l.id));
+        if (!selected.length) return;
+        const name = await promptDialog(I18n.t('layer.groupNamePrompt'),
+            I18n.t('layer.groupDefault') + ' ' + ((site.layerGroups || []).length + 1));
+        if (!name || !name.trim()) return;
+        if (!site.layerGroups) site.layerGroups = [];
+        const g = { id: State.generateId(), name: name.trim(), visible: true, locked: false, collapsed: false };
+        site.layerGroups.push(g);
+        // Ausgewaehlte zusammenziehen: Block an der Position der obersten Auswahl
+        const firstIdx = site.layers.findIndex(l => _layerSel.has(l.id));
+        let insertAt = 0;
+        for (let i = 0; i < firstIdx; i++) if (!_layerSel.has(site.layers[i].id)) insertAt++;
+        const rest = site.layers.filter(l => !_layerSel.has(l.id));
+        selected.forEach(l => { l.groupId = g.id; });
+        site.layers = [...rest.slice(0, insertAt), ...selected, ...rest.slice(insertAt)];
+        normalizeLayerGroups(site);
+        _layerSel.clear();
+        collabSyncLayers(site);
+        State.notifyChange();
+        buildLayers();
+        Canvas.render();
+    }
+
+    function moveLayerToGroup(site, layer, group) {
+        const idx = site.layers.indexOf(layer);
+        if (idx < 0) return;
+        site.layers.splice(idx, 1);
+        let at = site.layers.findIndex(l => l.groupId === group.id);
+        if (at < 0) at = site.layers.length;
+        site.layers.splice(at, 0, layer);
+        layer.groupId = group.id;
+        normalizeLayerGroups(site);
+        collabSyncLayers(site);
+        State.notifyChange();
+        buildLayers();
+        Canvas.render();
+    }
+
+    function removeLayerFromGroup(site, layer) {
+        const gid = layer.groupId;
+        if (!gid) return;
+        const [start] = groupBlockRange(site, gid);
+        const idx = site.layers.indexOf(layer);
+        site.layers.splice(idx, 1);
+        site.layers.splice(start, 0, layer); // direkt vor den Gruppenblock
+        delete layer.groupId;
+        normalizeLayerGroups(site);
+        collabSyncLayers(site);
+        State.notifyChange();
+        buildLayers();
+        Canvas.render();
+    }
+
+    function dissolveGroup(site, group) {
+        site.layers.forEach(l => { if (l.groupId === group.id) delete l.groupId; });
+        site.layerGroups = site.layerGroups.filter(g => g.id !== group.id);
+        collabSyncLayers(site);
+        State.notifyChange();
+        buildLayers();
+        Canvas.render();
+    }
+
+    async function deleteGroupWithContent(site, group) {
+        const memberIds = new Set(site.layers.filter(l => l.groupId === group.id).map(l => l.id));
+        if (!memberIds.size) { dissolveGroup(site, group); return; }
+        if (memberIds.size >= site.layers.length) {
+            infoDialog(I18n.t('layer.bulkDeleteAllBlocked'));
+            return;
+        }
+        const removedIds = site.objects.filter(o => memberIds.has(o.layerId)).map(o => o.id);
+        const ok = await confirmDialog(
+            I18n.t('layer.bulkDeleteConfirm', { layers: memberIds.size, objects: removedIds.length }),
+            { danger: true });
+        if (!ok) return;
+        site.objects = site.objects.filter(o => !memberIds.has(o.layerId));
+        Canvas.clearSelection();
+        site.layers = site.layers.filter(l => !memberIds.has(l.id));
+        site.layerGroups = site.layerGroups.filter(g => g.id !== group.id);
+        if (!site.layers.some(l => l.id === site.activeLayerId)) site.activeLayerId = site.layers[0].id;
+        removedIds.forEach(id => collabPushOp(site, { type: 'remove', objectId: id }));
+        collabSyncLayers(site);
+        State.notifyChange();
+        buildLayers();
+        buildPlacedList();
+        Canvas.render();
+    }
+
+    // Ganze Gruppe als Block nach oben/unten verschieben
+    function moveGroupBlock(site, group, dir) {
+        const [start, end] = groupBlockRange(site, group.id);
+        if (start < 0) return;
+        if (dir === 'up') {
+            if (start === 0) return;
+            const above = site.layers[start - 1];
+            let insertAt = start - 1;
+            if (above.groupId) insertAt = groupBlockRange(site, above.groupId)[0];
+            const block = site.layers.splice(start, end - start + 1);
+            site.layers.splice(insertAt, 0, ...block);
+        } else {
+            if (end === site.layers.length - 1) return;
+            const below = site.layers[end + 1];
+            const jump = below.groupId
+                ? site.layers.filter(l => l.groupId === below.groupId).length : 1;
+            const block = site.layers.splice(start, end - start + 1);
+            site.layers.splice(start + jump, 0, ...block);
+        }
+        collabSyncLayers(site);
+        State.notifyChange(true);
+        buildLayers();
+        Canvas.render();
+    }
+
     async function bulkDeleteLayers() {
         const site = State.activeSite;
         if (!site) return;
@@ -232,6 +377,7 @@ const UI = (() => {
             <button class="bulkbar-btn dim" data-act="hide" title="${escAttr(I18n.t('layer.bulkHide'))}">\u{1F441}</button>
             <button class="bulkbar-btn" data-act="lock" title="${escAttr(I18n.t('layer.bulkLock'))}">\u{1F6AB}</button>
             <button class="bulkbar-btn" data-act="unlock" title="${escAttr(I18n.t('layer.bulkUnlock'))}">\u{1F513}</button>
+            <button class="bulkbar-btn" data-act="group" title="${escAttr(I18n.t('layer.group'))}">\u{1F4C1}</button>
             <button class="bulkbar-btn danger" data-act="delete" title="${escAttr(I18n.t('layer.bulkDelete'))}">\u{1F5D1}</button>
             <button class="bulkbar-btn" data-act="clear" title="${escAttr(I18n.t('layer.clearSelection'))}">&times;</button>`;
         bulkbar.querySelectorAll('.bulkbar-btn').forEach(b => b.addEventListener('click', () => {
@@ -240,9 +386,84 @@ const UI = (() => {
             else if (act === 'hide') setLayersVisible(false, _layerSel);
             else if (act === 'lock') setLayersLocked(true, _layerSel);
             else if (act === 'unlock') setLayersLocked(false, _layerSel);
+            else if (act === 'group') groupSelectedLayers();
             else if (act === 'delete') bulkDeleteLayers();
             else if (act === 'clear') { _layerSel.clear(); buildLayers(); }
         }));
+    }
+
+    function buildGroupRow(site, group) {
+        const memberCount = site.layers.filter(l => l.groupId === group.id).length;
+        const el = document.createElement('div');
+        el.className = 'layer-group-item' + (group.visible === false ? ' off' : '');
+        el.innerHTML = `
+            <span class="group-arrow">${group.collapsed ? '▶' : '▼'}</span>
+            <button class="layer-vis-btn ${group.visible === false ? 'off' : ''}" title="Visibility">\u{1F441}</button>
+            <button class="layer-lock-btn ${group.locked ? 'on' : ''}" title="Lock">${group.locked ? '\u{1F6AB}' : '\u{1F513}'}</button>
+            <span class="layer-name" title="${escAttr(group.name)}">${escapeHtml(group.name)}</span>
+            <span style="font-size:9px;color:var(--text-secondary)">${memberCount}</span>
+            <div class="layer-order-btns">
+                <button class="layer-order-btn" data-dir="up" title="Up">&#9650;</button>
+                <button class="layer-order-btn" data-dir="down" title="Down">&#9660;</button>
+            </div>`;
+
+        // Klick: ein-/ausklappen
+        el.addEventListener('click', (e) => {
+            if (e.target.closest('.layer-vis-btn') || e.target.closest('.layer-lock-btn') ||
+                e.target.closest('.layer-order-btn')) return;
+            group.collapsed = !group.collapsed;
+            collabSyncLayers(site);
+            State.notifyChange(true);
+            buildLayers();
+        });
+
+        el.querySelector('.layer-vis-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            group.visible = group.visible === false;
+            afterLayerViewChange(site);
+        });
+
+        el.querySelector('.layer-lock-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            group.locked = !group.locked;
+            afterLayerViewChange(site);
+        });
+
+        el.querySelectorAll('.layer-order-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                moveGroupBlock(site, group, btn.dataset.dir);
+            });
+        });
+
+        // Doppelklick: umbenennen
+        el.querySelector('.layer-name').addEventListener('dblclick', async (e) => {
+            e.stopPropagation();
+            const n = await promptDialog(I18n.t('layer.groupNamePrompt'), group.name);
+            if (n && n.trim()) {
+                group.name = n.trim();
+                collabSyncLayers(site);
+                State.notifyChange(true);
+                buildLayers();
+            }
+        });
+
+        // Rechtsklick: Gruppen-Optionen
+        el.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            createContextMenuAt(e.clientX, e.clientY, [
+                { label: I18n.t('tab.rename'), action: async () => {
+                    const n = await promptDialog(I18n.t('layer.groupNamePrompt'), group.name);
+                    if (n && n.trim()) { group.name = n.trim(); collabSyncLayers(site); State.notifyChange(true); buildLayers(); }
+                }},
+                { label: I18n.t('layer.ungroup'), action: () => dissolveGroup(site, group) },
+                { sep: true },
+                { label: I18n.t('layer.groupDelete'), className: 'danger', action: () => deleteGroupWithContent(site, group) },
+            ]);
+        });
+
+        return el;
     }
 
     function buildLayers() {
@@ -250,6 +471,7 @@ const UI = (() => {
         container.innerHTML = '';
         const site = State.activeSite;
         if (!site || !site.layers) return;
+        normalizeLayerGroups(site);
 
         // Auswahl bereinigen: Tab-Wechsel oder geloeschte/entfernte Ebenen
         if (site.id !== _layerSelSiteId) {
@@ -260,10 +482,21 @@ const UI = (() => {
         [..._layerSel].forEach(id => { if (!site.layers.some(l => l.id === id)) _layerSel.delete(id); });
         buildLayersBulkbar(site);
 
+        const renderedGroups = new Set();
         site.layers.forEach((layer, i) => {
+            const group = layer.groupId
+                ? (site.layerGroups || []).find(g => g.id === layer.groupId) : null;
+            if (group && !renderedGroups.has(group.id)) {
+                renderedGroups.add(group.id);
+                container.appendChild(buildGroupRow(site, group));
+            }
+            if (group && group.collapsed) return;
+
             const el = document.createElement('div');
             el.className = 'layer-item' + (layer.id === site.activeLayerId ? ' active' : '')
-                + (_layerSel.has(layer.id) ? ' multi-selected' : '');
+                + (_layerSel.has(layer.id) ? ' multi-selected' : '')
+                + (group ? ' in-group' : '')
+                + (group && group.visible === false ? ' group-hidden' : '');
             const objCount = site.objects.filter(o => o.layerId === layer.id).length;
 
             const lColor = layer.color || '#888';
@@ -345,6 +578,14 @@ const UI = (() => {
                     { label: I18n.t('layer.showAll'), action: () => setLayersVisible(true, null) },
                     { label: I18n.t('layer.hideAll'), action: () => setLayersVisible(false, null) },
                 ];
+                const otherGroups = (site.layerGroups || []).filter(g => g.id !== layer.groupId);
+                if (otherGroups.length || layer.groupId) items.push({ sep: true });
+                otherGroups.forEach(g => {
+                    items.push({ label: I18n.t('layer.moveToGroup') + ' ' + g.name, action: () => moveLayerToGroup(site, layer, g) });
+                });
+                if (layer.groupId) {
+                    items.push({ label: I18n.t('layer.removeFromGroup'), action: () => removeLayerFromGroup(site, layer) });
+                }
                 if (State.sites.length > 1 || site.layers.length > 1) items.push({ sep: true });
                 if (State.sites.length > 1) {
                     items.push({ label: I18n.t('layer.copyToTab'), action: async () => {
@@ -362,6 +603,7 @@ const UI = (() => {
                         const newLayerId = genId();
                         const newLayer = JSON.parse(JSON.stringify(layer));
                         newLayer.id = newLayerId;
+                        delete newLayer.groupId; // Gruppe existiert im Ziel-Tab nicht
                         target.layers.push(newLayer);
                         collabPushOp(target, { type: 'site_props', props: { layers: JSON.parse(JSON.stringify(target.layers)) } });
                         site.objects.filter(o => o.layerId === layer.id).forEach(o => {
@@ -399,6 +641,8 @@ const UI = (() => {
                             }
                         });
                         site.layers = [site.layers[site.layers.length - 1]];
+                        delete site.layers[0].groupId;
+                        site.layerGroups = [];
                         site.activeLayerId = keepId;
                         collabSyncLayers(site);
                         State.notifyChange(); buildLayers(); buildPlacedList(); Canvas.render();
@@ -434,16 +678,36 @@ const UI = (() => {
                 afterLayerViewChange(site);
             });
 
-            // Reorder
+            // Reorder (gruppen-bewusst): innerhalb der Gruppe tauschen; am
+            // Gruppenrand verlaesst die Ebene die Gruppe; ungruppierte Ebenen
+            // ueberspringen fremde Gruppen als ganzen Block.
             el.querySelectorAll('.layer-order-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
                     const dir = btn.dataset.dir;
-                    if (dir === 'up' && i > 0) {
-                        [site.layers[i], site.layers[i - 1]] = [site.layers[i - 1], site.layers[i]];
-                    } else if (dir === 'down' && i < site.layers.length - 1) {
-                        [site.layers[i], site.layers[i + 1]] = [site.layers[i + 1], site.layers[i]];
+                    const cur = layer.groupId || null;
+                    const j = dir === 'up' ? i - 1 : i + 1;
+                    const neighbor = site.layers[j];
+                    const neighborGroup = neighbor ? (neighbor.groupId || null) : null;
+                    if (cur) {
+                        if (neighbor && neighborGroup === cur) {
+                            [site.layers[i], site.layers[j]] = [site.layers[j], site.layers[i]];
+                        } else {
+                            // Am Rand der Gruppe: austreten statt tauschen –
+                            // die Position im Array passt bereits (vor/nach dem Block)
+                            delete layer.groupId;
+                        }
+                    } else if (neighbor && neighborGroup) {
+                        // Fremde Gruppe als Block ueberspringen
+                        const [start, end] = groupBlockRange(site, neighborGroup);
+                        site.layers.splice(i, 1);
+                        site.layers.splice(dir === 'up' ? start : end, 0, layer);
+                    } else if (neighbor) {
+                        [site.layers[i], site.layers[j]] = [site.layers[j], site.layers[i]];
+                    } else {
+                        return;
                     }
+                    normalizeLayerGroups(site);
                     collabSyncLayers(site);
                     State.notifyChange(true);
                     buildLayers();

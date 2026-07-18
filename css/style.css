@@ -2150,6 +2150,37 @@ kbd {
 .layers-add-btn.dim-btn { opacity: 0.45; }
 .layers-add-btn.dim-btn:hover { opacity: 1; }
 
+/* Ebenen-Gruppen */
+.layer-group-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.1s;
+    background: var(--bg);
+    user-select: none;
+    position: relative;
+}
+
+.layer-group-item:hover { background: var(--primary-light); }
+.layer-group-item.off .layer-name { opacity: 0.45; }
+.layer-group-item .layer-order-btns { display: none; }
+.layer-group-item:hover .layer-order-btns { display: flex; }
+
+.group-arrow {
+    width: 10px;
+    font-size: 8px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+
+.layer-item.in-group { margin-left: 14px; }
+.layer-item.group-hidden { opacity: 0.45; }
+
 .layer-vis-btn, .layer-lock-btn {
     width: 18px;
     height: 18px;
