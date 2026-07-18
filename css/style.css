@@ -2181,6 +2181,21 @@ kbd {
 .layer-item.in-group { margin-left: 14px; }
 .layer-item.group-hidden { opacity: 0.45; }
 
+/* Spezialzeile Kartenansicht */
+.layer-item.special-layer {
+    border-top: 1px dashed var(--border);
+    border-radius: 0 0 4px 4px;
+    margin-top: 3px;
+    padding-top: 5px;
+}
+
+.layer-special-icon {
+    width: 12px;
+    font-size: 10px;
+    flex-shrink: 0;
+    text-align: center;
+}
+
 .layer-vis-btn, .layer-lock-btn {
     width: 18px;
     height: 18px;

@@ -87,6 +87,32 @@ const MapTiles = (() => {
         };
     }
 
+    // WGS84 -> UTM (transversale Mercator vorwaerts, Gegenstueck zu utmToLatLng)
+    function latLngToUtm(zone, lat, lng) {
+        const a = 6378137.0;
+        const f = 1 / 298.257223563;
+        const k0 = 0.9996;
+        const e2 = f * (2 - f);
+        const ep2 = e2 / (1 - e2);
+        const phi = lat * Math.PI / 180;
+        const lam = (lng - (zone * 6 - 183)) * Math.PI / 180;
+        const sinP = Math.sin(phi), cosP = Math.cos(phi), tanP = Math.tan(phi);
+        const N = a / Math.sqrt(1 - e2 * sinP * sinP);
+        const T = tanP * tanP;
+        const C = ep2 * cosP * cosP;
+        const A = cosP * lam;
+        const M = a * ((1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * Math.pow(e2, 3) / 256) * phi
+            - (3 * e2 / 8 + 3 * e2 * e2 / 32 + 45 * Math.pow(e2, 3) / 1024) * Math.sin(2 * phi)
+            + (15 * e2 * e2 / 256 + 45 * Math.pow(e2, 3) / 1024) * Math.sin(4 * phi)
+            - (35 * Math.pow(e2, 3) / 3072) * Math.sin(6 * phi));
+        const x = k0 * N * (A + (1 - T + C) * Math.pow(A, 3) / 6
+            + (5 - 18 * T + T * T + 72 * C - 58 * ep2) * Math.pow(A, 5) / 120) + 500000;
+        const y = k0 * (M + N * tanP * (A * A / 2
+            + (5 - T + 9 * C + 4 * C * C) * Math.pow(A, 4) / 24
+            + (61 - 58 * T + T * T + 600 * C - 330 * ep2) * Math.pow(A, 6) / 720));
+        return { easting: x, northing: y };
+    }
+
     // --- Tile URL ---
 
     function tileUrl(source, z, x, y) {
@@ -286,7 +312,7 @@ const MapTiles = (() => {
     return {
         drawMapTiles,
         clearCache,
-        utmToLatLng,
+        utmToLatLng, latLngToUtm,
         lngToWorldX, latToWorldY, worldXToLng, worldYToLat,
     };
 })();

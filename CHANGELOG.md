@@ -1,5 +1,12 @@
 # Changelog
 
+## [6.17.0] - 2026-07-18
+
+### Added
+- **Slope map from hoehendaten.de (Germany)**: The map view dialog can now load an official slope map directly from the hoehendaten.de API (based on the federal states' 1 m elevation models). One click fetches the 1×1 km tile around the current view center, colors it from green (flat) to red (steep), and places it to scale in the plan — no GIS software needed. The data attribution is shown after loading. Only available for locations in Germany.
+- **Imported GeoTIFFs get their own layer**: Every GeoTIFF import (file or slope map) now automatically lands on its own background layer named after the file (slope tiles collect on a shared "Slope" layer), so it can be hidden, locked or dimmed via layer opacity without touching the rest of the plan.
+- **Map view as a layer entry**: When a map is anchored, the layers panel shows a pinned "Map view" row with a globe icon — the eye toggles the map tiles on/off, the row shows the current map opacity, right-click changes it, and clicking the row opens the map settings.
+
 ## [6.16.0] - 2026-07-18
 
 ### Added

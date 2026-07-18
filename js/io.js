@@ -1164,6 +1164,17 @@ ${els}</svg>`;
         return null;
     }
 
+    // Import-Ebene (am Listenende = Hintergrund) holen oder anlegen
+    function ensureImportLayer(site, name) {
+        let layer = site.layers.find(l => l.name === name);
+        if (!layer) {
+            layer = { id: State.generateId(), name, visible: true, locked: false };
+            site.layers.push(layer);
+            if (typeof UI !== 'undefined' && UI.collabSyncLayers) UI.collabSyncLayers(site);
+        }
+        return layer;
+    }
+
     function importGeoTIFF() {
         const site = State.activeSite;
         if (!site) return;
@@ -1178,7 +1189,13 @@ ${els}</svg>`;
             const file = input.files[0];
             if (!file) return;
             try {
-                await placeGeoTIFF(site, file);
+                const buf = await file.arrayBuffer();
+                const layerName = (file.name.replace(/\.[^.]+$/, '') || 'GeoTIFF').slice(0, 24);
+                const placed = await placeGeoTIFFBuffer(site, buf, file.name, { layerName });
+                UI.buildLayers();
+                UI.buildPlacedList();
+                Canvas.render();
+                if (placed) UI.infoDialog(I18n.t('geotiff.placed', { w: Math.round(placed.w), h: Math.round(placed.h) }));
             } catch (err) {
                 UI.infoDialog(I18n.t('geotiff.error') + ' ' + (err && err.message ? err.message : err));
             }
@@ -1186,8 +1203,10 @@ ${els}</svg>`;
         input.click();
     }
 
-    async function placeGeoTIFF(site, file) {
-        const buf = await file.arrayBuffer();
+    // Kern des GeoTIFF-Imports; opts: { layerName, opacity, quiet }
+    // Rueckgabe: { w, h } in Weltmetern bei georeferenzierter Platzierung, sonst null.
+    async function placeGeoTIFFBuffer(site, buf, displayName, opts) {
+        opts = opts || {};
         const tiff = await GeoTIFF.fromArrayBuffer(buf);
         const image = await tiff.getImage();
         const pxW = image.getWidth(), pxH = image.getHeight();
@@ -1222,20 +1241,21 @@ ${els}</svg>`;
         if (!bbox || !toLatLng) {
             // Unbekanntes/fehlendes CRS: unreferenziert einfuegen, manuell ausrichten
             const ok = await UI.confirmDialog(I18n.t('geotiff.unsupportedCrs', { epsg: epsg || '?' }));
-            if (!ok) return;
+            if (!ok) return null;
             let w = 100;
             if (bbox) {
                 const bw = Math.abs(bbox[2] - bbox[0]);
                 if (bw > 1 && bw < 100000) w = bw; // projizierte Einheiten sind ~Meter
             }
             State.addObject({
-                type: 'bgimage', name: file.name,
+                type: 'bgimage', name: displayName,
                 width: w, height: w * (pxH / pxW),
                 guyRopeDistance: 0, color: '#888', shape: 'rect',
-                dataUrl, opacity: 1,
+                dataUrl, opacity: opts.opacity != null ? opts.opacity : 1,
+                layerId: ensureImportLayer(site, opts.layerName || 'GeoTIFF').id,
             }, 0, 0);
             Canvas.render();
-            return;
+            return null;
         }
 
         // Ecken nach WGS84
@@ -1273,15 +1293,98 @@ ${els}</svg>`;
         }
 
         const obj = State.addObject({
-            type: 'bgimage', name: file.name,
+            type: 'bgimage', name: displayName,
             width: wM, height: hM,
             guyRopeDistance: 0, color: '#888', shape: 'rect',
-            dataUrl, opacity: 1, locked: true,
+            dataUrl, opacity: opts.opacity != null ? opts.opacity : 1, locked: true,
+            layerId: ensureImportLayer(site, opts.layerName || 'GeoTIFF').id,
         }, cx, cy);
         if (obj && rot) State.updateObject(obj.id, { rotation: rot });
-        UI.buildPlacedList();
-        Canvas.render();
-        UI.infoDialog(I18n.t('geotiff.placed', { w: Math.round(wM), h: Math.round(hM) }));
+        return { w: wM, h: hM };
+    }
+
+    // Hangneigungskarte (1x1-km-Kacheln) von hoehendaten.de laden – nur
+    // Deutschland (DGM1 der Bundeslaender). Bezugspunkt: Mitte der Ansicht.
+    async function loadSlopeMap() {
+        const site = State.activeSite;
+        if (!site) return;
+        const ml = site.mapLayer;
+        if (!ml || ml.lat == null || ml.lng == null) {
+            UI.infoDialog(I18n.t('geotiff.slopeNeedsAnchor'));
+            return;
+        }
+        try {
+            const cv = document.getElementById('canvas');
+            const c = Canvas.s2w(cv.width / 2, cv.height / 2);
+            const anchor = { lat: ml.lat, lng: ml.lng, worldX: ml.anchorWorldX || 0, worldY: ml.anchorWorldY || 0 };
+            const lat = MapTiles.worldYToLat(c.y, anchor);
+            const lng = MapTiles.worldXToLng(c.x, anchor);
+            const zone = Math.max(1, Math.min(60, Math.floor(lng / 6) + 31));
+            const utm = MapTiles.latLngToUtm(zone, lat, lng);
+
+            const resp = await fetch('https://api.hoehendaten.de:14444/v1/slope', {
+                method: 'POST',
+                // Die API verlangt exakt 'Accept: application/json'
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify({
+                    Type: 'SlopeRequest',
+                    ID: 'campplanner-' + Date.now(),
+                    Attributes: {
+                        Zone: zone,
+                        Easting: Math.round(utm.easting * 10) / 10,
+                        Northing: Math.round(utm.northing * 10) / 10,
+                        Longitude: 0,
+                        Latitude: 0,
+                        GradientAlgorithm: 'ZevenbergenThorne',
+                        ColorTextFileContent: [
+                            '# Zeltplatzplaner Hangneigungs-Farbschema (Wert R G B A)',
+                            '0 0 100 0 255',
+                            '5 0 200 0 255',
+                            '10 100 255 0 255',
+                            '20 200 200 0 255',
+                            '30 255 150 0 255',
+                            '40 255 100 0 255',
+                            '45 255 0 0 255',
+                            '60 150 0 0 255',
+                            '90 0 0 0 255',
+                            'nv 0 0 0 0',
+                        ],
+                        ColoringAlgorithm: 'interpolation',
+                    },
+                }),
+            });
+            if (!resp.ok) throw new Error('HTTP ' + resp.status);
+            const data = await resp.json();
+            const at = data && data.Attributes;
+            if (!at || at.IsError) {
+                const err = (at && at.Error) || {};
+                throw new Error([err.Title || err.Code, err.Detail].filter(Boolean).join(' – ') || 'Unbekannte Antwort');
+            }
+            const slopes = at.Slopes || [];
+            let placedN = 0;
+            const attributions = new Set();
+            for (const s of slopes) {
+                if (!s.Data || (s.DataFormat || '').toLowerCase() !== 'geotiff') continue;
+                const bin = atob(s.Data);
+                const arr = new Uint8Array(bin.length);
+                for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+                await placeGeoTIFFBuffer(site, arr.buffer, 'Hangneigung ' + (s.TileIndex || ''), {
+                    layerName: I18n.t('geotiff.slopeLayer'),
+                    opacity: 0.8,
+                    quiet: true,
+                });
+                placedN++;
+                if (s.Attribution) attributions.add(s.Attribution);
+            }
+            if (!placedN) throw new Error(I18n.t('geotiff.slopeNoData'));
+            UI.buildLayers();
+            UI.buildPlacedList();
+            Canvas.render();
+            UI.infoDialog(I18n.t('geotiff.slopeDone', { n: placedN })
+                + (attributions.size ? '\n\n' + [...attributions].join('\n') : ''));
+        } catch (err) {
+            UI.infoDialog(I18n.t('geotiff.error') + ' ' + (err && err.message ? err.message : err));
+        }
     }
 
     function importCSV(csvText) {
@@ -1424,5 +1527,5 @@ ${els}</svg>`;
         input.click();
     }
 
-    return { exportFile, importFile, print, exportSVG, exportDXF, downloadOffline, importCSV, exportTab, importTab, importGeoTIFF };
+    return { exportFile, importFile, print, exportSVG, exportDXF, downloadOffline, importCSV, exportTab, importTab, importGeoTIFF, loadSlopeMap };
 })();

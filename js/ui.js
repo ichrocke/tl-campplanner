@@ -740,6 +740,50 @@ const UI = (() => {
 
             container.appendChild(el);
         });
+
+        // Spezialzeile: Kartenansicht als Pseudo-Ebene (Auge = Karte an/aus,
+        // Rechtsklick = Deckkraft; Klick oeffnet die Karten-Einstellungen)
+        const ml = site.mapLayer;
+        if (ml && ml.lat != null) {
+            const mapEl = document.createElement('div');
+            mapEl.className = 'layer-item special-layer';
+            const pct = Math.round((ml.opacity != null ? ml.opacity : 0.5) * 100);
+            mapEl.innerHTML = `
+                <span class="layer-special-icon">\u{1F310}</span>
+                <button class="layer-vis-btn ${ml.enabled ? '' : 'off'}" title="Visibility">\u{1F441}</button>
+                <span class="layer-name" title="${escAttr(I18n.t('modal.map.title'))}">${escapeHtml(I18n.t('modal.map.title'))}</span>
+                <span style="font-size:9px;color:var(--text-secondary)">${pct}%</span>`;
+            const syncMapLayer = () => {
+                collabPushOp(site, { type: 'site_props', props: { mapLayer: JSON.parse(JSON.stringify(ml)) } });
+                State.notifyChange(true);
+                buildLayers();
+                Canvas.render();
+            };
+            mapEl.querySelector('.layer-vis-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                ml.enabled = !ml.enabled;
+                syncMapLayer();
+            });
+            mapEl.addEventListener('click', (e) => {
+                if (e.target.closest('.layer-vis-btn')) return;
+                openMaptilesModal();
+            });
+            mapEl.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                createContextMenuAt(e.clientX, e.clientY, [
+                    { label: I18n.t('layer.opacity'), action: async () => {
+                        const o = await promptDialog(I18n.t('layer.opacity') + ' (0.1-1.0):', ml.opacity != null ? ml.opacity : 0.5);
+                        if (o !== null) {
+                            ml.opacity = Math.max(0.1, Math.min(1, parseFloat(o) || 0.5));
+                            syncMapLayer();
+                        }
+                    }},
+                    { label: I18n.t('modal.map.title'), action: () => openMaptilesModal() },
+                ]);
+            });
+            container.appendChild(mapEl);
+        }
     }
 
     // --- Sidebar resize divider ---
@@ -1078,6 +1122,13 @@ const UI = (() => {
         if (geotiffBtn) geotiffBtn.addEventListener('click', () => {
             closeModal();
             IO.importGeoTIFF();
+        });
+
+        // Hangneigung von hoehendaten.de (nur Deutschland)
+        const slopeBtn = document.getElementById('map-slope');
+        if (slopeBtn) slopeBtn.addEventListener('click', () => {
+            closeModal();
+            IO.loadSlopeMap();
         });
 
         // Collab button
@@ -3694,5 +3745,6 @@ const UI = (() => {
         updateCollabStatus, openMaptilesModal,
         updateHoverTooltip, notifyEyedropperEnded,
         confirmDialog, promptDialog, infoDialog,
+        collabSyncLayers,
     };
 })();
