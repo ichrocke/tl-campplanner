@@ -1082,7 +1082,7 @@ ${els}</svg>`;
 
         // Gather all assets
         const css = await fetchText('css/style.css');
-        const jsNames = ['i18n','state','canvas','tools','ui','io','touch','app'];
+        const jsNames = ['i18n','state','canvas','maptiles','tools','ui','io','touch','app'];
         const jsCode = {};
         for (const n of jsNames) jsCode[n] = await fetchText('js/' + n + '.js');
 
@@ -1128,6 +1128,7 @@ ${els}</svg>`;
         const modules = {};
         modules._langs = langs;
         for (const n of jsNames) modules[n] = jsCode[n];
+        try { modules.geotiff_vendor = await fetchText('js/vendor/geotiff.min.js'); } catch (e) { /* optional */ }
 
         // Store in hidden textarea (HTML-escaped, safe from parser)
         html += '<textarea id="_offline_data" style="display:none">';
@@ -1138,7 +1139,8 @@ ${els}</svg>`;
         html += '<script>\n';
         html += 'var _d=JSON.parse(document.getElementById("_offline_data").value.replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&"));\n';
         html += 'window._offlineLangs=_d._langs;\n';
-        html += '["i18n","state","canvas","tools","ui","io","touch","app"].forEach(function(n){\n';
+        html += '["geotiff_vendor","i18n","state","canvas","maptiles","tools","ui","io","touch","app"].forEach(function(n){\n';
+        html += '  if(!_d[n])return;\n';
         html += '  var s=document.createElement("script");s.textContent=_d[n];document.head.appendChild(s);\n';
         html += '});\n';
         html += '</script>\n';
@@ -1149,6 +1151,137 @@ ${els}</svg>`;
         a.href = URL.createObjectURL(blob);
         a.download = 'campplanner-offline.html';
         a.click();
+    }
+
+    // --- GeoTIFF-Import: georeferenziertes Bild als Hintergrundbild einfuegen ---
+
+    // EPSG-Code -> Funktion (x,y in CRS-Einheiten) -> {lat,lng}; null = nicht unterstuetzt
+    function epsgToLatLng(epsg) {
+        if (epsg === 4326 || epsg === 4258) return (x, y) => ({ lat: y, lng: x }); // WGS84 / ETRS89 geographisch
+        if (epsg >= 25828 && epsg <= 25838) { const z = epsg - 25800; return (x, y) => MapTiles.utmToLatLng(z, x, y, false); }
+        if (epsg >= 32601 && epsg <= 32660) { const z = epsg - 32600; return (x, y) => MapTiles.utmToLatLng(z, x, y, false); }
+        if (epsg >= 32701 && epsg <= 32760) { const z = epsg - 32700; return (x, y) => MapTiles.utmToLatLng(z, x, y, true); }
+        return null;
+    }
+
+    function importGeoTIFF() {
+        const site = State.activeSite;
+        if (!site) return;
+        if (typeof GeoTIFF === 'undefined' || typeof MapTiles === 'undefined') {
+            UI.infoDialog(I18n.t('geotiff.error') + ' Modul nicht geladen');
+            return;
+        }
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.tif,.tiff,image/tiff';
+        input.onchange = async () => {
+            const file = input.files[0];
+            if (!file) return;
+            try {
+                await placeGeoTIFF(site, file);
+            } catch (err) {
+                UI.infoDialog(I18n.t('geotiff.error') + ' ' + (err && err.message ? err.message : err));
+            }
+        };
+        input.click();
+    }
+
+    async function placeGeoTIFF(site, file) {
+        const buf = await file.arrayBuffer();
+        const tiff = await GeoTIFF.fromArrayBuffer(buf);
+        const image = await tiff.getImage();
+        const pxW = image.getWidth(), pxH = image.getHeight();
+
+        // Beim Dekodieren herunterskalieren (Speicher + localStorage-Quota)
+        const MAXPX = 2048;
+        const ds = Math.min(1, MAXPX / Math.max(pxW, pxH));
+        const cw = Math.max(1, Math.round(pxW * ds));
+        const ch = Math.max(1, Math.round(pxH * ds));
+        const rgb = await image.readRGB({ width: cw, height: ch, interleave: true });
+        const cnv = document.createElement('canvas');
+        cnv.width = cw; cnv.height = ch;
+        const ictx = cnv.getContext('2d');
+        const imgData = ictx.createImageData(cw, ch);
+        for (let i = 0, j = 0; i < cw * ch; i++) {
+            imgData.data[i * 4] = rgb[j++];
+            imgData.data[i * 4 + 1] = rgb[j++];
+            imgData.data[i * 4 + 2] = rgb[j++];
+            imgData.data[i * 4 + 3] = 255;
+        }
+        ictx.putImageData(imgData, 0, 0);
+        const dataUrl = cnv.toDataURL('image/jpeg', 0.85);
+
+        let bbox = null, geoKeys = {};
+        try {
+            bbox = image.getBoundingBox(); // [minX, minY, maxX, maxY] in CRS-Einheiten
+            geoKeys = image.getGeoKeys() || {};
+        } catch (e) { /* keine Georeferenz in der Datei */ }
+        const epsg = geoKeys.ProjectedCSTypeGeoKey || geoKeys.GeographicTypeGeoKey || 0;
+        const toLatLng = bbox ? epsgToLatLng(epsg) : null;
+
+        if (!bbox || !toLatLng) {
+            // Unbekanntes/fehlendes CRS: unreferenziert einfuegen, manuell ausrichten
+            const ok = await UI.confirmDialog(I18n.t('geotiff.unsupportedCrs', { epsg: epsg || '?' }));
+            if (!ok) return;
+            let w = 100;
+            if (bbox) {
+                const bw = Math.abs(bbox[2] - bbox[0]);
+                if (bw > 1 && bw < 100000) w = bw; // projizierte Einheiten sind ~Meter
+            }
+            State.addObject({
+                type: 'bgimage', name: file.name,
+                width: w, height: w * (pxH / pxW),
+                guyRopeDistance: 0, color: '#888', shape: 'rect',
+                dataUrl, opacity: 1,
+            }, 0, 0);
+            Canvas.render();
+            return;
+        }
+
+        // Ecken nach WGS84
+        const nw = toLatLng(bbox[0], bbox[3]);
+        const se = toLatLng(bbox[2], bbox[1]);
+        const center = { lat: (nw.lat + se.lat) / 2, lng: (nw.lng + se.lng) / 2 };
+
+        if (!site.mapLayer) {
+            site.mapLayer = { enabled: false, lat: null, lng: null, source: 'osm', opacity: 0.5, rotation: 0, anchorWorldX: 0, anchorWorldY: 0 };
+        }
+        const ml = site.mapLayer;
+        if (ml.lat == null || ml.lng == null) {
+            // Karte noch nicht verankert: Anker auf die GeoTIFF-Mitte setzen,
+            // damit OSM/Topo/Satellit deckungsgleich darunter liegen.
+            ml.lat = center.lat;
+            ml.lng = center.lng;
+            ml.anchorWorldX = 0;
+            ml.anchorWorldY = 0;
+        }
+        const anchor = { lat: ml.lat, lng: ml.lng, worldX: ml.anchorWorldX || 0, worldY: ml.anchorWorldY || 0 };
+        const x1 = MapTiles.lngToWorldX(nw.lng, anchor);
+        const y1 = MapTiles.latToWorldY(nw.lat, anchor);
+        const x2 = MapTiles.lngToWorldX(se.lng, anchor);
+        const y2 = MapTiles.latToWorldY(se.lat, anchor);
+        let cx = (x1 + x2) / 2, cy = (y1 + y2) / 2;
+        const wM = Math.abs(x2 - x1), hM = Math.abs(y2 - y1);
+
+        // Karten-Drehung: Bild dreht wie die Kacheln um den Anker mit
+        const rot = ml.rotation || 0;
+        if (rot) {
+            const r = rot * Math.PI / 180;
+            const dx = cx - anchor.worldX, dy = cy - anchor.worldY;
+            cx = anchor.worldX + dx * Math.cos(r) - dy * Math.sin(r);
+            cy = anchor.worldY + dx * Math.sin(r) + dy * Math.cos(r);
+        }
+
+        const obj = State.addObject({
+            type: 'bgimage', name: file.name,
+            width: wM, height: hM,
+            guyRopeDistance: 0, color: '#888', shape: 'rect',
+            dataUrl, opacity: 1, locked: true,
+        }, cx, cy);
+        if (obj && rot) State.updateObject(obj.id, { rotation: rot });
+        UI.buildPlacedList();
+        Canvas.render();
+        UI.infoDialog(I18n.t('geotiff.placed', { w: Math.round(wM), h: Math.round(hM) }));
     }
 
     function importCSV(csvText) {
@@ -1291,5 +1424,5 @@ ${els}</svg>`;
         input.click();
     }
 
-    return { exportFile, importFile, print, exportSVG, exportDXF, downloadOffline, importCSV, exportTab, importTab };
+    return { exportFile, importFile, print, exportSVG, exportDXF, downloadOffline, importCSV, exportTab, importTab, importGeoTIFF };
 })();

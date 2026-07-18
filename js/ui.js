@@ -1073,6 +1073,13 @@ const UI = (() => {
 
         document.getElementById('map-cancel').addEventListener('click', closeModal);
 
+        // GeoTIFF-Import (georeferenziertes Bild)
+        const geotiffBtn = document.getElementById('map-geotiff');
+        if (geotiffBtn) geotiffBtn.addEventListener('click', () => {
+            closeModal();
+            IO.importGeoTIFF();
+        });
+
         // Collab button
         document.getElementById('btn-collab').addEventListener('click', async () => {
             if (typeof Collab === 'undefined') return;

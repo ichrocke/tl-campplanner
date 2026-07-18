@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.16.0] - 2026-07-18
+
+### Added
+- **GeoTIFF import with automatic georeferencing**: The map view dialog has a new "Insert GeoTIFF" button. GeoTIFF files (e.g. slope maps or orthophotos exported from GIS software) are decoded directly in the browser, their embedded georeference and coordinate system are read automatically (supported: ETRS89/UTM, WGS84/UTM, WGS84 geographic — covers standard German and most international exports), and the image is placed to scale, exactly aligned with the OpenStreetMap/topo/satellite map layers. If no map anchor is set yet, it is set automatically to the GeoTIFF center so map tiles line up underneath. Large files are downscaled on import to protect browser storage; the image is inserted as a locked background image (unlock it in the properties to move it). Files without a supported coordinate system can still be inserted unreferenced and aligned manually. Uses the vendored geotiff.js library (MIT) — the app remains build-free and works offline.
+
 ## [6.15.0] - 2026-07-18
 
 ### Added

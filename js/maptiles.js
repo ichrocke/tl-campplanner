@@ -50,6 +50,43 @@ const MapTiles = (() => {
         return anchor.lat - (wy - anchor.worldY) / 110540;
     }
 
+    // --- UTM -> WGS84 (inverse Transversale Mercator, Snyder-Formeln) ---
+    // Genau genug fuer Zeltplatz-Massstab (<1 mm Abweichung); ETRS89/GRS80
+    // und WGS84 sind fuer diesen Zweck identisch.
+    function utmToLatLng(zone, easting, northing, southern) {
+        const a = 6378137.0;
+        const f = 1 / 298.257223563;
+        const k0 = 0.9996;
+        const e2 = f * (2 - f);
+        const e1 = (1 - Math.sqrt(1 - e2)) / (1 + Math.sqrt(1 - e2));
+        const x = easting - 500000;
+        let y = northing;
+        if (southern) y -= 10000000;
+        const M = y / k0;
+        const mu = M / (a * (1 - e2 / 4 - 3 * e2 * e2 / 64 - 5 * e2 * e2 * e2 / 256));
+        const phi1 = mu
+            + (3 * e1 / 2 - 27 * Math.pow(e1, 3) / 32) * Math.sin(2 * mu)
+            + (21 * e1 * e1 / 16 - 55 * Math.pow(e1, 4) / 32) * Math.sin(4 * mu)
+            + (151 * Math.pow(e1, 3) / 96) * Math.sin(6 * mu)
+            + (1097 * Math.pow(e1, 4) / 512) * Math.sin(8 * mu);
+        const ep2 = e2 / (1 - e2);
+        const sin1 = Math.sin(phi1), cos1 = Math.cos(phi1), tan1 = Math.tan(phi1);
+        const C1 = ep2 * cos1 * cos1;
+        const T1 = tan1 * tan1;
+        const N1 = a / Math.sqrt(1 - e2 * sin1 * sin1);
+        const R1 = a * (1 - e2) / Math.pow(1 - e2 * sin1 * sin1, 1.5);
+        const D = x / (N1 * k0);
+        const lat = phi1 - (N1 * tan1 / R1) * (D * D / 2
+            - (5 + 3 * T1 + 10 * C1 - 4 * C1 * C1 - 9 * ep2) * Math.pow(D, 4) / 24
+            + (61 + 90 * T1 + 298 * C1 + 45 * T1 * T1 - 252 * ep2 - 3 * C1 * C1) * Math.pow(D, 6) / 720);
+        const dLng = (D - (1 + 2 * T1 + C1) * Math.pow(D, 3) / 6
+            + (5 - 2 * C1 + 28 * T1 - 3 * C1 * C1 + 8 * ep2 + 24 * T1 * T1) * Math.pow(D, 5) / 120) / cos1;
+        return {
+            lat: lat * 180 / Math.PI,
+            lng: (zone * 6 - 183) + dLng * 180 / Math.PI,
+        };
+    }
+
     // --- Tile URL ---
 
     function tileUrl(source, z, x, y) {
@@ -249,5 +286,7 @@ const MapTiles = (() => {
     return {
         drawMapTiles,
         clearCache,
+        utmToLatLng,
+        lngToWorldX, latToWorldY, worldXToLng, worldYToLat,
     };
 })();
