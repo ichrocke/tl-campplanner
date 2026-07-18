@@ -1082,7 +1082,7 @@ const UI = (() => {
             document.getElementById('map-lng').value = ml.lng || '';
             document.getElementById('map-source').value = ml.source || 'osm';
             document.getElementById('map-opacity').value = ml.opacity != null ? ml.opacity : 0.5;
-            document.getElementById('map-opacity-val').textContent = Math.round((ml.opacity != null ? ml.opacity : 0.5) * 100) + '%';
+            document.getElementById('map-opacity-val').value = Math.round((ml.opacity != null ? ml.opacity : 0.5) * 100);
             document.getElementById('map-enabled').checked = !!ml.enabled;
             document.getElementById('map-rotation').value = ml.rotation || 0;
             document.getElementById('map-rotation-val').textContent = (ml.rotation || 0) + '\u00B0';
@@ -1090,7 +1090,14 @@ const UI = (() => {
         });
 
         document.getElementById('map-opacity').addEventListener('input', (e) => {
-            document.getElementById('map-opacity-val').textContent = Math.round(e.target.value * 100) + '%';
+            document.getElementById('map-opacity-val').value = Math.round(e.target.value * 100);
+        });
+
+        // Prozentfeld -> Regler (exakte Werte)
+        document.getElementById('map-opacity-val').addEventListener('input', (e) => {
+            const pct = parseFloat(e.target.value);
+            if (isNaN(pct)) return;
+            document.getElementById('map-opacity').value = Math.max(0.1, Math.min(1, pct / 100));
         });
 
         document.getElementById('map-rotation').addEventListener('input', (e) => {
@@ -1922,7 +1929,13 @@ const UI = (() => {
             html += `<label>${I18n.t('props.color')} <span style="display:inline-flex;align-items:center;gap:4px"><input type="color" id="prop-color" value="${safeColor(obj.color)}"><button type="button" id="prop-color-pick" class="eyedropper-btn" title="${I18n.t('props.color.eyedropper')}">&#127777;&#65039;</button></span></label>`;
         }
         if (obj.type === 'bgimage' || obj.type === 'image') {
-            html += `<label>${I18n.t('modal.settings.bgOpacity')} <input type="range" id="prop-opacity" min="0.05" max="1" step="0.05" value="${obj.opacity || (obj.type === 'image' ? 1 : 0.3)}" style="width:100%"></label>`;
+            const bgOp = obj.opacity || (obj.type === 'image' ? 1 : 0.3);
+            html += `<label>${I18n.t('modal.settings.bgOpacity')}
+                <div style="display:flex;align-items:center;gap:6px">
+                    <input type="range" id="prop-opacity" min="0.05" max="1" step="0.01" value="${bgOp}" style="flex:1">
+                    <input type="number" id="prop-opacity-num" min="5" max="100" step="1" value="${Math.round(bgOp * 100)}" style="width:52px">
+                    <span style="font-size:11px;color:var(--text-secondary)">%</span>
+                </div></label>`;
             html += `<label style="flex-direction:row !important;align-items:center !important;gap:6px !important"><input type="checkbox" id="prop-keepaspect" ${obj.keepAspectRatio !== false ? 'checked' : ''} style="width:auto"> ${I18n.t('props.keepAspectRatio')}</label>`;
         }
         if (obj.type === 'image') {
@@ -2130,7 +2143,12 @@ const UI = (() => {
                     <label>Label X <input type="number" id="prop-labeloffx" value="${obj.labelOffsetX || 0}" step="0.5"></label>
                     <label>Label Y <input type="number" id="prop-labeloffy" value="${obj.labelOffsetY || 0}" step="0.5"></label>
                 </div>` : ''}
-                <label>${I18n.t('props.opacity')} <input type="range" id="prop-obj-opacity" min="0.05" max="1" step="0.05" value="${opVal}" style="width:100%"></label>
+                <label>${I18n.t('props.opacity')}
+                <div style="display:flex;align-items:center;gap:6px">
+                    <input type="range" id="prop-obj-opacity" min="0.05" max="1" step="0.01" value="${opVal}" style="flex:1">
+                    <input type="number" id="prop-obj-opacity-num" min="5" max="100" step="1" value="${Math.round(opVal * 100)}" style="width:52px">
+                    <span style="font-size:11px;color:var(--text-secondary)">%</span>
+                </div></label>
             </div>`;
         }
 
@@ -2326,24 +2344,34 @@ const UI = (() => {
                 buildPlacedList();
             });
         }
-        // Object opacity slider
-        const objOpSlider = document.getElementById('prop-obj-opacity');
-        if (objOpSlider) {
-            objOpSlider.addEventListener('input', () => {
+        // Deckkraft: Regler + Prozentfeld gekoppelt, damit exakte Werte moeglich sind
+        function bindOpacityPair(sliderId, numId, prop) {
+            const slider = document.getElementById(sliderId);
+            const num = document.getElementById(numId);
+            if (!slider) return;
+            const apply = (v) => {
                 if (!Canvas.isSelected(obj.id)) return;
-                State.updateObject(obj.id, { objectOpacity: parseFloat(objOpSlider.value) });
+                v = Math.max(0.05, Math.min(1, v));
+                const props = {};
+                props[prop] = v;
+                State.updateObject(obj.id, props);
                 Canvas.render();
+            };
+            slider.addEventListener('input', () => {
+                const v = parseFloat(slider.value);
+                if (num) num.value = Math.round(v * 100);
+                apply(v);
+            });
+            if (num) num.addEventListener('input', () => {
+                const pct = parseFloat(num.value);
+                if (isNaN(pct)) return;
+                const v = Math.max(0.05, Math.min(1, pct / 100));
+                slider.value = v;
+                apply(v);
             });
         }
-        // Bgimage opacity slider
-        const opSlider = document.getElementById('prop-opacity');
-        if (opSlider) {
-            opSlider.addEventListener('input', () => {
-                if (!Canvas.isSelected(obj.id)) return;
-                State.updateObject(obj.id, { opacity: parseFloat(opSlider.value) });
-                Canvas.render();
-            });
-        }
+        bindOpacityPair('prop-obj-opacity', 'prop-obj-opacity-num', 'objectOpacity');
+        bindOpacityPair('prop-opacity', 'prop-opacity-num', 'opacity');
         // Keep aspect ratio checkbox
         const keepAspect = document.getElementById('prop-keepaspect');
         if (keepAspect) {
@@ -3664,7 +3692,7 @@ const UI = (() => {
         document.getElementById('map-lng').value = ml.lng || '';
         document.getElementById('map-source').value = ml.source || 'osm';
         document.getElementById('map-opacity').value = ml.opacity != null ? ml.opacity : 0.5;
-        document.getElementById('map-opacity-val').textContent = Math.round((ml.opacity != null ? ml.opacity : 0.5) * 100) + '%';
+        document.getElementById('map-opacity-val').value = Math.round((ml.opacity != null ? ml.opacity : 0.5) * 100);
         document.getElementById('map-enabled').checked = !!ml.enabled;
         document.getElementById('map-rotation').value = ml.rotation || 0;
         document.getElementById('map-rotation-val').textContent = (ml.rotation || 0) + '\u00B0';

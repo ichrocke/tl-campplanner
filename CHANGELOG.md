@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.17.1] - 2026-07-18
+
+### Improved
+- **Exact opacity values**: All opacity sliders now have a percent input field next to them, so precise values can be typed instead of dragging the slider — for background images (including imported GeoTIFFs and slope maps), general object opacity, and the map view (dialog and the percentage shown in the map layer row). Sliders also step in 1% increments now instead of 5%.
+
 ## [6.17.0] - 2026-07-18
 
 ### Added
