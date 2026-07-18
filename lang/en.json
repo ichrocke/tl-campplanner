@@ -388,6 +388,7 @@
   "modal.map.lat": "Latitude",
   "modal.map.lng": "Longitude",
   "modal.map.source": "Map type",
+  "modal.map.topo": "OpenTopoMap (contour lines)",
   "modal.map.opacity": "Opacity",
   "modal.map.enabled": "Show map",
   "modal.map.rotation": "Rotation",

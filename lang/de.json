@@ -388,6 +388,7 @@
   "modal.map.lat": "Breitengrad",
   "modal.map.lng": "Laengengrad",
   "modal.map.source": "Kartentyp",
+  "modal.map.topo": "OpenTopoMap (Höhenlinien)",
   "modal.map.opacity": "Deckkraft",
   "modal.map.enabled": "Karte anzeigen",
   "modal.map.rotation": "Drehung",

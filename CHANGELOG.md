@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.14.0] - 2026-07-18
+
+### Added
+- **Topographic map with contour lines**: The map view offers a new map type "OpenTopoMap (contour lines)" alongside OpenStreetMap and satellite. It shows elevation contour lines and hillshading, making slopes and height differences of a camp site visible directly under the plan. Works in print and image export like the other map types. (OpenTopoMap provides tiles up to zoom level 17; beyond that the map is scaled.)
+
 ## [6.13.1] - 2026-07-17
 
 ### Fixed

@@ -56,6 +56,10 @@ const MapTiles = (() => {
         if (source === 'satellite') {
             return 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/' + z + '/' + y + '/' + x;
         }
+        // Topografische Karte mit Hoehenlinien und Schummerung
+        if (source === 'topo') {
+            return 'https://a.tile.opentopomap.org/' + z + '/' + x + '/' + y + '.png';
+        }
         // Use cartodb/carto positron basemap (OSM data, no restrictive tile policy)
         if (source === 'osmLight') {
             return 'https://a.basemaps.cartocdn.com/light_all/' + z + '/' + x + '/' + y + '.png';
@@ -181,7 +185,9 @@ const MapTiles = (() => {
         const seLng = worldXToLng(maxWx, anchor);
 
         // Best tile zoom, reduce if too many tiles would be needed
-        let z = Math.min(19, Math.max(1, bestZoom(anchor.lat, mPerScreenPx)));
+        // (OpenTopoMap liefert nur bis z=17; darueber werden Kacheln skaliert)
+        const maxTileZ = source === 'topo' ? 17 : 19;
+        let z = Math.min(maxTileZ, Math.max(1, bestZoom(anchor.lat, mPerScreenPx)));
         let txMin, txMax, tyMin, tyMax;
         for (; z >= 1; z--) {
             txMin = lngToTileX(Math.min(nwLng, seLng), z);

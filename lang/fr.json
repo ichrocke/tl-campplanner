@@ -387,6 +387,7 @@
   "modal.map.lat": "Latitude",
   "modal.map.lng": "Longitude",
   "modal.map.source": "Type de carte",
+  "modal.map.topo": "OpenTopoMap (courbes de niveau)",
   "modal.map.opacity": "Opacite",
   "modal.map.enabled": "Afficher la carte",
   "modal.map.rotation": "Rotation",

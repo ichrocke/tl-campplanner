@@ -388,6 +388,7 @@
   "modal.map.lat": "Latitud",
   "modal.map.lng": "Longitud",
   "modal.map.source": "Tipo de mapa",
+  "modal.map.topo": "OpenTopoMap (curvas de nivel)",
   "modal.map.opacity": "Opacidad",
   "modal.map.enabled": "Mostrar mapa",
   "modal.map.rotation": "Rotacion",
