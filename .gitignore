@@ -2,3 +2,5 @@
 api/config.php
 CLAUDE.md
 temp/
+tests/node_modules/
+tests/artifacts/

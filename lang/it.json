@@ -165,6 +165,7 @@
   "modal.settings.grid": "Griglia e distanze",
   "modal.settings.gridSize": "Dimensione griglia",
   "modal.settings.snapToGrid": "Aggancia alla griglia",
+  "modal.settings.snapToObjects": "Aggancia agli oggetti",
   "modal.settings.minDistance": "Distanza minima (m)",
   "modal.settings.display": "Visualizzazione",
   "modal.settings.fontSize": "Dimensione testo (fattore)",

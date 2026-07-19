@@ -165,6 +165,7 @@
   "modal.settings.grid": "Grid & Distances",
   "modal.settings.gridSize": "Grid size",
   "modal.settings.snapToGrid": "Snap to grid",
+  "modal.settings.snapToObjects": "Snap to objects",
   "modal.settings.minDistance": "Minimum distance (m)",
   "modal.settings.display": "Display",
   "modal.settings.fontSize": "Font size (factor)",

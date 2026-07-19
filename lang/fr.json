@@ -165,6 +165,7 @@
   "modal.settings.grid": "Grille et distances",
   "modal.settings.gridSize": "Taille de la grille",
   "modal.settings.snapToGrid": "Aligner sur la grille",
+  "modal.settings.snapToObjects": "Aligner sur les objets",
   "modal.settings.minDistance": "Distance minimale (m)",
   "modal.settings.display": "Affichage",
   "modal.settings.fontSize": "Taille de police (facteur)",

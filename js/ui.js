@@ -1817,6 +1817,10 @@ const UI = (() => {
             const site = State.activeSite;
             if (site) { site.gridSize = parseFloat(e.target.value); State.notifyChange(true); Canvas.render(); }
         });
+        document.getElementById('snap-to-objects').addEventListener('change', (e) => {
+            const site = State.activeSite;
+            if (site) { site.snapToObjects = e.target.checked; State.notifyChange(true); }
+        });
         document.getElementById('snap-to-grid').addEventListener('change', (e) => {
             const site = State.activeSite;
             if (site) { site.snapToGrid = e.target.checked; }
@@ -1879,6 +1883,7 @@ const UI = (() => {
         if (!site) return;
         document.getElementById('grid-size').value = site.gridSize;
         document.getElementById('snap-to-grid').checked = site.snapToGrid;
+        document.getElementById('snap-to-objects').checked = site.snapToObjects !== false;
         document.getElementById('min-distance').value = State.minDistance;
         const ds = State.displaySettings;
         document.getElementById('set-fontscale').value = ds.fontScale;

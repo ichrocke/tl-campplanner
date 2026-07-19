@@ -305,7 +305,8 @@
                                 <option value="5">5 m</option>
                             </select>
                         </label>
-                        <label><input type="checkbox" id="snap-to-grid" checked> Snap to grid</label>
+                        <label><input type="checkbox" id="snap-to-grid" checked> <span data-i18n="modal.settings.snapToGrid">Snap to grid</span></label>
+                        <label><input type="checkbox" id="snap-to-objects" checked> <span data-i18n="modal.settings.snapToObjects">Snap to objects</span></label>
                         <label>Min distance (m)
                             <input type="number" id="min-distance" value="2" min="0" step="0.5" style="width:70px">
                         </label>
@@ -370,7 +371,9 @@
                         <tr><td><kbd>F2</kbd></td><td>Rename</td></tr>
                         <tr><td><kbd>1</kbd>-<kbd>0</kbd></td><td>Quick place</td></tr>
                         <tr><td><kbd>+</kbd>/<kbd>-</kbd></td><td>Grid size</td></tr>
-                        <tr><td><kbd>&#8592;&#8593;&#8594;&#8595;</kbd></td><td>Nudge</td></tr>
+                        <tr><td><kbd>&#8592;&#8593;&#8594;&#8595;</kbd></td><td>Nudge (grid)</td></tr>
+                        <tr><td><kbd>Shift</kbd>+<kbd>&#8592;&#8595;</kbd></td><td>Nudge 1 m</td></tr>
+                        <tr><td><kbd>Alt</kbd>+<kbd>&#8592;&#8595;</kbd></td><td>Nudge 5 cm</td></tr>
                     </table>
                 </div>
                 <!-- Column 3: Shortcuts Edit + Canvas -->

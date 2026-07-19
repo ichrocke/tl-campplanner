@@ -270,6 +270,7 @@ const Canvas = (() => {
         drawPlacementPreview();
         drawPathPreview();
         drawDragDistances();
+        drawSnapGuides();
         drawMeasureLine();
         drawSelectionRect();
         drawGroupRotHandle(activeSite);
@@ -2120,6 +2121,28 @@ const Canvas = (() => {
         });
     }
 
+    // Ausrichtungs-Hilfslinien beim Objekt-Snapping (Kanten/Mittelpunkte)
+    let snapGuides = [];
+    function drawSnapGuides() {
+        snapGuides.forEach(g => {
+            ctx.strokeStyle = '#e11d48';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([5, 4]);
+            ctx.beginPath();
+            if (g.axis === 'v') {
+                const p1 = w2s(g.at, g.from);
+                const p2 = w2s(g.at, g.to);
+                ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+            } else {
+                const p1 = w2s(g.from, g.at);
+                const p2 = w2s(g.to, g.at);
+                ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
+            }
+            ctx.stroke();
+            ctx.setLineDash([]);
+        });
+    }
+
     function drawDragDistances() {
         dragDistances.forEach(d => {
             const p1 = w2s(d.x1, d.y1);
@@ -2799,6 +2822,8 @@ const Canvas = (() => {
         set hoveredId(id) { hoveredId = id; },
         get dragDistances() { return dragDistances; },
         set dragDistances(d) { dragDistances = d; },
+        get snapGuides() { return snapGuides; },
+        set snapGuides(g) { snapGuides = g || []; },
         get measureLine() { return measureLine; },
         set measureLine(l) { measureLine = l; },
         get groundPreview() { return groundPreview; },

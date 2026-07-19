@@ -404,6 +404,82 @@ const Tools = (() => {
         Canvas.render();
     }
 
+    // --- Objekt-Snapping: Kanten und Mittelpunkte anderer Objekte ---
+
+    function objAabbAt(obj, x, y, points) {
+        if (points && points.length) {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            points.forEach(p => {
+                if (p.x < minX) minX = p.x; if (p.x > maxX) maxX = p.x;
+                if (p.y < minY) minY = p.y; if (p.y > maxY) maxY = p.y;
+            });
+            return { minX, minY, maxX, maxY };
+        }
+        const rot = (obj.rotation || 0) * Math.PI / 180;
+        const hw = Math.abs(Math.cos(rot)) * (obj.width || 0) / 2 + Math.abs(Math.sin(rot)) * (obj.height || 0) / 2;
+        const hh = Math.abs(Math.sin(rot)) * (obj.width || 0) / 2 + Math.abs(Math.cos(rot)) * (obj.height || 0) / 2;
+        return { minX: x - hw, minY: y - hh, maxX: x + hw, maxY: y + hh };
+    }
+
+    // Beste Snap-Korrektur (sdx/sdy) fuer die bewegte Auswahl gegen die
+    // Kanten/Mittelpunkte aller anderen sichtbaren Objekte. null = kein Treffer.
+    function computeObjectSnap(site, drag, rawDx, rawDy) {
+        const res = { sdx: null, sdy: null, guides: [] };
+        // Schwelle: ~8 Bildschirmpixel in Weltmeter
+        const threshold = 8 / (30 * (site.view.zoom || 1));
+
+        // AABB der bewegten Auswahl an der Rohposition
+        let m = null;
+        site.objects.forEach(obj => {
+            if (!Canvas.isSelected(obj.id)) return;
+            const orig = drag.origPositions[obj.id];
+            if (!orig) return;
+            const pts = orig.points ? orig.points.map(p => ({ x: p.x + rawDx, y: p.y + rawDy })) : null;
+            const b = objAabbAt(obj, orig.x + rawDx, orig.y + rawDy, pts);
+            if (!m) m = { ...b };
+            else {
+                m.minX = Math.min(m.minX, b.minX); m.maxX = Math.max(m.maxX, b.maxX);
+                m.minY = Math.min(m.minY, b.minY); m.maxY = Math.max(m.maxY, b.maxY);
+            }
+        });
+        if (!m) return res;
+        const mx = [m.minX, (m.minX + m.maxX) / 2, m.maxX];
+        const my = [m.minY, (m.minY + m.maxY) / 2, m.maxY];
+
+        let bestX = threshold, bestY = threshold;
+        let checked = 0;
+        for (const other of site.objects) {
+            if (checked > 400) break; // Performance-Deckel bei riesigen Plaenen
+            if (Canvas.isSelected(other.id)) continue;
+            if (other.type === 'bgimage' || other.type === 'guideline') continue;
+            if (!Canvas.isLayerVisible(site, other.layerId)) continue;
+            const b = objAabbAt(other, other.x, other.y, other.points);
+            if (!isFinite(b.minX)) continue;
+            checked++;
+            const cx = [b.minX, (b.minX + b.maxX) / 2, b.maxX];
+            const cy = [b.minY, (b.minY + b.maxY) / 2, b.maxY];
+            for (const a of mx) for (const c of cx) {
+                const d = c - a;
+                if (Math.abs(d) < Math.abs(bestX)) {
+                    bestX = d;
+                    res.sdx = d;
+                    res.guideV = { axis: 'v', at: c, from: Math.min(m.minY, b.minY) - 1, to: Math.max(m.maxY, b.maxY) + 1 };
+                }
+            }
+            for (const a of my) for (const c of cy) {
+                const d = c - a;
+                if (Math.abs(d) < Math.abs(bestY)) {
+                    bestY = d;
+                    res.sdy = d;
+                    res.guideH = { axis: 'h', at: c, from: Math.min(m.minX, b.minX) - 1, to: Math.max(m.maxX, b.maxX) + 1 };
+                }
+            }
+        }
+        if (res.guideV) res.guides.push(res.guideV);
+        if (res.guideH) res.guides.push(res.guideH);
+        return res;
+    }
+
     // --- Fence tool ---
     function onFenceClick(pos) {
         const now = Date.now();
@@ -457,6 +533,7 @@ const Tools = (() => {
     // D6: revert an in-progress manipulation drag (called by ESC)
     function cancelActiveDrag() {
         if (!drag) return false;
+        Canvas.snapGuides = [];
         const site = State.activeSite;
         if (site) {
             if (drag.type === 'move' && drag.origPositions) {
@@ -529,6 +606,12 @@ const Tools = (() => {
                 case 'move': {
                     const rawDx = world.x - drag.offsetX;
                     const rawDy = world.y - drag.offsetY;
+                    // Objekt-Snap (Kanten/Mittelpunkte) hat Vorrang vor dem Raster
+                    let objSnap = { sdx: null, sdy: null, guides: [] };
+                    if (site.snapToObjects !== false) {
+                        objSnap = computeObjectSnap(site, drag, rawDx, rawDy);
+                    }
+                    Canvas.snapGuides = objSnap.guides;
                     // For single object with snap: snap target position to grid edges
                     if (site.snapToGrid && Canvas.selectionCount === 1) {
                         const obj = site.objects.find(o => Canvas.isSelected(o.id));
@@ -560,6 +643,8 @@ const Tools = (() => {
                                 dx = target.x - orig.x;
                                 dy = target.y - orig.y;
                             }
+                            if (objSnap.sdx !== null) dx = rawDx + objSnap.sdx;
+                            if (objSnap.sdy !== null) dy = rawDy + objSnap.sdy;
                             if (obj.points && orig.points) {
                                 obj.points.forEach((p, i) => { p.x = orig.points[i].x + dx; p.y = orig.points[i].y + dy; });
                             }
@@ -573,6 +658,8 @@ const Tools = (() => {
                         dx = Canvas.snapToGrid(rawDx, site.gridSize);
                         dy = Canvas.snapToGrid(rawDy, site.gridSize);
                     }
+                    if (objSnap.sdx !== null) dx = rawDx + objSnap.sdx;
+                    if (objSnap.sdy !== null) dy = rawDy + objSnap.sdy;
                     site.objects.forEach(obj => {
                         if (!Canvas.isSelected(obj.id)) return;
                         const orig = drag.origPositions[obj.id];
@@ -820,6 +907,7 @@ const Tools = (() => {
             return;
         }
         if (drag) {
+            if (drag.type === 'move') Canvas.snapGuides = [];
             if (drag.type === 'move' && drag.moved) {
                 State.notifyChange();
                 if (Canvas.selectionCount === 1) {
@@ -1091,14 +1179,17 @@ const Tools = (() => {
             case 'ArrowUp': case 'ArrowDown': case 'ArrowLeft': case 'ArrowRight':
                 if (Canvas.selectionCount > 0) {
                     e.preventDefault();
+                    // Schrittweite: normal = Rasterweite, Shift = 1 m, Alt = 5 cm
                     const gs = State.activeSite ? State.activeSite.gridSize : 0.5;
-                    const dx = e.key === 'ArrowRight' ? gs : e.key === 'ArrowLeft' ? -gs : 0;
-                    const dy = e.key === 'ArrowDown' ? gs : e.key === 'ArrowUp' ? -gs : 0;
+                    const step = e.altKey ? 0.05 : (e.shiftKey ? 1 : gs);
+                    const r3 = (v) => Math.round(v * 1000) / 1000;
+                    const dx = e.key === 'ArrowRight' ? step : e.key === 'ArrowLeft' ? -step : 0;
+                    const dy = e.key === 'ArrowDown' ? step : e.key === 'ArrowUp' ? -step : 0;
                     [...Canvas.selectedIds].forEach(id => {
                         const obj = State.activeSite.objects.find(o => o.id === id);
                         if (obj && !obj.locked) {
-                            obj.x += dx; obj.y += dy;
-                            if (obj.points) obj.points.forEach(p => { p.x += dx; p.y += dy; });
+                            obj.x = r3(obj.x + dx); obj.y = r3(obj.y + dy);
+                            if (obj.points) obj.points.forEach(p => { p.x = r3(p.x + dx); p.y = r3(p.y + dy); });
                         }
                     });
                     State.notifyChange();

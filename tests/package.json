@@ -1,0 +1,11 @@
+{
+  "name": "tl-campplanner-tests",
+  "private": true,
+  "description": "End-to-end tests for the camp planner (Playwright + system Chrome)",
+  "scripts": {
+    "test": "node run-all.js"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}

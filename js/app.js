@@ -2,7 +2,7 @@
    App – Initialisierung & Event-Binding
    ======================================== */
 
-(function () {
+(async function () {
     const STORAGE_KEY = 'zeltplaner_autosave';
     const STORAGE_LANG_KEY = 'zeltplaner_lang';
 
@@ -15,24 +15,29 @@
     // Check if joining a collab room (skip localStorage in that case)
     const _isCollabRoom = new URLSearchParams(window.location.search).has('room');
 
-    // Try to restore from localStorage (only in local mode)
+    // Autosave wiederherstellen: primaer aus IndexedDB (grosse Plaene mit
+    // GeoTIFF/Hangneigung sprengen die localStorage-Quota), Fallback
+    // localStorage (Migration von aelteren Versionen).
     let restored = false;
     if (!_isCollabRoom) {
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            if (saved) {
+        let saved = null;
+        if (typeof Backup !== 'undefined') {
+            try { saved = await Backup.loadAutosave(); } catch (e) { console.warn('IndexedDB autosave unavailable:', e); }
+        }
+        if (!saved) {
+            try { saved = localStorage.getItem(STORAGE_KEY); } catch (e) { /* ignore */ }
+        }
+        if (saved) {
+            try {
                 State.importJSON(saved);
                 restored = true;
+            } catch (e) {
+                console.warn('Could not restore autosave:', e);
+                // D2: do NOT silently discard a corrupt autosave – keep a backup copy
+                // so the user's data can potentially be recovered, and warn them.
+                try { localStorage.setItem(STORAGE_KEY + '_broken', saved); } catch (ex) { /* ignore */ }
+                setTimeout(() => { try { UI.infoDialog(I18n.t('msg.autosaveCorrupt')); } catch (ex) {} }, 600);
             }
-        } catch (e) {
-            console.warn('Could not restore autosave:', e);
-            // D2: do NOT silently discard a corrupt autosave – keep a backup copy
-            // so the user's data can potentially be recovered, and warn them.
-            try {
-                const saved = localStorage.getItem(STORAGE_KEY);
-                if (saved) localStorage.setItem(STORAGE_KEY + '_broken', saved);
-            } catch (ex) { /* ignore */ }
-            setTimeout(() => { try { UI.infoDialog(I18n.t('msg.autosaveCorrupt')); } catch (ex) {} }, 600);
         }
     }
     if (!restored) {
@@ -53,23 +58,34 @@
         document.querySelectorAll('.lang-flag').forEach(b => b.classList.toggle('active', b.dataset.lang === savedLang));
     }
 
-    // Auto-save to localStorage on state change (debounced, not in collab mode)
+    // Auto-save on state change (debounced, not in collab mode).
+    // Primaer IndexedDB (keine 5-MB-Quota), localStorage nur noch als
+    // Best-Effort-Spiegel (Multi-Tab-Erkennung + Fallback fuer alte Browser).
     let _saveTimer = null;
     let _quotaWarned = false;
+    function warnOnce() {
+        // D1: a failed autosave must NOT be swallowed – warn the user once.
+        if (_quotaWarned) return;
+        _quotaWarned = true;
+        try { UI.infoDialog(I18n.t('msg.autosaveFailed')); } catch (ex) {}
+    }
     function saveNow() {
+        const json = State.exportJSON(true); // compact
+        let lsOk = true;
         try {
-            localStorage.setItem(STORAGE_KEY, State.exportJSON(true)); // compact
-            return true;
+            localStorage.setItem(STORAGE_KEY, json);
         } catch (e) {
-            // D1: a failed autosave (e.g. localStorage quota exceeded by a large
-            // background image) must NOT be swallowed – warn the user once.
-            console.warn('Autosave failed:', e);
-            if (!_quotaWarned) {
-                _quotaWarned = true;
-                try { UI.infoDialog(I18n.t('msg.autosaveFailed')); } catch (ex) {}
-            }
-            return false;
+            lsOk = false; // Quota – unkritisch, solange IndexedDB klappt
         }
+        if (typeof Backup !== 'undefined') {
+            Backup.saveAutosave(json).catch((e) => {
+                console.warn('Autosave (IndexedDB) failed:', e);
+                if (!lsOk) warnOnce();
+            });
+            return true;
+        }
+        if (!lsOk) { console.warn('Autosave failed: localStorage quota'); warnOnce(); return false; }
+        return true;
     }
     function autoSave() {
         if (typeof Collab !== 'undefined' && Collab.isConnected()) return;

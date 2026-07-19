@@ -1,5 +1,21 @@
 # Changelog
 
+## [6.19.0] - 2026-07-19
+
+### Added
+- **Snap to objects**: While moving, objects now snap to the edges and centers of other objects (not just the grid), with dashed alignment guides shown during the drag. Object snapping wins over grid snapping when both are close, so off-grid rows stay aligned. Can be turned off in the settings ("Snap to objects").
+- **Precise arrow-key nudging**: Arrow keys move the selection by one grid step as before; **Shift+Arrow** moves 1 m, **Alt+Arrow** moves 5 cm for fine adjustments. The shortcut list in the settings shows the new combinations.
+
+### Improved
+- **Autosave moved to IndexedDB**: The automatic save now goes to the browser's IndexedDB, which handles large plans (imported GeoTIFFs, slope maps) far beyond the old ~5 MB localStorage limit. Existing localStorage autosaves are migrated automatically on first load, and localStorage is still written as a fallback.
+- **Data source attribution on prints**: Prints and PNG/JPEG exports now include a small attribution line at the bottom naming the map source (OpenStreetMap/CARTO, Esri, OpenTopoMap) and the origin of loaded slope data (e.g. state survey offices, dl-de/by-2-0) — as the data licenses require.
+
+### Fixed
+- **PNG/JPEG export title placement**: Due to a double DPI scaling, the title was drawn oversized and misplaced in image exports, and page numbers were missing entirely from multi-page image exports. Both are now positioned correctly.
+
+### Technical
+- Added a repeatable end-to-end test suite (`tests/`, Playwright) covering dialogs, layer multi-select, groups, GeoTIFF import, slope map + legend, opacity inputs, IndexedDB autosave, snapping/nudging and print attribution.
+
 ## [6.18.0] - 2026-07-18
 
 ### Added

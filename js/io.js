@@ -70,6 +70,44 @@ const IO = (() => {
         }
     }
 
+    // Quellenangaben (Lizenzpflicht bei OSM/CC-BY-SA/dl-de-Daten) sammeln:
+    // aktive Kartenquelle + Attribution geladener Geodaten (z.B. Hangneigung)
+    function collectAttributions(site) {
+        const out = [];
+        const ml = site.mapLayer;
+        if (ml && ml.enabled && ml.lat != null) {
+            const src = ml.source || 'osm';
+            if (src === 'satellite') out.push('Map: © Esri World Imagery');
+            else if (src === 'topo') out.push('Map: © OpenStreetMap contributors, SRTM | © OpenTopoMap (CC-BY-SA)');
+            else out.push('Map: © OpenStreetMap contributors © CARTO');
+        }
+        site.objects.forEach(o => {
+            if (o.attribution && Canvas.isLayerVisible(site, o.layerId) && out.indexOf(o.attribution) < 0) {
+                out.push(o.attribution);
+            }
+        });
+        return out;
+    }
+
+    // Fusszeile mittig unten; ctx ist bereits im CSS-Pixel-Raum (nach dpiScale)
+    function drawAttributionFooter(ctx, wCss, hCss, lines) {
+        if (!lines || !lines.length) return;
+        ctx.save();
+        ctx.font = '6px sans-serif';
+        ctx.fillStyle = '#94a3b8';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        const joined = lines.join('  ·  ');
+        if (ctx.measureText(joined).width > wCss - 180) {
+            const mid = Math.max(1, Math.floor(lines.length / 2));
+            ctx.fillText(lines.slice(0, mid).join('  ·  '), wCss / 2, hCss - 9.5);
+            ctx.fillText(lines.slice(mid).join('  ·  '), wCss / 2, hCss - 3);
+        } else {
+            ctx.fillText(joined, wCss / 2, hCss - 3);
+        }
+        ctx.restore();
+    }
+
     async function printNew(site, paperSel, orientation, scaleOption, showGrid, showDistances, showObjList, treasureMap, blackWhite, multiPage, title, format) {
         const papers = { a4: { w: 297, h: 210 }, a3: { w: 420, h: 297 }, a2: { w: 594, h: 420 } };
         let paper = papers[paperSel] || papers.a4;
@@ -77,6 +115,7 @@ const IO = (() => {
 
         const bounds = getContentBounds(site);
         if (!bounds) { UI.infoDialog(I18n.t('msg.noPrintContent')); return; }
+        const attributions = collectAttributions(site);
 
         const basePxPerMm = 3.78; // 96 DPI
         const dpiScale = (format === 'png' || format === 'jpeg') ? 3 : 1;
@@ -143,7 +182,10 @@ const IO = (() => {
                     });
                     if (!tileCanvas) continue;
                     const tc = tileCanvas.getContext('2d');
-                    tc.scale(dpiScale, dpiScale);
+                    // renderOffscreen laesst den Kontext bereits dpi-skaliert
+                    // zurueck – explizit setzen statt doppelt zu skalieren
+                    // (sonst liegen Titel/Fusszeile bei PNG-Export ausserhalb).
+                    tc.setTransform(dpiScale, 0, 0, dpiScale, 0, 0);
 
                     // Title top-left
                     if (title) {
@@ -160,6 +202,8 @@ const IO = (() => {
                     tc.textAlign = 'right';
                     tc.textBaseline = 'bottom';
                     tc.fillText(`${I18n.t('modal.print.paper')} ${pageIdx}/${totalPages}  \u2014  1:${scale}`, canvasW - 8, canvasH - 6);
+
+                    drawAttributionFooter(tc, canvasW, canvasH, attributions);
 
                     // Overview mini-map bottom-left
                     if (totalPages > 1) {
@@ -214,7 +258,8 @@ const IO = (() => {
             });
             if (!mapCanvas) return;
             const pctx = mapCanvas.getContext('2d');
-            pctx.scale(dpiScale, dpiScale);
+            // dito: dpi-Transform explizit setzen, nicht aufmultiplizieren
+            pctx.setTransform(dpiScale, 0, 0, dpiScale, 0, 0);
             if (title) {
                 pctx.font = treasureMap ? "18px 'PirateFont', 'Georgia', serif" : '600 8px sans-serif';
                 pctx.fillStyle = treasureMap ? '#2a1a0a' : '#64748b';
@@ -222,6 +267,7 @@ const IO = (() => {
                 pctx.textBaseline = 'top';
                 pctx.fillText(title, treasureMap ? 20 : 8, treasureMap ? 12 : 6);
             }
+            if (!treasureMap) drawAttributionFooter(pctx, canvasW, canvasH, attributions);
             pctx.setTransform(1, 0, 0, 1, 0, 0);
             if (treasureMap) applyTreasureMapEffect(pctx, mapCanvas.width, mapCanvas.height);
             if (blackWhite) {
@@ -1363,6 +1409,8 @@ ${els}</svg>`;
             layerId: ensureImportLayer(site, opts.layerName || 'GeoTIFF').id,
         }, cx, cy);
         if (obj && rot) State.updateObject(obj.id, { rotation: rot });
+        // Quellenangabe am Objekt hinterlegen (landet im Druckfuss)
+        if (obj && opts.attribution) obj.attribution = opts.attribution;
         return { w: wM, h: hM, cx, cy };
     }
 
@@ -1429,6 +1477,7 @@ ${els}</svg>`;
                     layerName: I18n.t('geotiff.slopeLayer'),
                     opacity: 0.8,
                     quiet: true,
+                    attribution: s.Attribution || '',
                 });
                 if (placed && !firstTile) firstTile = placed;
                 placedN++;

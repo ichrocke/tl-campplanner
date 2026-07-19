@@ -165,6 +165,7 @@
   "modal.settings.grid": "Cuadrícula y distancias",
   "modal.settings.gridSize": "Tamaño de cuadrícula",
   "modal.settings.snapToGrid": "Ajustar a cuadrícula",
+  "modal.settings.snapToObjects": "Ajustar a objetos",
   "modal.settings.minDistance": "Distancia mínima (m)",
   "modal.settings.display": "Visualización",
   "modal.settings.fontSize": "Tamaño de texto (factor)",

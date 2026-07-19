@@ -6,6 +6,7 @@
 const Backup = (() => {
     const DB_NAME = 'zeltplaner_backups';
     const STORE = 'snapshots';
+    const AUTOSAVE_STORE = 'autosave';  // aktueller Arbeitsstand (ersetzt localStorage)
     const MAX_AUTO = 10;            // wie viele automatische Sicherungen behalten
     const MIN_INTERVAL = 90 * 1000; // frühestens alle 90s ein Auto-Backup
 
@@ -17,12 +18,15 @@ const Backup = (() => {
         return new Promise((resolve, reject) => {
             if (_db) return resolve(_db);
             if (!('indexedDB' in window)) return reject(new Error('IndexedDB unavailable'));
-            const req = indexedDB.open(DB_NAME, 1);
+            const req = indexedDB.open(DB_NAME, 2);
             req.onupgradeneeded = () => {
                 const db = req.result;
                 if (!db.objectStoreNames.contains(STORE)) {
                     const os = db.createObjectStore(STORE, { keyPath: 'id', autoIncrement: true });
                     os.createIndex('ts', 'ts');
+                }
+                if (!db.objectStoreNames.contains(AUTOSAVE_STORE)) {
+                    db.createObjectStore(AUTOSAVE_STORE, { keyPath: 'key' });
                 }
             };
             req.onsuccess = () => { _db = req.result; resolve(_db); };
@@ -30,7 +34,36 @@ const Backup = (() => {
         });
     }
 
-    function tx(mode) { return _db.transaction(STORE, mode).objectStore(STORE); }
+    function tx(mode, store) { return _db.transaction(store || STORE, mode).objectStore(store || STORE); }
+
+    // --- Autosave (aktueller Stand) – ein Datensatz, wird ueberschrieben ---
+
+    async function saveAutosave(json) {
+        await openDB();
+        return new Promise((resolve, reject) => {
+            const r = tx('readwrite', AUTOSAVE_STORE).put({ key: 'current', ts: Date.now(), json });
+            r.onsuccess = () => resolve(true);
+            r.onerror = () => reject(r.error);
+        });
+    }
+
+    async function loadAutosave() {
+        await openDB();
+        return new Promise((resolve, reject) => {
+            const r = tx('readonly', AUTOSAVE_STORE).get('current');
+            r.onsuccess = () => resolve(r.result ? r.result.json : null);
+            r.onerror = () => reject(r.error);
+        });
+    }
+
+    async function clearAutosave() {
+        await openDB();
+        return new Promise((resolve, reject) => {
+            const r = tx('readwrite', AUTOSAVE_STORE).delete('current');
+            r.onsuccess = () => resolve();
+            r.onerror = () => reject(r.error);
+        });
+    }
 
     async function put(record) {
         await openDB();
@@ -111,5 +144,5 @@ const Backup = (() => {
         }, 2000);
     }
 
-    return { openDB, list, get, remove, saveNamed, autoBackup };
+    return { openDB, list, get, remove, saveNamed, autoBackup, saveAutosave, loadAutosave, clearAutosave };
 })();

@@ -165,6 +165,7 @@
   "modal.settings.grid": "Raster & Abstände",
   "modal.settings.gridSize": "Rastergröße",
   "modal.settings.snapToGrid": "Am Raster einrasten",
+  "modal.settings.snapToObjects": "An Objekten einrasten",
   "modal.settings.minDistance": "Mindestabstand (m)",
   "modal.settings.display": "Darstellung",
   "modal.settings.fontSize": "Textgröße (Faktor)",
