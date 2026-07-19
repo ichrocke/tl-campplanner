@@ -5,6 +5,10 @@ description: How to run and verify the Zeltplatzplaner app end-to-end in a headl
 
 # Verify Zeltplatzplaner
 
+**Repo test suite exists:** `cd tests && npm install && node run-all.js`
+(9 Playwright specs, starts its own server; `SKIP_ONLINE=1` skips the
+hoehendaten.de API specs). Prefer extending it over ad-hoc scripts.
+
 Vanilla HTML/JS app, no build step. Serve and drive with Playwright + system Chrome:
 
 ```bash
