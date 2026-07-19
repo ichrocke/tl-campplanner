@@ -3,6 +3,13 @@ Ideen fuer den Zeltplatzplaner
 
 Zusammenstellung moeglicher Verbesserungen und neuer Features.
 Sortiert grob nach Aufwand/Nutzen, ohne Anspruch auf Vollstaendigkeit.
+Stand: 2026-07-19 (ueberarbeitet nach v6.18.0)
+
+Seit der letzten Fassung umgesetzt: Layer-Gruppen, Ebenen-Mehrfachauswahl
+mit Bulk-Aktionen, eigene In-App-Dialoge (statt confirm/prompt/alert),
+Hoehenlinien-Karte (OpenTopoMap), GeoTIFF-Import mit Georeferenz,
+Hangneigung von hoehendaten.de inkl. Legende, Kartenansicht als
+Pseudo-Ebene, exakte Deckkraft-Eingabe.
 
 
 --- Quick Wins (kleine Aenderungen, sichtbarer Effekt) ---
@@ -13,7 +20,43 @@ Sortiert grob nach Aufwand/Nutzen, ohne Anspruch auf Vollstaendigkeit.
 - Massgenaues Verschieben: Pfeiltasten + Shift fuer kleinere/groessere Schritte.
 - "Zuletzt verwendet"-Liste der platzierten Vorlagen.
 - Mehrere Objekte gleichzeitig drehen um gemeinsamen Mittelpunkt.
-- Massstabs-Lineal direkt im Canvas (Drag, um Abstand zu messen) erweitern um Mehrfach-Messung mit Summe.
+- Mehrfach-Messung mit Summe (Messlinie mit mehreren Punkten).
+- (neu) Karten-Deckkraft in der Pseudo-Ebenen-Zeile direkt per Mini-Slider
+  statt Rechtsklick-Dialog.
+- (neu) "In Gruppe verschieben" als echtes Untermenue statt einzelner
+  Eintraege pro Gruppe (wird bei vielen Gruppen sonst lang).
+- (neu) Ebenen per Drag & Drop neu ordnen und in Gruppen ziehen
+  (aktuell nur Pfeil-Buttons).
+- (neu) Versionsnummer der App im Footer anzeigen (aus CHANGELOG geparst);
+  Hinweis-Banner wenn ein lange offener Tab nicht mehr aktuell ist.
+
+
+--- Karten / Geodaten (baut auf 6.14-6.18 auf) ---
+
+- (neu) Hangneigung fuer groessere Flaeche: 3x3 Kacheln um die Ansicht laden,
+  oder Rechteck aufziehen und alle beruehrten 1x1-km-Kacheln holen.
+- (neu) hoehendaten.de bietet weitere APIs: Punkthoehe, Hoehenlinien als
+  Vektor, Schummerung, GPX-Anreicherung. Konkrete Kandidaten:
+  * Hoehe am Mauszeiger in der Statusleiste (PointRequest).
+  * Hoehenprofil entlang der Messlinie.
+  * Hoehenlinien als eigene Vektor-Ebene (scharf in jeder Zoomstufe,
+    besser als die gerasterten OpenTopoMap-Kacheln).
+- (neu) DEM-GeoTIFFs (1-Band Float, z.B. DGM1 der Bundeslaender) direkt
+  importieren und clientseitig einfaerben/schummern -- der Importer kann
+  bisher nur fertige RGB-GeoTIFFs.
+- (neu) Slope-Farbrampe konfigurierbar machen (eigene Grenzwerte, z.B.
+  "ab 8 Grad kein Zelt mehr"); Legende wird ja bereits aus der Rampe
+  generiert und zieht automatisch mit.
+- (neu) Legende bei Sprachwechsel neu generieren (PNG hat feste Sprache).
+- (neu) GeoJSON/GPX-Export der Objektpositionen: UTM/WGS84-Transformationen
+  sind seit 6.16 im Code -- Zeltpositionen als echte Geo-Koordinaten
+  exportieren (fuer GPS-Geraete beim Aufbau!). Umgekehrt: GPX-Import
+  fuer Wege/Tracks.
+- (neu) Koordinatenanzeige in der Statusleiste umschaltbar:
+  Meter / Lat-Lng / UTM.
+- Adresse statt Koordinaten eingeben (Geocoding, z.B. Nominatim).
+- Maptiles-Cache in IndexedDB fuer Offline-Nutzung.
+- Kachel-Subdomains a/b/c im Round-Robin nutzen (laedt schneller).
 
 
 --- Abspannung / Geometrie ---
@@ -25,69 +68,92 @@ Sortiert grob nach Aufwand/Nutzen, ohne Anspruch auf Vollstaendigkeit.
 
 --- Layer & Organisation ---
 
-- Layer-Gruppen (z.B. "Schlafzelte", "Funktionsbereich").
 - Layer aus anderem Tab kopieren (existiert) -> auch verlinken (Live-Update).
-- Layer faerben/Tinten zur visuellen Unterscheidung.
-- Layer per Drag & Drop neu ordnen.
-- Layer-Filter beim Export (nur sichtbare Layer drucken).
-- Vorlagen aus Auswahl erstellen (Gruppe von Zelten als wiederverwendbare Konfiguration).
+- Layer-Filter beim Export (nur bestimmte Layer drucken; ausgeblendete
+  werden seit 6.12.4 schon weggelassen).
+- Vorlagen aus Auswahl erstellen (Gruppe von Zelten als wiederverwendbare
+  Konfiguration).
+- (neu) Objektliste nach Ebenen gruppieren (mit Ebenen-Headern), passend
+  zur neuen Gruppen-Struktur im Ebenen-Panel.
+- (neu) Klick auf Gruppen-Kopf waehlt alle Mitglieds-Ebenen in die
+  Mehrfachauswahl (Bulk-Aktionen direkt auf Gruppe anwenden).
 
 
 --- Collaboration ---
 
-- Live-Cursor anderer Nutzer im Canvas.
+- Live-Cursor anderer Nutzer im Canvas (Grundlagen existieren:
+  getRemoteCursors in collab.js).
 - Kommentare/Notizen auf Objekten (kleine Pin-Marker).
 - Aenderungs-Historie mit Autor und Zeitstempel.
 - Lock auf Objektebene mit Nutzer (nur ich darf das verschieben).
-- Chat / Aktivitaets-Feed im Sidebar.
-
-
---- Karten-Integration ---
-
-- GPX-Import fuer Wege/Tracks.
-- Adresse statt Koordinaten eingeben (Geocoding).
-- Maptiles-Cache fuer Offline-Nutzung.
-- Hoehenlinien-Layer (USGS / OSM topographic).
-- Route-Drawing: Wege auf der Karte einzeichnen (z.B. Pfade vom Eingang zu den Zelten).
+- (neu) mapLayer-Aenderungen aus dem Karten-Dialog als merge-sichere Op
+  senden (die Ebenen-Zeile tut das seit 6.17 schon, der Dialog macht noch
+  einen Full-Push -- gleiche Race-Klasse wie die 6.12.2-Layer-Bugs).
 
 
 --- Zeltplatz-spezifisch ---
 
-- Real-World Zeltkatalog (Marken/Modelle mit korrekten Massen und Abspannungen).
+- Real-World Zeltkatalog (Marken/Modelle mit korrekten Massen und
+  Abspannungen).
 - Personenzaehler pro Zelt -> Gesamt-Kapazitaet im Status anzeigen.
 - Brandschutz-Modus: Min-Abstand 5m als Warnung, Fluchtwege markieren.
-- Steckdosen / Wasseranschluesse / Feuerstellen als Symbole mit Reichweite/Radius.
+- Steckdosen / Wasseranschluesse / Feuerstellen als Symbole mit Radius.
 - Sanitaer-Bereiche mit Mindestabstand-Pruefung zu Schlafzelten.
 - Wind-Richtung als globaler Pfeil; Warnung wenn Eingaenge gegen Wind zeigen.
 - Sonnenstand-Simulation: Schattenwurf zur eingestellten Tageszeit.
-- Slope/Gefaelle-Indikator pro Bereich (manuelle Eingabe oder aus Hoehendaten).
+- (neu) Zelt-Platzierungswarnung auf steilem Grund: wenn Hangneigungsdaten
+  geladen sind, beim Platzieren pruefen, ob das Zelt in einer roten Zone
+  landet (Pixel der Slope-Kachel unter dem Zelt auswerten).
 
 
 --- Export / Import / Druck ---
 
-- DXF-Export ist Stub - implementieren fuer CAD-Workflow.
+- DXF-Export ist Stub -- implementieren fuer CAD-Workflow.
 - PDF mit echtem Vektor-Output (statt PNG-im-PDF) fuer scharfen Ausdruck.
-- Mehrseiten-Druck mit automatischer Aufteilung nach Layer/Bereich.
 - QR-Code mit Share-Link auf Druck (Live-Plan auf dem Handy).
 - Excel/ODS-Export der Objektliste.
-- Backup automatisch in Cloud (Dropbox / Google Drive Connector).
+- (neu) Quellenangabe (Attribution) der Karten-/Hangneigungsdaten
+  automatisch klein in den Druckfuss setzen -- lizenzrechtlich sauber
+  (dl-de/by-2-0 verlangt Namensnennung, OSM/OpenTopoMap ebenso).
+- (neu) Druckvorschau als Modal vor dem eigentlichen Druck.
 
 
---- Performance ---
+--- Performance / Technik ---
 
+- (neu) Cache-Busting umstellen: index.html laedt ALLE Assets bei jedem
+  Besuch komplett neu (Date.now()-Query). Stattdessen Versionsnummer als
+  Query-Param -> Browser kann cachen, Update laedt trotzdem frisch.
+  Spuerbar schnellerer Start, weniger Traffic.
+- (neu) Autosave von localStorage auf IndexedDB umstellen: GeoTIFF- und
+  Hangneigungs-Bilder (2+ MB Base64 pro Stueck) sprengen die 5-10-MB-Quota
+  schnell. Die Backup-Infrastruktur (backup.js) nutzt IndexedDB bereits --
+  Autosave koennte denselben Weg gehen, localStorage nur noch als
+  Mini-Fallback fuer kleine Plaene.
+- (neu) Offline-Export: geotiff.min.js (317 KB) nur einbetten, wenn der
+  Plan GeoTIFF-Funktionen nutzt; sonst weglassen.
+- (neu) Die Playwright-Verifikationsskripte aus der Entwicklung als
+  wiederholbare Testsuite ins Repo (tests/-Ordner + kurze Anleitung);
+  deckt inzwischen Dialoge, Ebenen, Gruppen, GeoTIFF und Slope-API ab.
+- (neu) CSP haerten: 'unsafe-inline' fuer Skripte entfernen (Bootstrap-
+  Snippet auslagern), Tile-/API-Hosts explizit whitelisten statt https:*.
+- (neu) de.json vereinheitlichen: teils "zusammenfuehren"/"Laengengrad"
+  ohne Umlaute, teils echte Umlaute -- einmal durchgehen.
 - Spatial Index (Quadtree) fuer Distanzberechnung bei vielen Objekten.
-- Render-Throttling beim Pan/Zoom.
 - Web Worker fuer schwere Berechnungen (Distanzen, Bounds).
-- Map-Tiles mit Lazy Loading nur fuer sichtbaren Bereich.
-- Inkrementelles Speichern statt vollstaendiger State-Push bei Collab.
+- Service Worker fuer vollstaendige Offline-Faehigkeit (PWA,
+  "zum Homescreen hinzufuegen").
+- Tests fuer Geometrie-Funktionen (Distanz, Hit-Test, Snap, UTM).
+- TypeScript-Migration oder JSDoc-Annotationen fuer IDE-Unterstuetzung.
 
 
 --- Mobile / Touch ---
 
-- Bessere Touch-Gesten: Pinch-Zoom, Zwei-Finger-Pan (existiert teilweise).
 - Touch-optimierte Resize/Rotate-Handles (groesser, leichter zu treffen).
-- Kontextmenue per Long-Press.
+- Kontextmenue per Long-Press (wichtig: Ebenen-Optionen, Solo, Gruppen
+  sind aktuell nur per Rechtsklick erreichbar).
 - Mobile Layout fuer schmale Screens (collapsible Sidebar).
+- (neu) Strg/Shift-Mehrfachauswahl der Ebenen braucht ein Touch-Pendant
+  (z.B. Auswahlmodus-Button, der Checkboxen einblendet).
 
 
 --- Misc / Quality of Life ---
@@ -98,14 +164,6 @@ Sortiert grob nach Aufwand/Nutzen, ohne Anspruch auf Vollstaendigkeit.
 - Tag-System fuer Objekte (z.B. "Familie", "Crew").
 - Checkliste pro Camp (Strom/Wasser/Gas/Genehmigung) im Sidebar.
 - Time-Travel: verschiedene Tage als Varianten desselben Plans.
-- Print-Preview als Modal vor dem eigentlichen Druck.
 - Custom Symbols: User kann eigene SVG-Icons hochladen (Symboltyp).
-
-
---- Technik / Code ---
-
-- TypeScript-Migration (oder JSDoc-Annotationen) fuer bessere IDE-Unterstuetzung.
-- Tests fuer Geometrie-Funktionen (Distanz, Hit-Test, Snap).
-- Service Worker fuer vollstaendige Offline-Faehigkeit (PWA).
-- Push-Notifications bei Collab-Aenderungen.
-- API/Endpoint zum programmatischen Anlegen von Zeltplaenen (z.B. aus Buchungssystem).
+- API/Endpoint zum programmatischen Anlegen von Zeltplaenen
+  (z.B. aus Buchungssystem).
