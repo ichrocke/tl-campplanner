@@ -1,5 +1,10 @@
 # Changelog
 
+## [6.19.1] - 2026-07-20
+
+### Fixed
+- **Importing a single-tab export via the main import button works now**: Files created with "Export tab" (right-click on a tab) could only be re-imported through the tab context menu — the main import button rejected them with "Invalid format". All import paths now accept both file formats.
+
 ## [6.19.0] - 2026-07-19
 
 ### Added

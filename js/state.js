@@ -551,6 +551,11 @@ const State = (() => {
 
         importJSON(json, skipSync, append) {
             const data = JSON.parse(json);
+            // Einzel-Tab-Exporte ("Tab exportieren": {type:'single-tab', site})
+            // ueberall akzeptieren, nicht nur beim Tab-Import-Kontextmenue.
+            if (!data.sites && data.site && typeof data.site === 'object') {
+                data.sites = [data.site];
+            }
             if (!data.sites || !Array.isArray(data.sites)) throw new Error('Invalid format');
 
             // Append-Modus: vorhandene Tabs bleiben erhalten, importierte Sites
